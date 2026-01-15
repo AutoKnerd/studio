@@ -1,17 +1,37 @@
+export type UserRole = 
+  | 'consultant' 
+  | 'manager' 
+  | 'Service Writer' 
+  | 'Service Manager' 
+  | 'Finance Manager' 
+  | 'Parts Consultant' 
+  | 'Parts Manager' 
+  | 'Owner';
+
 export type User = {
   userId: string;
   name: string;
   email: string;
-  role: 'consultant' | 'manager';
+  role: UserRole;
   dealershipId: string;
   avatarUrl: string;
 };
 
+export type LessonRole = Exclude<UserRole, 'Owner'>;
+
+export type LessonCategory = 
+  | 'Sales Process' 
+  | 'Product Knowledge' 
+  | 'Customer Service' 
+  | 'Financing'
+  | 'Service'
+  | 'Parts';
+
 export type Lesson = {
   lessonId: string;
   title: string;
-  role: 'consultant' | 'manager';
-  category: 'Sales Process' | 'Product Knowledge' | 'Customer Service' | 'Financing';
+  role: LessonRole;
+  category: LessonCategory;
 };
 
 export type LessonLog = {

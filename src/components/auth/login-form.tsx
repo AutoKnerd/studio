@@ -108,6 +108,46 @@ export function LoginForm() {
     }
   }
 
+  async function handleOwnerLogin() {
+    setIsSubmitting(true);
+    try {
+      await login('owner@autodrive.com', 'password'); 
+      toast({
+        title: 'Login Successful',
+        description: 'Logged in as Owner.',
+      });
+      router.push('/');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Owner Login Failed',
+        description: 'Could not log in as owner user.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+  
+  async function handleServiceManagerLogin() {
+    setIsSubmitting(true);
+    try {
+      await login('service.manager@autodrive.com', 'password');
+      toast({
+        title: 'Login Successful',
+        description: 'Logged in as Service Manager.',
+      });
+      router.push('/');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Service Manager Login Failed',
+        description: 'Could not log in as service manager user.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <Card>
       <Form {...form}>
@@ -144,12 +184,22 @@ export function LoginForm() {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? <Spinner size="sm" /> : 'Sign In'}
             </Button>
-            <Button type="button" variant="outline" className="w-full" onClick={handleAdminLogin} disabled={isSubmitting}>
-              Admin Bypass
-            </Button>
-            <Button type="button" variant="outline" className="w-full" onClick={handleConsultantLogin} disabled={isSubmitting}>
-              Consultant Bypass
-            </Button>
+            <div className='flex w-full gap-2'>
+              <Button type="button" variant="outline" className="w-full" onClick={handleConsultantLogin} disabled={isSubmitting}>
+                Consultant
+              </Button>
+              <Button type="button" variant="outline" className="w-full" onClick={handleAdminLogin} disabled={isSubmitting}>
+                Sales Manager
+              </Button>
+            </div>
+            <div className='flex w-full gap-2'>
+              <Button type="button" variant="outline" className="w-full" onClick={handleServiceManagerLogin} disabled={isSubmitting}>
+                Service Manager
+              </Button>
+              <Button type="button" variant="outline" className="w-full" onClick={handleOwnerLogin} disabled={isSubmitting}>
+                Owner
+              </Button>
+            </div>
           </CardFooter>
         </form>
       </Form>

@@ -1,4 +1,4 @@
-import type { User, Lesson, LessonLog } from './definitions';
+import type { User, Lesson, LessonLog, UserRole, LessonRole } from './definitions';
 
 // --- MOCK DATABASE ---
 
@@ -7,6 +7,13 @@ const users: User[] = [
   { userId: 'user-2', name: 'Bob Williams', email: 'manager@autodrive.com', role: 'manager', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/102/200/200' },
   { userId: 'user-3', name: 'Charlie Brown', email: 'charlie@autodrive.com', role: 'consultant', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/103/200/200' },
   { userId: 'user-4', name: 'Diana Prince', email: 'diana@autodrive.com', role: 'consultant', dealershipId: 'dealership-B', avatarUrl: 'https://picsum.photos/seed/104/200/200' },
+  { userId: 'user-5', name: 'Eve Adams', email: 'service.writer@autodrive.com', role: 'Service Writer', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/105/200/200' },
+  { userId: 'user-6', name: 'Frank Miller', email: 'service.manager@autodrive.com', role: 'Service Manager', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/106/200/200' },
+  { userId: 'user-7', name: 'Grace Lee', email: 'finance.manager@autodrive.com', role: 'Finance Manager', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/107/200/200' },
+  { userId: 'user-8', name: 'Henry Wilson', email: 'parts.consultant@autodrive.com', role: 'Parts Consultant', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/108/200/200' },
+  { userId: 'user-9', name: 'Ivy Green', email: 'parts.manager@autodrive.com', role: 'Parts Manager', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/109/200/200' },
+  { userId: 'user-10', name: 'Jack King', email: 'owner@autodrive.com', role: 'Owner', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/110/200/200' },
+  { userId: 'user-11', name: 'Sam Smith', email: 'sam.sw@autodrive.com', role: 'Service Writer', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/111/200/200' },
 ];
 
 const lessons: Lesson[] = [
@@ -16,6 +23,11 @@ const lessons: Lesson[] = [
   { lessonId: 'lesson-104', title: 'Handling Difficult Customers', role: 'consultant', category: 'Customer Service' },
   { lessonId: 'lesson-105', title: 'Understanding Financing Options', role: 'consultant', category: 'Financing' },
   { lessonId: 'lesson-201', title: 'Conducting Performance Reviews', role: 'manager', category: 'Sales Process' },
+  { lessonId: 'lesson-301', title: 'Effective Service Write-ups', role: 'Service Writer', category: 'Service' },
+  { lessonId: 'lesson-302', title: 'Managing Shop Workflow', role: 'Service Manager', category: 'Service' },
+  { lessonId: 'lesson-401', title: 'F&I Product Presentation', role: 'Finance Manager', category: 'Financing' },
+  { lessonId: 'lesson-501', title: 'Finding the Right Part', role: 'Parts Consultant', category: 'Parts' },
+  { lessonId: 'lesson-502', title: 'Inventory Management Basics', role: 'Parts Manager', category: 'Parts' },
 ];
 
 const lessonLogs: LessonLog[] = [
@@ -48,7 +60,7 @@ export async function getUserById(userId: string): Promise<User | null> {
 }
 
 // LESSONS
-export async function getLessons(role: 'consultant' | 'manager'): Promise<Lesson[]> {
+export async function getLessons(role: LessonRole): Promise<Lesson[]> {
     await simulateNetworkDelay();
     return lessons.filter(l => l.role === role);
 }
@@ -64,10 +76,29 @@ export async function getConsultantActivity(userId: string): Promise<LessonLog[]
 }
 
 // MANAGER
-export async function getManagerStats(dealershipId: string): Promise<{ totalLessons: number; avgEmpathy: number }> {
+const getTeamMemberRoles = (managerRole: UserRole): UserRole[] => {
+    switch (managerRole) {
+        case 'manager':
+            return ['consultant'];
+        case 'Service Manager':
+            return ['Service Writer'];
+        case 'Parts Manager':
+            return ['Parts Consultant'];
+        case 'Owner':
+            return users.filter(u => u.role !== 'Owner').map(u => u.role);
+        default:
+            return [];
+    }
+};
+
+export async function getManagerStats(dealershipId: string, userRole: UserRole): Promise<{ totalLessons: number; avgEmpathy: number }> {
     await simulateNetworkDelay();
-    const dealershipUserIds = users.filter(u => u.dealershipId === dealershipId && u.role === 'consultant').map(u => u.userId);
-    const dealershipLogs = lessonLogs.filter(log => dealershipUserIds.includes(log.userId));
+    const teamRoles = getTeamMemberRoles(userRole);
+    const teamUserIds = users
+        .filter(u => u.dealershipId === dealershipId && teamRoles.includes(u.role))
+        .map(u => u.userId);
+
+    const dealershipLogs = lessonLogs.filter(log => teamUserIds.includes(log.userId));
     
     if (dealershipLogs.length === 0) {
         return { totalLessons: 0, avgEmpathy: 0 };
@@ -80,9 +111,10 @@ export async function getManagerStats(dealershipId: string): Promise<{ totalLess
     return { totalLessons, avgEmpathy };
 }
 
-export async function getTeamActivity(dealershipId: string): Promise<{ consultant: User; lessonsCompleted: number; totalXp: number; avgScore: number; }[]> {
+export async function getTeamActivity(dealershipId: string, userRole: UserRole): Promise<{ consultant: User; lessonsCompleted: number; totalXp: number; avgScore: number; }[]> {
     await simulateNetworkDelay();
-    const teamMembers = users.filter(u => u.dealershipId === dealershipId && u.role === 'consultant');
+    const teamRoles = getTeamMemberRoles(userRole);
+    const teamMembers = users.filter(u => u.dealershipId === dealershipId && teamRoles.includes(u.role));
     
     const activity = teamMembers.map(member => {
         const memberLogs = lessonLogs.filter(log => log.userId === member.userId);
@@ -102,5 +134,5 @@ export async function getTeamActivity(dealershipId: string): Promise<{ consultan
         return { consultant: member, lessonsCompleted, totalXp, avgScore };
     });
 
-    return activity;
+    return activity.sort((a, b) => b.totalXp - a.totalXp);
 }

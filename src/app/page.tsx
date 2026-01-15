@@ -7,6 +7,7 @@ import { Header } from '@/components/layout/header';
 import { ConsultantDashboard } from '@/components/dashboard/consultant-dashboard';
 import { ManagerDashboard } from '@/components/dashboard/manager-dashboard';
 import { Spinner } from '@/components/ui/spinner';
+import type { UserRole } from '@/lib/definitions';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -26,14 +27,16 @@ export default function Home() {
     );
   }
 
+  const managerialRoles: UserRole[] = ['manager', 'Service Manager', 'Parts Manager', 'Finance Manager', 'Owner'];
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        {user.role === 'consultant' ? (
-          <ConsultantDashboard user={user} />
-        ) : (
+        {managerialRoles.includes(user.role) ? (
           <ManagerDashboard user={user} />
+        ) : (
+          <ConsultantDashboard user={user} />
         )}
       </main>
     </div>

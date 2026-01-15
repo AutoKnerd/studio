@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { User, LessonLog } from '@/lib/definitions';
-import { getManagerStats, getTeamActivity } from '@/lib/data';
+import type { User, LessonLog, Lesson, LessonRole } from '@/lib/definitions';
+import { getManagerStats, getTeamActivity, getLessons } from '@/lib/data';
 import { StatCard } from './stat-card';
-import { BarChart, CheckCircle, Smile, Star, Users } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '../ui/skeleton';
+import Link from 'next/link';
+import { Badge } from '../ui/badge';
 
 interface ManagerDashboardProps {
   user: User;
@@ -25,24 +27,70 @@ type TeamMemberStats = {
 export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [stats, setStats] = useState<{ totalLessons: number, avgEmpathy: number } | null>(null);
   const [teamActivity, setTeamActivity] = useState<TeamMemberStats[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const [managerStats, activity] = await Promise.all([
-        getManagerStats(user.dealershipId),
-        getTeamActivity(user.dealershipId),
-      ]);
-      setStats(managerStats);
-      setTeamActivity(activity);
+
+      const promises = [
+        getManagerStats(user.dealershipId, user.role),
+        getTeamActivity(user.dealershipId, user.role),
+      ];
+
+      if (user.role !== 'Owner') {
+        promises.push(getLessons(user.role as LessonRole));
+      }
+
+      const [managerStats, activity, fetchedLessons] = await Promise.all(promises);
+      
+      setStats(managerStats as { totalLessons: number, avgEmpathy: number });
+      setTeamActivity(activity as TeamMemberStats[]);
+      if (fetchedLessons) {
+        setLessons(fetchedLessons as Lesson[]);
+      }
+
       setLoading(false);
     }
     fetchData();
-  }, [user.dealershipId]);
+  }, [user.dealershipId, user.role]);
   
   return (
     <>
+      {user.role !== 'Owner' && (
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              My Available Lessons
+            </CardTitle>
+            <CardDescription>Complete these lessons to improve your own skills.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : lessons.length > 0 ? (
+              <div className="space-y-4">
+                {lessons.map(lesson => (
+                  <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`} className="block rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium">{lesson.title}</p>
+                      <Badge variant="secondary">{lesson.category}</Badge>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+                <p className="text-sm text-muted-foreground">No lessons available for your role.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {loading ? (
             Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-32"/>)
@@ -57,7 +105,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             <StatCard 
               title="Team Members"
               value={teamActivity.length.toString()}
-              description="Active consultants"
+              description="Active team members"
               Icon={Users}
             />
             <StatCard 
@@ -80,10 +128,10 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart className="h-5 w-5" />
-            Lesson Completion Summary
+            Team Performance Summary
           </CardTitle>
           <CardDescription>
-            Performance overview of consultants at your dealership.
+            Performance overview of staff at your dealership.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,7 +145,8 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Consultant</TableHead>
+                  <TableHead>Team Member</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead className="text-center">Lessons Completed</TableHead>
                   <TableHead className="text-center">Total XP</TableHead>
                   <TableHead className="text-right">Average Score</TableHead>
@@ -118,6 +167,9 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                         </div>
                       </div>
                     </TableCell>
+                    <TableCell>
+                        <Badge variant="outline">{member.consultant.role}</Badge>
+                    </TableCell>
                     <TableCell className="text-center font-medium">{member.lessonsCompleted}</TableCell>
                     <TableCell className="text-center font-medium">{member.totalXp.toLocaleString()}</TableCell>
                     <TableCell className="text-right">
@@ -129,7 +181,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       No team activity found.
                     </TableCell>
                   </TableRow>
