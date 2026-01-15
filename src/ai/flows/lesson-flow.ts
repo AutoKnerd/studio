@@ -131,12 +131,26 @@ End the session after outputting the JSON.
 ---
 Current Lesson: "{{lessonTitle}}"
 
-If the user message is "Start the lesson.", begin the lesson by identifying their weakest skill and starting with your first coaching prompt. Otherwise, respond to their message in the context of the focused training.
+### Your First Message
+When the \`userMessage\` is "Start the lesson.", that is your signal to begin. Your first response MUST:
+1.  Briefly welcome the user.
+2.  State the single CX trait you will be focusing on (their weakest).
+3.  Ask ONE clear, introductory question or present ONE short scenario. Do not combine these.
+
+Example First Message:
+"Welcome to your lesson. Today, we'll be focusing on **Listening**. Let's start with a scenario: A customer says they're 'just looking.' What's your initial response?"
+
+### Subsequent Messages
+For all other messages, continue the coaching conversation, remembering to only ask one question or present one scenario at a time.
 
 Conversation History:
+{{#if history.length}}
 {{#each history}}
 - {{sender}}: {{text}}
 {{/each}}
+{{else}}
+(No history yet)
+{{/if}}
 
 User's latest response:
 {{userMessage}}
