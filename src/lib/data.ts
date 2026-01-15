@@ -14,6 +14,7 @@ const lessons: Lesson[] = [
   { lessonId: 'lesson-102', title: 'Advanced Closing Techniques', role: 'consultant', category: 'Sales Process' },
   { lessonId: 'lesson-103', title: 'EV Model Lineup 2024', role: 'consultant', category: 'Product Knowledge' },
   { lessonId: 'lesson-104', title: 'Handling Difficult Customers', role: 'consultant', category: 'Customer Service' },
+  { lessonId: 'lesson-105', title: 'Understanding Financing Options', role: 'consultant', category: 'Financing' },
   { lessonId: 'lesson-201', title: 'Conducting Performance Reviews', role: 'manager', category: 'Sales Process' },
 ];
 
@@ -46,10 +47,15 @@ export async function getUserById(userId: string): Promise<User | null> {
     return users.find(u => u.userId === userId) || null;
 }
 
-// CONSULTANT
+// LESSONS
 export async function getLessons(role: 'consultant' | 'manager'): Promise<Lesson[]> {
     await simulateNetworkDelay();
     return lessons.filter(l => l.role === role);
+}
+
+export async function getLessonById(lessonId: string): Promise<Lesson | null> {
+    await simulateNetworkDelay();
+    return lessons.find(l => l.lessonId === lessonId) || null;
 }
 
 export async function getConsultantActivity(userId: string): Promise<LessonLog[]> {

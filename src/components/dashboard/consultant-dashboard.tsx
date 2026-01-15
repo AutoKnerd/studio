@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import Link from 'next/link';
 
 interface ConsultantDashboardProps {
   user: User;
@@ -93,10 +94,12 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
             ) : (
               <div className="space-y-4">
                 {lessons.map(lesson => (
-                  <div key={lesson.lessonId} className="flex items-center justify-between rounded-lg border p-3">
-                    <p className="font-medium">{lesson.title}</p>
-                    <Badge variant="secondary">{lesson.category}</Badge>
-                  </div>
+                  <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`} className="block rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium">{lesson.title}</p>
+                      <Badge variant="secondary">{lesson.category}</Badge>
+                    </div>
+                  </Link>
                 ))}
               </div>
             )}
