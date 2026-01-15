@@ -6,9 +6,10 @@ import { getLessonById } from '@/lib/data';
 import { Lesson } from '@/lib/definitions';
 import { useEffect, useState } from 'react';
 import { Spinner } from '@/components/ui/spinner';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 
-export default function LessonPage({ params }: { params: { lessonId: string } }) {
+export default function LessonPage() {
+    const params = useParams<{ lessonId: string }>();
     const [lesson, setLesson] = useState<Lesson | null>(null);
     const [loading, setLoading] = useState(true);
 
