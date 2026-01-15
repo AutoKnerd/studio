@@ -1,8 +1,9 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { User, LessonLog, Lesson, LessonRole } from '@/lib/definitions';
-import { getManagerStats, getTeamActivity, getLessons } from '@/lib/data';
+import { useState, useEffect, useMemo } from 'react';
+import type { User, LessonLog, Lesson, LessonRole, CxTrait } from '@/lib/definitions';
+import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity } from '@/lib/data';
 import { StatCard } from './stat-card';
 import { BarChart, BookOpen, CheckCircle, Smile, Star, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,33 +29,80 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [stats, setStats] = useState<{ totalLessons: number, avgEmpathy: number } | null>(null);
   const [teamActivity, setTeamActivity] = useState<TeamMemberStats[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [managerActivity, setManagerActivity] = useState<LessonLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
 
-      const promises = [
+      const promises: Promise<any>[] = [
         getManagerStats(user.dealershipId, user.role),
         getTeamActivity(user.dealershipId, user.role),
       ];
 
       if (user.role !== 'Owner') {
         promises.push(getLessons(user.role as LessonRole));
+        promises.push(getConsultantActivity(user.userId));
       }
 
-      const [managerStats, activity, fetchedLessons] = await Promise.all(promises);
+      const [managerStats, activity, fetchedLessons, fetchedManagerActivity] = await Promise.all(promises);
       
       setStats(managerStats as { totalLessons: number, avgEmpathy: number });
       setTeamActivity(activity as TeamMemberStats[]);
       if (fetchedLessons) {
         setLessons(fetchedLessons as Lesson[]);
       }
+      if (fetchedManagerActivity) {
+        setManagerActivity(fetchedManagerActivity as LessonLog[]);
+      }
 
       setLoading(false);
     }
     fetchData();
-  }, [user.dealershipId, user.role]);
+  }, [user.dealershipId, user.role, user.userId]);
+
+  const managerAverageScores = useMemo(() => {
+      if (user.role === 'Owner') return null;
+      if (!managerActivity.length) return {
+          empathy: 75, listening: 62, trust: 80, followUp: 70, closing: 68, relationshipBuilding: 85
+      };
+
+      const total = managerActivity.reduce((acc, log) => {
+          acc.empathy += log.empathy;
+          acc.listening += log.listening;
+          acc.trust += log.trust;
+          acc.followUp += log.followUp;
+          acc.closing += log.closing;
+          acc.relationshipBuilding += log.relationshipBuilding;
+          return acc;
+      }, { empathy: 0, listening: 0, trust: 0, followUp: 0, closing: 0, relationshipBuilding: 0 });
+
+      const count = managerActivity.length;
+      return {
+          empathy: Math.round(total.empathy / count),
+          listening: Math.round(total.listening / count),
+          trust: Math.round(total.trust / count),
+          followUp: Math.round(total.followUp / count),
+          closing: Math.round(total.closing / count),
+          relationshipBuilding: Math.round(total.relationshipBuilding / count),
+      };
+  }, [managerActivity, user.role]);
+
+  const recommendedLesson = useMemo(() => {
+    if (user.role === 'Owner' || loading || lessons.length === 0 || !managerAverageScores) return null;
+
+    const lowestScoringTrait = Object.entries(managerAverageScores).reduce((lowest, [trait, score]) => {
+        if (score < lowest.score) {
+            return { trait: trait as CxTrait, score };
+        }
+        return lowest;
+    }, { trait: 'empathy' as CxTrait, score: 101 });
+
+    const lesson = lessons.find(l => l.associatedTrait === lowestScoringTrait.trait);
+
+    return lesson || lessons[0];
+  }, [loading, lessons, managerAverageScores, user.role]);
   
   return (
     <>
@@ -63,27 +111,25 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
-              My Available Lessons
+              My Recommended Lesson
             </CardTitle>
-            <CardDescription>Complete these lessons to improve your own skills.</CardDescription>
+            <CardDescription>A lesson focused on your area for greatest improvement.</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="space-y-4">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-16 w-full" />
               </div>
-            ) : lessons.length > 0 ? (
-              <div className="space-y-4">
-                {lessons.map(lesson => (
-                  <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`} className="block rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">{lesson.title}</p>
-                      <Badge variant="secondary">{lesson.category}</Badge>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+            ) : recommendedLesson ? (
+              <Link key={recommendedLesson.lessonId} href={`/lesson/${recommendedLesson.lessonId}`} className="block rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{recommendedLesson.title}</p>
+                    <p className="text-sm text-muted-foreground">Focus on your weakest skill: <span className="font-semibold capitalize">{recommendedLesson.associatedTrait.replace(/([A-Z])/g, ' $1')}</span></p>
+                  </div>
+                  <Badge variant="secondary">{recommendedLesson.category}</Badge>
+                </div>
+              </Link>
             ) : (
                 <p className="text-sm text-muted-foreground">No lessons available for your role.</p>
             )}

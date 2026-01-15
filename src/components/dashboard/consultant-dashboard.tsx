@@ -1,11 +1,12 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import type { User, Lesson, LessonLog } from '@/lib/definitions';
+import type { User, Lesson, LessonLog, CxTrait } from '@/lib/definitions';
 import { getLessons, getConsultantActivity } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users } from 'lucide-react';
+import { BookOpen, TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
 
@@ -13,7 +14,7 @@ interface ConsultantDashboardProps {
   user: User;
 }
 
-const metricIcons = {
+const metricIcons: Record<CxTrait, LucideIcon> = {
   empathy: Smile,
   listening: Ear,
   trust: Handshake,
@@ -48,7 +49,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   
   const averageScores = useMemo(() => {
     if (!activity.length) return {
-      empathy: 0, listening: 0, trust: 0, followUp: 0, closing: 0, relationshipBuilding: 0
+      empathy: 75, listening: 62, trust: 80, followUp: 70, closing: 68, relationshipBuilding: 85
     };
 
     const total = activity.reduce((acc, log) => {
@@ -70,7 +71,22 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
         closing: Math.round(total.closing / count),
         relationshipBuilding: Math.round(total.relationshipBuilding / count),
     };
-}, [activity]);
+  }, [activity]);
+
+  const recommendedLesson = useMemo(() => {
+    if (loading || lessons.length === 0) return null;
+
+    const lowestScoringTrait = Object.entries(averageScores).reduce((lowest, [trait, score]) => {
+        if (score < lowest.score) {
+            return { trait: trait as CxTrait, score };
+        }
+        return lowest;
+    }, { trait: 'empathy' as CxTrait, score: 101 });
+
+    const lesson = lessons.find(l => l.associatedTrait === lowestScoringTrait.trait);
+
+    return lesson || lessons[0];
+  }, [loading, lessons, averageScores]);
 
 
   return (
@@ -80,28 +96,27 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
-              Available Lessons
+              Recommended Lesson
             </CardTitle>
-            <CardDescription>Complete these lessons to improve your skills and earn XP.</CardDescription>
+            <CardDescription>A lesson focused on your area for greatest improvement.</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="space-y-4">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-16 w-full" />
               </div>
+            ) : recommendedLesson ? (
+              <Link href={`/lesson/${recommendedLesson.lessonId}`} className="block rounded-lg border p-3 transition-colors hover:bg-muted/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{recommendedLesson.title}</p>
+                    <p className="text-sm text-muted-foreground">Focus on your weakest skill: <span className="font-semibold capitalize">{recommendedLesson.associatedTrait.replace(/([A-Z])/g, ' $1')}</span></p>
+                  </div>
+                  <Badge variant="secondary">{recommendedLesson.category}</Badge>
+                </div>
+              </Link>
             ) : (
-              <div className="space-y-4">
-                {lessons.map(lesson => (
-                  <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`} className="block rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">{lesson.title}</p>
-                      <Badge variant="secondary">{lesson.category}</Badge>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <p className="text-muted-foreground">No recommended lessons available.</p>
             )}
           </CardContent>
         </Card>
@@ -123,6 +138,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
             ) : recentActivity ? (
               <div className="space-y-2">
                 <p className="text-lg font-semibold text-primary">{lessons.find(l => l.lessonId === recentActivity.lessonId)?.title}</p>
+
                 <p className="text-sm text-muted-foreground">
                   Completed on {new Date(recentActivity.timestamp).toLocaleDateString()}
                 </p>

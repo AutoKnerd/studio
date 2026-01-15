@@ -1,3 +1,4 @@
+
 export type UserRole = 
   | 'consultant' 
   | 'manager' 
@@ -27,11 +28,14 @@ export type LessonCategory =
   | 'Service'
   | 'Parts';
 
+export type CxTrait = 'empathy' | 'listening' | 'trust' | 'followUp' | 'closing' | 'relationshipBuilding';
+
 export type Lesson = {
   lessonId: string;
   title: string;
   role: LessonRole;
   category: LessonCategory;
+  associatedTrait: CxTrait;
 };
 
 export type LessonLog = {

@@ -1,4 +1,5 @@
-import type { User, Lesson, LessonLog, UserRole, LessonRole } from './definitions';
+
+import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait } from './definitions';
 
 // --- MOCK DATABASE ---
 
@@ -17,17 +18,18 @@ const users: User[] = [
 ];
 
 const lessons: Lesson[] = [
-  { lessonId: 'lesson-101', title: 'Mastering the Walk-around', role: 'consultant', category: 'Sales Process' },
-  { lessonId: 'lesson-102', title: 'Advanced Closing Techniques', role: 'consultant', category: 'Sales Process' },
-  { lessonId: 'lesson-103', title: 'EV Model Lineup 2024', role: 'consultant', category: 'Product Knowledge' },
-  { lessonId: 'lesson-104', title: 'Handling Difficult Customers', role: 'consultant', category: 'Customer Service' },
-  { lessonId: 'lesson-105', title: 'Understanding Financing Options', role: 'consultant', category: 'Financing' },
-  { lessonId: 'lesson-201', title: 'Conducting Performance Reviews', role: 'manager', category: 'Sales Process' },
-  { lessonId: 'lesson-301', title: 'Effective Service Write-ups', role: 'Service Writer', category: 'Service' },
-  { lessonId: 'lesson-302', title: 'Managing Shop Workflow', role: 'Service Manager', category: 'Service' },
-  { lessonId: 'lesson-401', title: 'F&I Product Presentation', role: 'Finance Manager', category: 'Financing' },
-  { lessonId: 'lesson-501', title: 'Finding the Right Part', role: 'Parts Consultant', category: 'Parts' },
-  { lessonId: 'lesson-502', title: 'Inventory Management Basics', role: 'Parts Manager', category: 'Parts' },
+    { lessonId: 'lesson-101', title: 'Mastering the Walk-around', role: 'consultant', category: 'Sales Process', associatedTrait: 'relationshipBuilding' },
+    { lessonId: 'lesson-102', title: 'Advanced Closing Techniques', role: 'consultant', category: 'Sales Process', associatedTrait: 'closing' },
+    { lessonId: 'lesson-103', title: 'EV Model Lineup 2024', role: 'consultant', category: 'Product Knowledge', associatedTrait: 'trust' },
+    { lessonId: 'lesson-104', title: 'Handling Difficult Customers', role: 'consultant', category: 'Customer Service', associatedTrait: 'empathy' },
+    { lessonId: 'lesson-105', title: 'Active Listening for Customer Needs', role: 'consultant', category: 'Customer Service', associatedTrait: 'listening' },
+    { lessonId: 'lesson-106', title: 'Effective Post-Sale Follow Up', role: 'consultant', category: 'Sales Process', associatedTrait: 'followUp' },
+    { lessonId: 'lesson-201', title: 'Coaching on Listening Skills', role: 'manager', category: 'Sales Process', associatedTrait: 'listening' },
+    { lessonId: 'lesson-301', title: 'Effective Service Write-ups', role: 'Service Writer', category: 'Service', associatedTrait: 'listening' },
+    { lessonId: 'lesson-302', title: 'Managing Shop Workflow for Better Follow-Up', role: 'Service Manager', category: 'Service', associatedTrait: 'followUp' },
+    { lessonId: 'lesson-401', title: 'Building Trust in F&I', role: 'Finance Manager', category: 'Financing', associatedTrait: 'trust' },
+    { lessonId: 'lesson-501', title: 'Finding the Right Part Through Better Questions', role: 'Parts Consultant', category: 'Parts', associatedTrait: 'listening' },
+    { lessonId: 'lesson-502', title: 'Inventory Management for Timely Deliveries', role: 'Parts Manager', category: 'Parts', associatedTrait: 'followUp' },
 ];
 
 const lessonLogs: LessonLog[] = [
