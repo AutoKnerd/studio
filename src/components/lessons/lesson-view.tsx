@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Lesson } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,7 @@ export function LessonView({ lesson }: LessonViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [cxScores, setCxScores] = useState<CxScores | null>(null);
   const [inputDisabled, setInputDisabled] = useState(false);
+  const lessonStarted = useRef(false);
 
   useEffect(() => {
     async function fetchScores() {
@@ -91,7 +92,8 @@ export function LessonView({ lesson }: LessonViewProps) {
 
   useEffect(() => {
     async function startLesson() {
-      if (messages.length > 0 || !cxScores) return;
+      if (lessonStarted.current || !cxScores) return;
+      lessonStarted.current = true;
       
       const initialResponse = await conductLesson({
         lessonId: lesson.lessonId,
@@ -106,7 +108,7 @@ export function LessonView({ lesson }: LessonViewProps) {
     }
     startLesson();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lesson.lessonId, lesson.title, cxScores]); 
+  }, [cxScores, lesson.lessonId, lesson.title]); 
 
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -116,15 +118,15 @@ export function LessonView({ lesson }: LessonViewProps) {
     const currentInput = input;
     const userMessage: Message = { sender: 'user', text: currentInput };
     
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    const historyForAI = [...messages];
+    setMessages([...messages, userMessage]);
     setInput('');
     setIsLoading(true);
 
     const response = await conductLesson({
         lessonId: lesson.lessonId,
         lessonTitle: lesson.title,
-        history: newMessages,
+        history: historyForAI,
         userMessage: currentInput,
         cxScores,
     });
