@@ -220,3 +220,35 @@ export async function getTeamActivity(dealershipId: string, userRole: UserRole):
 
     return activity.sort((a, b) => b.totalXp - a.totalXp);
 }
+
+
+export async function registerDealership(dealershipName: string, ownerEmail: string): Promise<{ activationCode: string }> {
+    await simulateNetworkDelay();
+
+    if (users.some(u => u.email.toLowerCase() === ownerEmail.toLowerCase())) {
+        throw new Error("An account with this email already exists.");
+    }
+    const dealershipId = dealershipName.toLowerCase().replace(/\s+/g, '-');
+    if (users.some(u => u.dealershipId === dealershipId)) {
+        // In a real app, you might want to handle this differently, but for mock data this is fine.
+    }
+
+    const newUserId = `user-${users.length + 1}`;
+    const activationCode = Math.random().toString(36).slice(2, 10).toUpperCase();
+
+    const newOwner: User = {
+        userId: newUserId,
+        name: 'New Owner', // Default name
+        email: ownerEmail,
+        role: 'Owner',
+        dealershipId: dealershipId,
+        avatarUrl: `https://picsum.photos/seed/${newUserId}/200/200`,
+    };
+
+    users.push(newOwner);
+    
+    console.log(`Registered new dealership: ${dealershipName} (${dealershipId})`);
+    console.log(`New owner: ${ownerEmail} with activation code: ${activationCode}`);
+
+    return { activationCode };
+}

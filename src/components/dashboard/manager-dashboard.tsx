@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,7 @@ import { Button } from '../ui/button';
 import { CreateLessonForm } from '../lessons/create-lesson-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TeamMemberCard } from './team-member-card';
+import { RegisterDealershipForm } from '../admin/register-dealership-form';
 
 interface ManagerDashboardProps {
   user: User;
@@ -35,6 +36,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [managerActivity, setManagerActivity] = useState<LessonLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateLessonOpen, setCreateLessonOpen] = useState(false);
+  const [isRegisterOpen, setRegisterOpen] = useState(false);
 
   // New state for dealership selection
   const [dealerships, setDealerships] = useState<string[]>([]);
@@ -68,6 +70,10 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       if (!['Owner', 'Admin', 'Trainer'].includes(user.role)) {
         promises.push(getLessons(user.role as LessonRole));
         promises.push(getConsultantActivity(user.userId));
+      } else {
+        // Ensure promises array has same length
+        promises.push(Promise.resolve([]));
+        promises.push(Promise.resolve([]));
       }
 
       const [managerStats, activity, fetchedLessons, fetchedManagerActivity] = await Promise.all(promises);
@@ -135,6 +141,12 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     return 'Across your entire team';
   }, [user.role, selectedDealership]);
   
+  async function handleDealershipRegistered() {
+    setRegisterOpen(false);
+    const fetchedDealerships = await getDealerships();
+    setDealerships(fetchedDealerships);
+  }
+
   return (
     <>
       {['Owner', 'Admin', 'Trainer'].includes(user.role) && (
@@ -237,23 +249,44 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                     {`Performance overview of staff ${selectedDealership === 'all' ? 'at all dealerships' : `at ${selectedDealership}`}.`}
                 </CardDescription>
             </div>
-             <Dialog open={isCreateLessonOpen} onOpenChange={setCreateLessonOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create Lesson
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[625px]">
-                    <DialogHeader>
-                        <DialogTitle>Create New Training Lesson</DialogTitle>
-                        <DialogDescription>
-                            Design a new lesson for your team. Use AI to suggest a scenario based on your team's performance.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <CreateLessonForm user={user} onLessonCreated={() => setCreateLessonOpen(false)} />
-                </DialogContent>
-            </Dialog>
+             <div className="flex gap-2">
+                {['Admin', 'Trainer'].includes(user.role) && (
+                    <Dialog open={isRegisterOpen} onOpenChange={setRegisterOpen}>
+                        <DialogTrigger asChild>
+                                <Button variant="outline">
+                                    <Store className="mr-2 h-4 w-4" />
+                                    Register Dealership
+                                </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[525px]">
+                            <DialogHeader>
+                                <DialogTitle>Register New Dealership</DialogTitle>
+                                <DialogDescription>
+                                    Create a new dealership and generate an activation code for the owner.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <RegisterDealershipForm onDealershipRegistered={handleDealershipRegistered} />
+                        </DialogContent>
+                    </Dialog>
+                )}
+                <Dialog open={isCreateLessonOpen} onOpenChange={setCreateLessonOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Create Lesson
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[625px]">
+                        <DialogHeader>
+                            <DialogTitle>Create New Training Lesson</DialogTitle>
+                            <DialogDescription>
+                                Design a new lesson for your team. Use AI to suggest a scenario based on your team's performance.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <CreateLessonForm user={user} onLessonCreated={() => setCreateLessonOpen(false)} />
+                    </DialogContent>
+                </Dialog>
+            </div>
         </CardHeader>
         <CardContent>
           {loading ? (
