@@ -243,7 +243,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             <div>
                 <CardTitle className="flex items-center gap-2">
                     <BarChart className="h-5 w-5" />
-                    Team Performance Summary
+                    Dealer report
                 </CardTitle>
                 <CardDescription>
                     {selectedDealership === 'all'
