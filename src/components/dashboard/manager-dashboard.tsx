@@ -144,6 +144,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   async function handleDealershipRegistered() {
     const fetchedDealerships = await getDealerships();
     setDealerships(fetchedDealerships);
+    setRegisterOpen(false);
   }
 
   return (
@@ -263,7 +264,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                             <DialogHeader>
                                 <DialogTitle>Invite New User</DialogTitle>
                                 <DialogDescription>
-                                    Create a new dealership and send an invitation for the first user.
+                                    Send an invitation to a user for a new or existing dealership.
                                 </DialogDescription>
                             </DialogHeader>
                             <RegisterDealershipForm onDealershipRegistered={handleDealershipRegistered} />

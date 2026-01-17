@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { sendInvitation } from '@/lib/data';
+import { sendInvitation, getDealerships } from '@/lib/data';
 import { UserRole } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,20 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
   const [invitationSent, setInvitationSent] = useState(false);
   const { toast } = useToast();
 
+  const [dealerships, setDealerships] = useState<string[]>([]);
+  const [isNewDealership, setIsNewDealership] = useState(false);
+
+  useEffect(() => {
+    async function fetchDealerships() {
+        const d = await getDealerships();
+        setDealerships(d);
+        if (d.length === 0) {
+            setIsNewDealership(true);
+        }
+    }
+    fetchDealerships();
+  }, []);
+
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -57,6 +71,7 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
       
       onDealershipRegistered?.();
       form.reset();
+      setIsNewDealership(false);
 
     } catch (error) {
       toast({
@@ -81,7 +96,7 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
             </p>
           </AlertDescription>
         </Alert>
-        <Button onClick={() => setInvitationSent(false) } className="mt-4">
+        <Button onClick={() => { setInvitationSent(false); setIsNewDealership(false); } } className="mt-4">
             Send Another Invitation
         </Button>
       </div>
@@ -96,10 +111,42 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
           name="dealershipName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Dealership Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., AutoDrive North" {...field} />
-              </FormControl>
+              <FormLabel>Dealership</FormLabel>
+                <Select 
+                    onValueChange={(value) => {
+                        if (value === '---new---') {
+                            setIsNewDealership(true);
+                            field.onChange('');
+                        } else {
+                            setIsNewDealership(false);
+                            field.onChange(value);
+                        }
+                    }} 
+                    value={isNewDealership ? '---new---' : (field.value || '')}
+                >
+                  <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select an existing dealership..." />
+                      </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                      <SelectItem value="---new---">
+                        <span className="font-semibold">-- Add New Dealership --</span>
+                      </SelectItem>
+                      {dealerships.map(d => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              {isNewDealership && (
+                <FormControl>
+                    <Input
+                        placeholder="Enter new dealership name"
+                        {...field}
+                        className="mt-2"
+                    />
+                </FormControl>
+              )}
               <FormMessage />
             </FormItem>
           )}
