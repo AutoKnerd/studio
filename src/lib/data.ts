@@ -222,10 +222,10 @@ export async function getTeamActivity(dealershipId: string, userRole: UserRole):
 }
 
 
-export async function registerDealership(dealershipName: string, ownerEmail: string): Promise<{ activationCode: string }> {
+export async function registerDealership(dealershipName: string, userEmail: string, role: UserRole): Promise<{ activationCode: string }> {
     await simulateNetworkDelay();
 
-    if (users.some(u => u.email.toLowerCase() === ownerEmail.toLowerCase())) {
+    if (users.some(u => u.email.toLowerCase() === userEmail.toLowerCase())) {
         throw new Error("An account with this email already exists.");
     }
     const dealershipId = dealershipName.toLowerCase().replace(/\s+/g, '-');
@@ -236,19 +236,19 @@ export async function registerDealership(dealershipName: string, ownerEmail: str
     const newUserId = `user-${users.length + 1}`;
     const activationCode = Math.random().toString(36).slice(2, 10).toUpperCase();
 
-    const newOwner: User = {
+    const newUser: User = {
         userId: newUserId,
-        name: 'New Owner', // Default name
-        email: ownerEmail,
-        role: 'Owner',
+        name: 'New User', // Default name
+        email: userEmail,
+        role: role,
         dealershipId: dealershipId,
         avatarUrl: `https://picsum.photos/seed/${newUserId}/200/200`,
     };
 
-    users.push(newOwner);
+    users.push(newUser);
     
     console.log(`Registered new dealership: ${dealershipName} (${dealershipId})`);
-    console.log(`New owner: ${ownerEmail} with activation code: ${activationCode}`);
+    console.log(`New ${role}: ${userEmail} with activation code: ${activationCode}`);
 
     return { activationCode };
 }
