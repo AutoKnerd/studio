@@ -9,8 +9,11 @@ export default function LoginPage() {
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
                 <Cog className="h-8 w-8 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground">AutoKnerd</h1>
-            <p className="text-muted-foreground">Sign in to your account</p>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">AutoDrive</h1>
+              <p className="text-sm font-medium text-muted-foreground">powered by AutoKnerd</p>
+            </div>
+            <p className="mt-4 text-muted-foreground">Sign in to your account</p>
         </div>
         <LoginForm />
       </div>

@@ -21,7 +21,10 @@ export function Header() {
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <Link href="/" className="flex items-center gap-2 font-semibold">
         <Cog className="h-6 w-6 text-primary" />
-        <span className="text-lg font-bold">AutoKnerd</span>
+        <div className="flex flex-col">
+          <span className="text-lg font-bold leading-tight">AutoDrive</span>
+          <span className="text-[10px] font-medium text-muted-foreground -mt-1">powered by AutoKnerd</span>
+        </div>
       </Link>
       <div className="ml-auto flex items-center gap-4">
         {user && (

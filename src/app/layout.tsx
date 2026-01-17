@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/context/theme-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AutoKnerd',
+  title: 'AutoDrive powered by AutoKnerd',
   description: 'AI-powered training and performance for automotive professionals.',
 };
 
