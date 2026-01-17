@@ -342,12 +342,3 @@ export async function sendInvitation(
     console.log(`Click here to register: http://localhost:9002/register?token=${token}`);
     console.log('------------------------------------');
 }
-
-
-export async function registerDealership(
-    dealershipName: string, 
-    userEmail: string, 
-    role: UserRole
-): Promise<{ codes: { role: UserRole; activationCode: string; uses: number }[] }> {
-    throw new Error("registerDealership is deprecated. Use sendInvitation instead.");
-}
