@@ -141,3 +141,9 @@ export type EmailInvitation = {
   email: string;
   claimed: boolean;
 };
+
+export type Dealership = {
+  id: string;
+  name: string;
+  trainerId?: string;
+};

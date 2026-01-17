@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { sendInvitation, getDealerships, getTeamMemberRoles } from '@/lib/data';
+import { sendInvitation, getDealerships, getTeamMemberRoles, getDealershipById } from '@/lib/data';
 import { User, UserRole } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,42 +36,55 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
 
   const [dealerships, setDealerships] = useState<string[]>([]);
   const [isNewDealership, setIsNewDealership] = useState(false);
+  const [managerDealershipName, setManagerDealershipName] = useState('');
 
   const canManageAllDealerships = ['Admin', 'Trainer'].includes(user.role);
   const registrationRoles = getTeamMemberRoles(user.role);
 
   useEffect(() => {
-    async function fetchDealerships() {
+    async function fetchDealershipData() {
         if (canManageAllDealerships) {
-            const d = await getDealerships();
+            const d = await getDealerships(user);
             setDealerships(d);
             if (d.length === 0) {
                 setIsNewDealership(true);
             }
+        } else {
+            const dealership = await getDealershipById(user.dealershipId);
+            if (dealership) {
+                setManagerDealershipName(dealership.name);
+            }
         }
     }
-    fetchDealerships();
-  }, [canManageAllDealerships]);
+    fetchDealershipData();
+  }, [canManageAllDealerships, user]);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      dealershipName: canManageAllDealerships ? '' : user.dealershipId,
+      dealershipName: canManageAllDealerships ? '' : managerDealershipName,
       userEmail: '',
       role: '',
     },
   });
+  
+  useEffect(() => {
+      if (!canManageAllDealerships && managerDealershipName) {
+          form.setValue('dealershipName', managerDealershipName);
+      }
+  }, [managerDealershipName, canManageAllDealerships, form]);
+
 
   async function onSubmit(data: RegisterFormValues) {
     setIsSubmitting(true);
     setInvitationSent(false);
     try {
-      const dealershipToUse = canManageAllDealerships ? data.dealershipName : user.dealershipId;
+      const dealershipToUse = canManageAllDealerships ? data.dealershipName : managerDealershipName;
       if (!dealershipToUse) {
         throw new Error('Dealership name is missing.');
       }
       
-      await sendInvitation(dealershipToUse, data.userEmail, data.role as UserRole);
+      await sendInvitation(dealershipToUse, data.userEmail, data.role as UserRole, user.userId);
       
       setInvitationSent(true);
       toast({
@@ -80,7 +94,7 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
       
       onDealershipRegistered?.();
       form.reset({
-        dealershipName: canManageAllDealerships ? '' : user.dealershipId,
+        dealershipName: canManageAllDealerships ? '' : managerDealershipName,
         userEmail: '',
         role: '',
       });
@@ -129,7 +143,7 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
             <FormItem>
               <FormLabel>Dealership</FormLabel>
                 { !canManageAllDealerships ? (
-                    <Input value={user.dealershipId} disabled />
+                    <Input value={managerDealershipName} disabled />
                 ) : (
                     <>
                         <Select 

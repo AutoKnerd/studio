@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait } from '@/lib/definitions';
-import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships } from '@/lib/data';
+import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById } from '@/lib/data';
 import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -45,15 +46,20 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   useEffect(() => {
     async function fetchInitialData() {
         if(['Owner', 'Admin', 'Trainer'].includes(user.role)) {
-            const fetchedDealerships = await getDealerships();
+            const fetchedDealerships = await getDealerships(user);
             setDealerships(fetchedDealerships);
             setSelectedDealership('all'); // Owners/Admins start with an 'all' view.
         } else {
-            setSelectedDealership(user.dealershipId); // Other managers are scoped to their own dealership.
+            const dealership = await getDealershipById(user.dealershipId);
+            if (dealership) {
+                setSelectedDealership(dealership.name);
+            } else {
+                setSelectedDealership(user.dealershipId);
+            }
         }
     }
     fetchInitialData();
-  }, [user.role, user.dealershipId]);
+  }, [user]);
 
   useEffect(() => {
     // Don't fetch data until a dealership is selected
@@ -143,7 +149,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   
   async function handleDealershipRegistered() {
     if (['Owner', 'Admin', 'Trainer'].includes(user.role)) {
-        const fetchedDealerships = await getDealerships();
+        const fetchedDealerships = await getDealerships(user);
         setDealerships(fetchedDealerships);
     }
     setRegisterOpen(false);

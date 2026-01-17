@@ -1,8 +1,14 @@
 
 import { isToday } from 'date-fns';
-import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation } from './definitions';
+import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership } from './definitions';
 
 // --- MOCK DATABASE ---
+
+const dealerships: Dealership[] = [
+  { id: 'dealership-A', name: 'Dealership A', trainerId: 'user-12' },
+  { id: 'dealership-B', name: 'Dealership B' },
+  { id: 'autoknerd-hq', name: 'AutoKnerd HQ' },
+];
 
 const users: User[] = [
   { userId: 'user-1', name: 'Alice Johnson', email: 'consultant@autodrive.com', role: 'Sales Consultant', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/101/200/200', xp: 2580 },
@@ -127,6 +133,11 @@ export async function getLessonById(lessonId: string): Promise<Lesson | null> {
     return lessons.find(l => l.lessonId === lessonId) || null;
 }
 
+export async function getDealershipById(dealershipId: string): Promise<Dealership | null> {
+    await simulateNetworkDelay();
+    return dealerships.find(d => d.id === dealershipId) || null;
+}
+
 export async function createLesson(lessonData: {
     title: string;
     category: LessonCategory;
@@ -238,15 +249,29 @@ export const getTeamMemberRoles = (managerRole: UserRole): UserRole[] => {
     }
 };
 
-export async function getDealerships(): Promise<string[]> {
+export async function getDealerships(user?: User): Promise<string[]> {
     await simulateNetworkDelay();
-    const dealershipIds = users.map(u => u.dealershipId).filter(id => id !== 'autoknerd-hq');
-    return [...new Set(dealershipIds)];
+
+    let relevantDealerships = dealerships.filter(d => d.id !== 'autoknerd-hq');
+
+    if (user && user.role === 'Trainer') {
+        relevantDealerships = relevantDealerships.filter(d => d.trainerId === user.userId);
+    }
+    
+    return relevantDealerships.map(d => d.name);
 }
 
-export async function getManagerStats(dealershipId: string, userRole: UserRole): Promise<{ totalLessons: number; avgEmpathy: number }> {
+function getDealershipIdFromName(name: string): string | undefined {
+    if (name === 'all') return 'all';
+    const dealership = dealerships.find(d => d.name === name);
+    return dealership?.id;
+}
+
+
+export async function getManagerStats(dealershipName: string, userRole: UserRole): Promise<{ totalLessons: number; avgEmpathy: number }> {
     await simulateNetworkDelay();
 
+    const dealershipId = getDealershipIdFromName(dealershipName);
     const teamRoles = getTeamMemberRoles(userRole);
     
     let relevantLogs: LessonLog[];
@@ -273,8 +298,10 @@ export async function getManagerStats(dealershipId: string, userRole: UserRole):
     return { totalLessons, avgEmpathy };
 }
 
-export async function getTeamActivity(dealershipId: string, userRole: UserRole): Promise<{ consultant: User; lessonsCompleted: number; totalXp: number; avgScore: number; }[]> {
+export async function getTeamActivity(dealershipName: string, userRole: UserRole): Promise<{ consultant: User; lessonsCompleted: number; totalXp: number; avgScore: number; }[]> {
     await simulateNetworkDelay();
+
+    const dealershipId = getDealershipIdFromName(dealershipName);
     const teamRoles = getTeamMemberRoles(userRole);
 
     let teamMembers: User[];
@@ -317,11 +344,32 @@ export async function getTeamActivity(dealershipId: string, userRole: UserRole):
 export async function sendInvitation(
     dealershipName: string, 
     userEmail: string, 
-    role: UserRole
+    role: UserRole,
+    creatorId: string
 ): Promise<void> {
     await simulateNetworkDelay();
 
-    const dealershipId = dealershipName.toLowerCase().replace(/\s+/g, '-');
+    let dealership = dealerships.find(d => d.name.toLowerCase() === dealershipName.toLowerCase());
+    let dealershipId: string;
+
+    if (!dealership) {
+        dealershipId = dealershipName.toLowerCase().replace(/\s+/g, '-');
+        
+        const newDealership: Dealership = {
+            id: dealershipId,
+            name: dealershipName,
+        };
+        const creator = users.find(u => u.userId === creatorId);
+        if (creator && creator.role === 'Trainer') {
+            newDealership.trainerId = creatorId;
+        }
+
+        dealerships.push(newDealership);
+        console.log(`Created new dealership: ${dealershipName} with ID ${dealershipId}`);
+    } else {
+        dealershipId = dealership.id;
+    }
+
     const token = Math.random().toString(36).slice(2, 18).toUpperCase();
     
     const newInvitation: EmailInvitation = {
