@@ -1,6 +1,6 @@
 
 export type UserRole = 
-  | 'consultant' 
+  | 'Sales Consultant' 
   | 'manager' 
   | 'Service Writer' 
   | 'Service Manager' 
@@ -45,7 +45,7 @@ export type LessonCategory =
   | 'Product Knowledge';
 
 export const lessonCategoriesByRole: Record<string, LessonCategory[]> = {
-  consultant: [
+  'Sales Consultant': [
     'Sales - Meet and Greet',
     'Sales - Needs Assessment',
     'Sales - Vehicle Presentation',

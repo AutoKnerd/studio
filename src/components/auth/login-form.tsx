@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -94,7 +95,7 @@ export function LoginForm() {
       await login('consultant@autodrive.com', 'password'); // Using consultant credentials
       toast({
         title: 'Login Successful',
-        description: 'Logged in as Consultant.',
+        description: 'Logged in as Sales Consultant.',
       });
       router.push('/');
     } catch (error) {
@@ -226,7 +227,7 @@ export function LoginForm() {
             </Button>
             <div className='flex w-full gap-2'>
               <Button type="button" variant="outline" className="w-full" onClick={handleConsultantLogin} disabled={isSubmitting}>
-                Consultant
+                Sales Consultant
               </Button>
               <Button type="button" variant="outline" className="w-full" onClick={handleManagerLogin} disabled={isSubmitting}>
                 Sales Manager

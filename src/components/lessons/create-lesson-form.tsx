@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -110,7 +111,7 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
     try {
       const result = await suggestScenario({
         lessonTitle: title,
-        targetRole: (targetRole === 'global' ? 'consultant' : targetRole) as UserRole, // AI needs a concrete role
+        targetRole: (targetRole === 'global' ? 'Sales Consultant' : targetRole) as UserRole, // AI needs a concrete role
         cxTrait: associatedTrait,
         category: category as LessonCategory,
       });

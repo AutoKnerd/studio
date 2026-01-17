@@ -5,10 +5,10 @@ import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCate
 // --- MOCK DATABASE ---
 
 const users: User[] = [
-  { userId: 'user-1', name: 'Alice Johnson', email: 'consultant@autodrive.com', role: 'consultant', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/101/200/200', xp: 2580 },
+  { userId: 'user-1', name: 'Alice Johnson', email: 'consultant@autodrive.com', role: 'Sales Consultant', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/101/200/200', xp: 2580 },
   { userId: 'user-2', name: 'Bob Williams', email: 'manager@autodrive.com', role: 'manager', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/102/200/200', xp: 5200 },
-  { userId: 'user-3', name: 'Charlie Brown', email: 'charlie@autodrive.com', role: 'consultant', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/103/200/200', xp: 550 },
-  { userId: 'user-4', name: 'Diana Prince', email: 'diana@autodrive.com', role: 'consultant', dealershipId: 'dealership-B', avatarUrl: 'https://picsum.photos/seed/104/200/200', xp: 120 },
+  { userId: 'user-3', name: 'Charlie Brown', email: 'charlie@autodrive.com', role: 'Sales Consultant', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/103/200/200', xp: 550 },
+  { userId: 'user-4', name: 'Diana Prince', email: 'diana@autodrive.com', role: 'Sales Consultant', dealershipId: 'dealership-B', avatarUrl: 'https://picsum.photos/seed/104/200/200', xp: 120 },
   { userId: 'user-5', name: 'Eve Adams', email: 'service.writer@autodrive.com', role: 'Service Writer', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/105/200/200', xp: 800 },
   { userId: 'user-6', name: 'Frank Miller', email: 'service.manager@autodrive.com', role: 'Service Manager', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/106/200/200', xp: 4800 },
   { userId: 'user-7', name: 'Grace Lee', email: 'finance.manager@autodrive.com', role: 'Finance Manager', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/107/200/200', xp: 6000 },
@@ -19,16 +19,16 @@ const users: User[] = [
   { userId: 'user-12', name: 'Travis Trainer', email: 'trainer@autoknerd.com', role: 'Trainer', dealershipId: 'dealership-A', avatarUrl: 'https://picsum.photos/seed/112/200/200', xp: 15000 },
   { userId: 'user-13', name: 'Andy Admin', email: 'admin@autoknerd.com', role: 'Admin', dealershipId: 'autoknerd-hq', avatarUrl: 'https://picsum.photos/seed/113/200/200', xp: 20000 },
   { userId: 'user-14', name: 'Manager B', email: 'manager.b@autodrive.com', role: 'manager', dealershipId: 'dealership-B', avatarUrl: 'https://picsum.photos/seed/114/200/200', xp: 4500 },
-  { userId: 'user-15', name: 'Consultant B1', email: 'consultant.b1@autodrive.com', role: 'consultant', dealershipId: 'dealership-B', avatarUrl: 'https://picsum.photos/seed/115/200/200', xp: 30 },
+  { userId: 'user-15', name: 'Consultant B1', email: 'consultant.b1@autodrive.com', role: 'Sales Consultant', dealershipId: 'dealership-B', avatarUrl: 'https://picsum.photos/seed/115/200/200', xp: 30 },
 ];
 
 const lessons: Lesson[] = [
-    { lessonId: 'lesson-101', title: 'Mastering the Walk-around', role: 'consultant', category: 'Sales - Vehicle Presentation', associatedTrait: 'relationshipBuilding' },
-    { lessonId: 'lesson-102', title: 'Advanced Closing Techniques', role: 'consultant', category: 'Sales - Closing', associatedTrait: 'closing' },
-    { lessonId: 'lesson-103', title: 'EV Model Lineup 2024', role: 'consultant', category: 'Product Knowledge', associatedTrait: 'trust' },
-    { lessonId: 'lesson-104', title: 'Handling Difficult Customers', role: 'consultant', category: 'Sales - Needs Assessment', associatedTrait: 'empathy' },
-    { lessonId: 'lesson-105', title: 'Active Listening for Customer Needs', role: 'consultant', category: 'Sales - Needs Assessment', associatedTrait: 'listening' },
-    { lessonId: 'lesson-106', title: 'Effective Post-Sale Follow Up', role: 'consultant', category: 'Sales - Follow-up', associatedTrait: 'followUp' },
+    { lessonId: 'lesson-101', title: 'Mastering the Walk-around', role: 'Sales Consultant', category: 'Sales - Vehicle Presentation', associatedTrait: 'relationshipBuilding' },
+    { lessonId: 'lesson-102', title: 'Advanced Closing Techniques', role: 'Sales Consultant', category: 'Sales - Closing', associatedTrait: 'closing' },
+    { lessonId: 'lesson-103', title: 'EV Model Lineup 2024', role: 'Sales Consultant', category: 'Product Knowledge', associatedTrait: 'trust' },
+    { lessonId: 'lesson-104', title: 'Handling Difficult Customers', role: 'Sales Consultant', category: 'Sales - Needs Assessment', associatedTrait: 'empathy' },
+    { lessonId: 'lesson-105', title: 'Active Listening for Customer Needs', role: 'Sales Consultant', category: 'Sales - Needs Assessment', associatedTrait: 'listening' },
+    { lessonId: 'lesson-106', title: 'Effective Post-Sale Follow Up', role: 'Sales Consultant', category: 'Sales - Follow-up', associatedTrait: 'followUp' },
     { lessonId: 'lesson-201', title: 'Coaching on Listening Skills', role: 'manager', category: 'Sales - Needs Assessment', associatedTrait: 'listening' },
     { lessonId: 'lesson-202', title: 'Training Trainers', role: 'Trainer', category: 'Sales - Needs Assessment', associatedTrait: 'empathy' },
     { lessonId: 'lesson-301', title: 'Effective Service Write-ups', role: 'Service Writer', category: 'Service - Write-up', associatedTrait: 'listening' },
@@ -144,7 +144,7 @@ export async function createLesson(lessonData: {
     };
 
     const rolesToCreate: LessonRole[] = [];
-    const validRoles: UserRole[] = ['consultant', 'manager', 'Service Writer', 'Service Manager', 'Finance Manager', 'Parts Consultant', 'Parts Manager', 'Trainer'];
+    const validRoles: UserRole[] = ['Sales Consultant', 'manager', 'Service Writer', 'Service Manager', 'Finance Manager', 'Parts Consultant', 'Parts Manager', 'Trainer'];
     
     if (lessonData.targetRole === 'global') {
         rolesToCreate.push(...validRoles as LessonRole[]);
@@ -219,13 +219,13 @@ export async function logLessonCompletion(data: {
 export const getTeamMemberRoles = (managerRole: UserRole): UserRole[] => {
     switch (managerRole) {
         case 'manager':
-            return ['consultant'];
+            return ['Sales Consultant'];
         case 'Service Manager':
             return ['Service Writer'];
         case 'Parts Manager':
             return ['Parts Consultant'];
         case 'Owner':
-             const ownerRoles = users.filter(u => u.role !== 'Owner' && u.role !== 'Admin').map(u => u.role)
+             const ownerRoles = users.filter(u => u.role !== 'Owner' && u.role !== 'Admin' && u.role !== 'Trainer').map(u => u.role)
              return [...new Set(ownerRoles)];
         case 'Trainer':
             const trainerRoles = users.filter(u => u.role !== 'Admin' && u.role !== 'Trainer').map(u => u.role);
