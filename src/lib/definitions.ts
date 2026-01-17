@@ -22,13 +22,26 @@ export type User = {
 
 export type LessonRole = Exclude<UserRole, 'Owner' | 'Admin'>;
 
-export type LessonCategory = 
-  | 'Sales Process' 
-  | 'Product Knowledge' 
-  | 'Customer Service' 
-  | 'Financing'
-  | 'Service'
-  | 'Parts';
+export type LessonCategory =
+  | 'Sales - Meet and Greet'
+  | 'Sales - Needs Assessment'
+  | 'Sales - Vehicle Presentation'
+  | 'Sales - Test Drive'
+  | 'Sales - Negotiation'
+  | 'Sales - Closing'
+  | 'Sales - Delivery'
+  | 'Sales - Follow-up'
+  | 'Service - Appointment'
+  | 'Service - Write-up'
+  | 'Service - Walk-around'
+  | 'Service - Presenting MPI'
+  | 'Service - Status Updates'
+  | 'Service - Active Delivery'
+  | 'Parts - Identifying Needs'
+  | 'Parts - Sourcing'
+  | 'F&I - Menu Selling'
+  | 'F&I - Objection Handling'
+  | 'Product Knowledge';
 
 export type CxTrait = 'empathy' | 'listening' | 'trust' | 'followUp' | 'closing' | 'relationshipBuilding';
 

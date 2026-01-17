@@ -22,13 +22,33 @@ interface CreateLessonFormProps {
 }
 
 const cxTraits: CxTrait[] = ['empathy', 'listening', 'trust', 'followUp', 'closing', 'relationshipBuilding'];
-const lessonCategories: LessonCategory[] = ['Sales Process', 'Product Knowledge', 'Customer Service', 'Financing', 'Service', 'Parts'];
+const lessonCategories: LessonCategory[] = [
+  'Sales - Meet and Greet',
+  'Sales - Needs Assessment',
+  'Sales - Vehicle Presentation',
+  'Sales - Test Drive',
+  'Sales - Negotiation',
+  'Sales - Closing',
+  'Sales - Delivery',
+  'Sales - Follow-up',
+  'Service - Appointment',
+  'Service - Write-up',
+  'Service - Walk-around',
+  'Service - Presenting MPI',
+  'Service - Status Updates',
+  'Service - Active Delivery',
+  'Parts - Identifying Needs',
+  'Parts - Sourcing',
+  'F&I - Menu Selling',
+  'F&I - Objection Handling',
+  'Product Knowledge',
+];
 
 const createLessonSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
   targetRole: z.string().min(1, 'You must select a target role for this lesson.'),
   associatedTrait: z.enum(cxTraits),
-  category: z.enum(lessonCategories),
+  category: z.enum(lessonCategories as [string, ...string[]]),
   scenario: z.string().min(20, 'The scenario must be at least 20 characters long.'),
 });
 
@@ -44,7 +64,7 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
     defaultValues: {
       title: '',
       scenario: '',
-      category: 'Sales Process',
+      category: 'Sales - Meet and Greet',
       associatedTrait: 'empathy',
     },
   });

@@ -22,19 +22,19 @@ const users: User[] = [
 ];
 
 const lessons: Lesson[] = [
-    { lessonId: 'lesson-101', title: 'Mastering the Walk-around', role: 'consultant', category: 'Sales Process', associatedTrait: 'relationshipBuilding' },
-    { lessonId: 'lesson-102', title: 'Advanced Closing Techniques', role: 'consultant', category: 'Sales Process', associatedTrait: 'closing' },
+    { lessonId: 'lesson-101', title: 'Mastering the Walk-around', role: 'consultant', category: 'Sales - Vehicle Presentation', associatedTrait: 'relationshipBuilding' },
+    { lessonId: 'lesson-102', title: 'Advanced Closing Techniques', role: 'consultant', category: 'Sales - Closing', associatedTrait: 'closing' },
     { lessonId: 'lesson-103', title: 'EV Model Lineup 2024', role: 'consultant', category: 'Product Knowledge', associatedTrait: 'trust' },
-    { lessonId: 'lesson-104', title: 'Handling Difficult Customers', role: 'consultant', category: 'Customer Service', associatedTrait: 'empathy' },
-    { lessonId: 'lesson-105', title: 'Active Listening for Customer Needs', role: 'consultant', category: 'Customer Service', associatedTrait: 'listening' },
-    { lessonId: 'lesson-106', title: 'Effective Post-Sale Follow Up', role: 'consultant', category: 'Sales Process', associatedTrait: 'followUp' },
-    { lessonId: 'lesson-201', title: 'Coaching on Listening Skills', role: 'manager', category: 'Sales Process', associatedTrait: 'listening' },
-    { lessonId: 'lesson-202', title: 'Training Trainers', role: 'Trainer', category: 'Customer Service', associatedTrait: 'empathy' },
-    { lessonId: 'lesson-301', title: 'Effective Service Write-ups', role: 'Service Writer', category: 'Service', associatedTrait: 'listening' },
-    { lessonId: 'lesson-302', title: 'Managing Shop Workflow for Better Follow-Up', role: 'Service Manager', category: 'Service', associatedTrait: 'followUp' },
-    { lessonId: 'lesson-401', title: 'Building Trust in F&I', role: 'Finance Manager', category: 'Financing', associatedTrait: 'trust' },
-    { lessonId: 'lesson-501', title: 'Finding the Right Part Through Better Questions', role: 'Parts Consultant', category: 'Parts', associatedTrait: 'listening' },
-    { lessonId: 'lesson-502', title: 'Inventory Management for Timely Deliveries', role: 'Parts Manager', category: 'Parts', associatedTrait: 'followUp' },
+    { lessonId: 'lesson-104', title: 'Handling Difficult Customers', role: 'consultant', category: 'Sales - Needs Assessment', associatedTrait: 'empathy' },
+    { lessonId: 'lesson-105', title: 'Active Listening for Customer Needs', role: 'consultant', category: 'Sales - Needs Assessment', associatedTrait: 'listening' },
+    { lessonId: 'lesson-106', title: 'Effective Post-Sale Follow Up', role: 'consultant', category: 'Sales - Follow-up', associatedTrait: 'followUp' },
+    { lessonId: 'lesson-201', title: 'Coaching on Listening Skills', role: 'manager', category: 'Sales - Needs Assessment', associatedTrait: 'listening' },
+    { lessonId: 'lesson-202', title: 'Training Trainers', role: 'Trainer', category: 'Sales - Needs Assessment', associatedTrait: 'empathy' },
+    { lessonId: 'lesson-301', title: 'Effective Service Write-ups', role: 'Service Writer', category: 'Service - Write-up', associatedTrait: 'listening' },
+    { lessonId: 'lesson-302', title: 'Managing Shop Workflow for Better Follow-Up', role: 'Service Manager', category: 'Service - Status Updates', associatedTrait: 'followUp' },
+    { lessonId: 'lesson-401', title: 'Building Trust in F&I', role: 'Finance Manager', category: 'F&I - Menu Selling', associatedTrait: 'trust' },
+    { lessonId: 'lesson-501', title: 'Finding the Right Part Through Better Questions', role: 'Parts Consultant', category: 'Parts - Identifying Needs', associatedTrait: 'listening' },
+    { lessonId: 'lesson-502', title: 'Inventory Management for Timely Deliveries', role: 'Parts Manager', category: 'Parts - Sourcing', associatedTrait: 'followUp' },
 ];
 
 const lessonLogs: LessonLog[] = [
