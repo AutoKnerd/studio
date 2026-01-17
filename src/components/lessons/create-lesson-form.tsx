@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { User, UserRole, CxTrait, LessonCategory } from '@/lib/definitions';
+import { User, UserRole, CxTrait, LessonCategory, lessonCategories, lessonCategoriesByRole } from '@/lib/definitions';
 import { getTeamMemberRoles, createLesson } from '@/lib/data';
 import { suggestScenario } from '@/ai/flows/suggest-scenario-flow';
 import { Button } from '@/components/ui/button';
@@ -22,27 +22,6 @@ interface CreateLessonFormProps {
 }
 
 const cxTraits: CxTrait[] = ['empathy', 'listening', 'trust', 'followUp', 'closing', 'relationshipBuilding'];
-const lessonCategories: LessonCategory[] = [
-  'Sales - Meet and Greet',
-  'Sales - Needs Assessment',
-  'Sales - Vehicle Presentation',
-  'Sales - Test Drive',
-  'Sales - Negotiation',
-  'Sales - Closing',
-  'Sales - Delivery',
-  'Sales - Follow-up',
-  'Service - Appointment',
-  'Service - Write-up',
-  'Service - Walk-around',
-  'Service - Presenting MPI',
-  'Service - Status Updates',
-  'Service - Active Delivery',
-  'Parts - Identifying Needs',
-  'Parts - Sourcing',
-  'F&I - Menu Selling',
-  'F&I - Objection Handling',
-  'Product Knowledge',
-];
 
 const createLessonSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long.'),
@@ -63,11 +42,32 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
     resolver: zodResolver(createLessonSchema),
     defaultValues: {
       title: '',
-      scenario: '',
-      category: 'Sales - Meet and Greet',
+      targetRole: '',
       associatedTrait: 'empathy',
+      category: '' as any,
+      scenario: '',
     },
   });
+  
+  const targetRole = form.watch('targetRole');
+  const [availableCategories, setAvailableCategories] = useState<LessonCategory[]>([]);
+
+  useEffect(() => {
+    let newCategories: LessonCategory[] = [];
+    if (targetRole === 'global') {
+      newCategories = lessonCategories;
+    } else if (targetRole && lessonCategoriesByRole[targetRole]) {
+      newCategories = lessonCategoriesByRole[targetRole];
+    }
+    
+    setAvailableCategories(newCategories);
+
+    const currentCategory = form.getValues('category');
+    if (!newCategories.includes(currentCategory)) {
+        form.setValue('category', newCategories[0] || '', { shouldValidate: true });
+    }
+  }, [targetRole, form]);
+
 
   const canCreateGlobal = ['Owner', 'Admin', 'Trainer'].includes(user.role);
   const teamRoles = getTeamMemberRoles(user.role);
@@ -165,7 +165,7 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Target Role</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a role..." />
@@ -189,7 +189,7 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
             render={({ field }) => (
               <FormItem>
                 <FormLabel>CX Trait</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a trait..." />
@@ -214,14 +214,14 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!targetRole || availableCategories.length === 0}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category..." />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {lessonCategories.map(cat => (
+                    {availableCategories.map(cat => (
                       <SelectItem key={cat} value={cat}>
                         {cat}
                       </SelectItem>

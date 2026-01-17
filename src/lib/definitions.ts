@@ -43,6 +43,71 @@ export type LessonCategory =
   | 'F&I - Objection Handling'
   | 'Product Knowledge';
 
+export const lessonCategoriesByRole: Record<string, LessonCategory[]> = {
+  consultant: [
+    'Sales - Meet and Greet',
+    'Sales - Needs Assessment',
+    'Sales - Vehicle Presentation',
+    'Sales - Test Drive',
+    'Sales - Negotiation',
+    'Sales - Closing',
+    'Sales - Delivery',
+    'Sales - Follow-up',
+    'Product Knowledge',
+  ],
+  manager: [ // Sales Manager
+    'Sales - Meet and Greet',
+    'Sales - Needs Assessment',
+    'Sales - Vehicle Presentation',
+    'Sales - Test Drive',
+    'Sales - Negotiation',
+    'Sales - Closing',
+    'Sales - Delivery',
+    'Sales - Follow-up',
+    'Product Knowledge',
+  ],
+  'Service Writer': [
+    'Service - Appointment',
+    'Service - Write-up',
+    'Service - Walk-around',
+    'Service - Presenting MPI',
+    'Service - Status Updates',
+    'Service - Active Delivery',
+    'Product Knowledge',
+  ],
+  'Service Manager': [
+    'Service - Appointment',
+    'Service - Write-up',
+    'Service - Walk-around',
+    'Service - Presenting MPI',
+    'Service - Status Updates',
+    'Service - Active Delivery',
+    'Product Knowledge',
+  ],
+  'Finance Manager': [
+    'F&I - Menu Selling',
+    'F&I - Objection Handling',
+    'Product Knowledge',
+  ],
+  'Parts Consultant': [
+    'Parts - Identifying Needs',
+    'Parts - Sourcing',
+    'Product Knowledge',
+  ],
+  'Parts Manager': [
+    'Parts - Identifying Needs',
+    'Parts - Sourcing',
+    'Product Knowledge',
+  ],
+  'Trainer': [
+    'Product Knowledge',
+  ]
+};
+
+const allCategories = Object.values(lessonCategoriesByRole).flat();
+export const lessonCategories: LessonCategory[] = [...new Set(allCategories)];
+
+
 export type CxTrait = 'empathy' | 'listening' | 'trust' | 'followUp' | 'closing' | 'relationshipBuilding';
 
 export type Lesson = {
