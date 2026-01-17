@@ -1,6 +1,6 @@
 
 import { isToday } from 'date-fns';
-import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory } from './definitions';
+import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation } from './definitions';
 
 // --- MOCK DATABASE ---
 
@@ -47,13 +47,7 @@ const lessonLogs: LessonLog[] = [
   { logId: 'log-6', timestamp: new Date('2024-05-25T11:30:00Z'), userId: 'user-15', lessonId: 'lesson-101', stepResults: { step1: 'fail' }, xpGained: 30, empathy: 60, listening: 55, trust: 65, followUp: 70, closing: 50, relationshipBuilding: 62, isRecommended: true },
 ];
 
-export type InvitationCode = {
-    code: string;
-    dealershipId: string;
-    role: UserRole; 
-    uses: number;
-};
-const invitationCodes: InvitationCode[] = [];
+const emailInvitations: EmailInvitation[] = [];
 
 
 // --- MOCK API FUNCTIONS ---
@@ -78,16 +72,19 @@ export async function getUserById(userId: string): Promise<User | null> {
     return users.find(u => u.userId === userId) || null;
 }
 
-export async function redeemInvitationCode(code: string, name: string, email: string): Promise<User> {
+export async function redeemInvitation(token: string, name: string, email: string): Promise<User> {
     await simulateNetworkDelay();
     
-    const invitation = invitationCodes.find(inv => inv.code.toLowerCase() === code.toLowerCase());
+    const invitation = emailInvitations.find(inv => inv.token === token);
 
     if (!invitation) {
-        throw new Error("Invalid invitation code.");
+        throw new Error("Invalid invitation link.");
     }
-    if (invitation.uses <= 0) {
-        throw new Error("This invitation code has no uses left.");
+    if (invitation.claimed) {
+        throw new Error("This invitation has already been used.");
+    }
+     if (invitation.email.toLowerCase() !== email.toLowerCase()) {
+        throw new Error("This invitation is for a different email address.");
     }
     if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
         throw new Error("An account with this email already exists.");
@@ -105,12 +102,19 @@ export async function redeemInvitationCode(code: string, name: string, email: st
     };
 
     users.push(newUser);
-    invitation.uses--;
+    invitation.claimed = true;
 
-    console.log(`Redeemed code ${code} for ${email}. ${invitation.uses} uses remaining.`);
+    console.log(`Redeemed invitation for ${email}.`);
 
     return newUser;
 }
+
+export async function getInvitationByToken(token: string): Promise<EmailInvitation | null> {
+    await simulateNetworkDelay();
+    const invitation = emailInvitations.find(inv => inv.token === token);
+    return invitation || null;
+}
+
 
 // LESSONS
 export async function getLessons(role: LessonRole): Promise<Lesson[]> {
@@ -310,53 +314,40 @@ export async function getTeamActivity(dealershipId: string, userRole: UserRole):
 }
 
 
+export async function sendInvitation(
+    dealershipName: string, 
+    userEmail: string, 
+    role: UserRole
+): Promise<void> {
+    await simulateNetworkDelay();
+
+    const dealershipId = dealershipName.toLowerCase().replace(/\s+/g, '-');
+    const token = Math.random().toString(36).slice(2, 18).toUpperCase();
+    
+    const newInvitation: EmailInvitation = {
+        token: token,
+        dealershipId: dealershipId,
+        role: role,
+        email: userEmail,
+        claimed: false,
+    };
+    
+    emailInvitations.push(newInvitation);
+
+    // In a real app, you would send an email here.
+    // For this demo, we'll log a "magic link" to the console.
+    console.log('--- EMAIL INVITATION (SIMULATED) ---');
+    console.log(`To: ${userEmail}`);
+    console.log('Subject: You are invited to join AutoDrive!');
+    console.log(`Click here to register: http://localhost:9002/register?token=${token}`);
+    console.log('------------------------------------');
+}
+
+
 export async function registerDealership(
     dealershipName: string, 
     userEmail: string, 
     role: UserRole
 ): Promise<{ codes: { role: UserRole; activationCode: string; uses: number }[] }> {
-    await simulateNetworkDelay();
-
-    const dealershipId = dealershipName.toLowerCase().replace(/\s+/g, '-');
-    const generatedCodes: { role: UserRole; activationCode: string; uses: number }[] = [];
-
-    const generateAndStoreCode = (codeRole: UserRole, uses: number) => {
-        const activationCode = Math.random().toString(36).slice(2, 10).toUpperCase();
-        const newInvitation: InvitationCode = {
-            code: activationCode,
-            dealershipId: dealershipId,
-            role: codeRole,
-            uses: uses,
-        };
-        invitationCodes.push(newInvitation);
-        generatedCodes.push({ role: codeRole, activationCode, uses });
-    };
-
-    if (role === 'Owner') {
-        // Generate code for the owner
-        generateAndStoreCode('Owner', 1);
-        // Generate codes for managers the owner will invite
-        generateAndStoreCode('manager', 10);
-        generateAndStoreCode('Service Manager', 10);
-        generateAndStoreCode('Parts Manager', 10);
-        generateAndStoreCode('Finance Manager', 10);
-        // Generate codes for staff roles
-        generateAndStoreCode('consultant', 30);
-        generateAndStoreCode('Service Writer', 30);
-        generateAndStoreCode('Parts Consultant', 30);
-    } else {
-        // Original behavior for registering a manager directly
-        let uses = 30; // Default
-        if (['manager', 'Service Manager', 'Parts Manager', 'Finance Manager'].includes(role)) {
-            uses = 10;
-        } else if (role === 'Owner') {
-            uses = 1;
-        }
-        generateAndStoreCode(role, uses);
-    }
-    
-    console.log(`Generated invitation codes for dealership: ${dealershipName} (${dealershipId}). Intended for ${userEmail}`);
-    console.log(generatedCodes);
-
-    return { codes: generatedCodes };
+    throw new Error("registerDealership is deprecated. Use sendInvitation instead.");
 }

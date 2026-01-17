@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuth } from '@/hooks/use-auth';
-import { redeemInvitationCode } from '@/lib/data';
+import { redeemInvitation, getInvitationByToken } from '@/lib/data';
+import type { EmailInvitation } from '@/lib/definitions';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,21 +22,31 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '../ui/spinner';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { AlertCircle } from 'lucide-react';
+
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: 'Please enter your full name.' }),
-  email: z.string().email({ message: 'Please enter a valid email address.' }),
+  email: z.string().email(), // Will be disabled, so no validation message needed for user
   password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
-  code: z.string().min(4, { message: 'Please enter a valid invitation code.' }),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export function RegisterForm() {
+
+function RegisterFormComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
+
+  const [invitation, setInvitation] = useState<EmailInvitation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -43,15 +54,41 @@ export function RegisterForm() {
       name: '',
       email: '',
       password: '',
-      code: '',
     },
   });
 
+  useEffect(() => {
+    if (!token) {
+      setError('No invitation token provided. Please use the link from your invitation email.');
+      setLoading(false);
+      return;
+    }
+
+    async function validateToken() {
+      try {
+        const inv = await getInvitationByToken(token as string);
+        if (!inv) {
+          setError('This invitation link is invalid.');
+        } else if (inv.claimed) {
+          setError('This invitation has already been claimed.');
+        } else {
+          setInvitation(inv);
+          form.setValue('email', inv.email);
+        }
+      } catch (e) {
+        setError('An error occurred while validating your invitation.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    validateToken();
+  }, [token, form]);
+
   async function onSubmit(data: RegisterFormValues) {
+    if (!token || !invitation) return;
     setIsSubmitting(true);
     try {
-      await redeemInvitationCode(data.code, data.name, data.email);
-      // Now that the user is created, log them in
+      await redeemInvitation(token, data.name, data.email);
       await login(data.email, data.password);
       
       toast({
@@ -68,6 +105,22 @@ export function RegisterForm() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+  
+  if (loading) {
+    return <div className="flex items-center justify-center p-8"><Spinner /> <span className="ml-2">Validating invitation...</span></div>;
+  }
+  
+  if (error || !invitation) {
+    return (
+         <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+                {error || 'Invalid invitation details.'}
+            </AlertDescription>
+        </Alert>
+    );
   }
 
   return (
@@ -95,7 +148,7 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
+                    <Input {...field} readOnly disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,19 +167,6 @@ export function RegisterForm() {
                 </FormItem>
               )}
             />
-             <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Invitation Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="A1B2-C3D4" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
             <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -137,4 +177,13 @@ export function RegisterForm() {
       </Form>
     </Card>
   );
+}
+
+
+export function RegisterForm() {
+    return (
+        <Suspense fallback={<div className="flex w-full justify-center p-8"><Spinner /></div>}>
+            <RegisterFormComponent />
+        </Suspense>
+    )
 }

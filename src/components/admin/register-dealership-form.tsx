@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { registerDealership } from '@/lib/data';
+import { sendInvitation } from '@/lib/data';
 import { UserRole } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,14 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Terminal } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { MailCheck } from 'lucide-react';
 
 interface RegisterDealershipFormProps {
   onDealershipRegistered?: () => void;
 }
 
-const registrationRoles: UserRole[] = ['Owner', 'manager', 'Service Manager', 'Parts Manager', 'Finance Manager'];
+const registrationRoles: UserRole[] = ['Owner', 'manager', 'Service Manager', 'Parts Manager', 'Finance Manager', 'consultant', 'Service Writer', 'Parts Consultant'];
 
 const registerSchema = z.object({
   dealershipName: z.string().min(3, 'Dealership name must be at least 3 characters long.'),
@@ -32,7 +31,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDealershipFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [registrationResult, setRegistrationResult] = useState<{ codes: { role: UserRole; activationCode: string; uses: number }[] } | null>(null);
+  const [invitationSent, setInvitationSent] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<RegisterFormValues>({
@@ -46,56 +45,46 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
 
   async function onSubmit(data: RegisterFormValues) {
     setIsSubmitting(true);
-    setRegistrationResult(null);
+    setInvitationSent(false);
     try {
-      const result = await registerDealership(data.dealershipName, data.userEmail, data.role);
+      await sendInvitation(data.dealershipName, data.userEmail, data.role);
       
-      setRegistrationResult(result);
+      setInvitationSent(true);
       toast({
-        title: 'Dealership Registered!',
-        description: `An invitation code for ${data.dealershipName} has been created.`,
+        title: 'Invitation Sent!',
+        description: `An invitation has been sent to ${data.userEmail}.`,
       });
       
       onDealershipRegistered?.();
+      form.reset();
+
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Registration Failed',
-        description: (error as Error).message || 'An error occurred while registering the dealership.',
+        title: 'Invitation Failed',
+        description: (error as Error).message || 'An error occurred while sending the invitation.',
       });
     } finally {
       setIsSubmitting(false);
     }
   }
   
-  if (registrationResult && registrationResult.codes.length > 0) {
-    const primaryRole = form.getValues('role');
-    const primaryUserEmail = form.getValues('userEmail');
-
+  if (invitationSent) {
     return (
-      <Alert>
-        <Terminal className="h-4 w-4" />
-        <AlertTitle>Registration Successful!</AlertTitle>
-        <AlertDescription>
-          <p className="mb-4">
-            {primaryRole === 'Owner'
-              ? 'Invitation codes have been generated for the new dealership. Provide these to the Owner to distribute to their team.'
-              : 'An invitation code has been generated. Provide this to the new user to activate their account.'}
-          </p>
-          <ScrollArea className="h-48 rounded-md border">
-            <div className="space-y-3 p-4">
-              {registrationResult.codes.map((reg, index) => (
-                <div key={reg.activationCode} className="rounded-md bg-muted p-3 font-mono text-sm">
-                  {index === 0 && <p className="mb-1">Intended for: {primaryUserEmail}</p>}
-                  <p>Role: <span className="font-semibold">{reg.role === 'manager' ? 'Sales Manager' : reg.role}</span></p>
-                  <p>Invitation Code: <span className="font-bold text-primary">{reg.activationCode}</span></p>
-                  <p>Uses: {reg.uses}</p>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </AlertDescription>
-      </Alert>
+      <div className="text-center">
+        <Alert>
+          <MailCheck className="h-4 w-4" />
+          <AlertTitle>Invitation Sent Successfully!</AlertTitle>
+          <AlertDescription>
+            <p className="mb-4">
+              An invitation email has been sent to <span className="font-semibold">{form.getValues('userEmail')}</span>. They can use the link in the email to create their account.
+            </p>
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => setInvitationSent(false) } className="mt-4">
+            Send Another Invitation
+        </Button>
+      </div>
     );
   }
 
@@ -107,7 +96,7 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
           name="dealershipName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>New Dealership Name</FormLabel>
+              <FormLabel>Dealership Name</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., AutoDrive North" {...field} />
               </FormControl>
@@ -121,7 +110,7 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
             name="userEmail"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Intended User's Email</FormLabel>
+                <FormLabel>New User's Email</FormLabel>
                 <FormControl>
                     <Input placeholder="user@example.com" {...field} />
                 </FormControl>
@@ -134,7 +123,7 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
             name="role"
             render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Intended User Role</FormLabel>
+                    <FormLabel>New User's Role</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
@@ -155,7 +144,7 @@ export function RegisterDealershipForm({ onDealershipRegistered }: RegisterDeale
             />
         </div>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? <Spinner size="sm" /> : 'Generate Invitation Code'}
+          {isSubmitting ? <Spinner size="sm" /> : 'Send Invitation'}
         </Button>
       </form>
     </Form>

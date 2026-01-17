@@ -133,3 +133,11 @@ export type LessonLog = {
   relationshipBuilding: number;
   isRecommended: boolean;
 };
+
+export type EmailInvitation = {
+  token: string;
+  dealershipId: string;
+  role: UserRole;
+  email: string;
+  claimed: boolean;
+};

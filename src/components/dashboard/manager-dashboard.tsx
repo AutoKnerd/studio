@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -255,15 +255,15 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                     <Dialog open={isRegisterOpen} onOpenChange={setRegisterOpen}>
                         <DialogTrigger asChild>
                                 <Button variant="outline">
-                                    <Store className="mr-2 h-4 w-4" />
-                                    Register Dealership
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Invite User
                                 </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[525px]">
                             <DialogHeader>
-                                <DialogTitle>Register New Dealership</DialogTitle>
+                                <DialogTitle>Invite New User</DialogTitle>
                                 <DialogDescription>
-                                    Create a new dealership and generate an activation code for the new user.
+                                    Create a new dealership and send an invitation for the first user.
                                 </DialogDescription>
                             </DialogHeader>
                             <RegisterDealershipForm onDealershipRegistered={handleDealershipRegistered} />
