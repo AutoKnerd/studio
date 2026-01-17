@@ -5,8 +5,8 @@ import { ThemeProvider } from '@/context/theme-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AutoDrive',
-  description: 'Internal training and performance logging system for automotive sales consultants and managers.',
+  title: 'AutoKnerd',
+  description: 'AI-powered training and performance for automotive professionals.',
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider
             defaultTheme="system"
-            storageKey="autodrive-theme"
+            storageKey="autoknerd-theme"
         >
           <AuthProvider>
             {children}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Car, LogOut, User as UserIcon } from 'lucide-react';
+import { Cog, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import {
   DropdownMenu,
@@ -20,8 +20,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <Link href="/" className="flex items-center gap-2 font-semibold">
-        <Car className="h-6 w-6 text-primary" />
-        <span className="text-lg font-bold">AutoDrive</span>
+        <Cog className="h-6 w-6 text-primary" />
+        <span className="text-lg font-bold">AutoKnerd</span>
       </Link>
       <div className="ml-auto flex items-center gap-4">
         {user && (
