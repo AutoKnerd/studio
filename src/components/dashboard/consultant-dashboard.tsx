@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -156,18 +155,20 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
           <CardTitle>Your Average Scores</CardTitle>
           <CardDescription>Your average performance across all completed lessons.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+        <CardContent className="grid gap-x-8 gap-y-4 sm:grid-cols-2 md:grid-cols-3">
           {loading ? (
-            Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)
+            Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)
           ) : (
             Object.entries(averageScores).map(([key, value]) => {
               const Icon = metricIcons[key as keyof typeof metricIcons];
               const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
               return (
-                <div key={key} className="flex flex-col items-center justify-center space-y-2 rounded-lg border p-4">
-                  <Icon className="h-8 w-8 text-primary" />
-                  <span className="text-sm font-medium text-muted-foreground">{title}</span>
-                  <span className="text-2xl font-bold">{value}%</span>
+                <div key={key} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm font-medium">{title}</span>
+                    </div>
+                    <span className="font-bold">{value}%</span>
                 </div>
               );
             })
