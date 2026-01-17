@@ -340,6 +340,10 @@ export async function registerDealership(
         generateAndStoreCode('Service Manager', 10);
         generateAndStoreCode('Parts Manager', 10);
         generateAndStoreCode('Finance Manager', 10);
+        // Generate codes for staff roles
+        generateAndStoreCode('consultant', 30);
+        generateAndStoreCode('Service Writer', 30);
+        generateAndStoreCode('Parts Consultant', 30);
     } else {
         // Original behavior for registering a manager directly
         let uses = 30; // Default
