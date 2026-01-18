@@ -5,13 +5,23 @@ import { useState, useEffect, useMemo } from 'react';
 import type { User, Lesson, LessonLog, CxTrait } from '@/lib/definitions';
 import { getLessons, getConsultantActivity, getDailyLessonLimits } from '@/lib/data';
 import { calculateLevel } from '@/lib/xp';
-import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile } from 'lucide-react';
+import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile, LogOut } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Carousel, CarouselContent, CarouselItem } from '../ui/carousel';
 import { Separator } from '../ui/separator';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '../ui/button';
 
 interface ConsultantDashboardProps {
   user: User;
@@ -90,6 +100,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   const [activity, setActivity] = useState<LessonLog[]>([]);
   const [lessonLimits, setLessonLimits] = useState({ recommendedTaken: false, otherTaken: false });
   const [loading, setLoading] = useState(true);
+  const { logout } = useAuth();
 
 
   useEffect(() => {
@@ -154,13 +165,32 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                 <h1 className="text-3xl font-bold text-gray-200 tracking-wide">AutoDrive</h1>
                 <p className="text-sm font-light text-gray-400 -mt-1">powered by AutoKnerd</p>
             </div>
-            <div className="relative">
-                <Avatar className="h-14 w-14 border-2 border-cyan-400/50">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                 <div className="absolute inset-0 rounded-full border-2 border-cyan-400 blur-md" />
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-14 w-14 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 p-0">
+                  <Avatar className="h-14 w-14 border-2 border-cyan-400/50">
+                      <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 rounded-full border-2 border-cyan-400 blur-md" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => logout()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </header>
 
         {/* Recommended Lesson */}
