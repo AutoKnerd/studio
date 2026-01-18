@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,6 +16,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import placeholderImagesData from '@/lib/placeholder-images.json';
+import { Camera } from 'lucide-react';
 
 interface ProfileFormProps {
   user: User;
@@ -25,7 +26,7 @@ const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email('Please enter a valid email.'),
   phone: z.string().optional(),
-  avatarUrl: z.string().url('Invalid URL for avatar.'),
+  avatarUrl: z.string().min(1, 'An avatar image is required.'),
   address: z.object({
     street: z.string().optional(),
     city: z.string().optional(),
@@ -41,6 +42,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allDealerships, setAllDealerships] = useState<Dealership[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -73,6 +75,20 @@ export function ProfileForm({ user }: ProfileFormProps) {
   }, [user.dealershipIds, allDealerships]);
 
   const { placeholderImages } = placeholderImagesData;
+  
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (typeof e.target?.result === 'string') {
+            form.setValue('avatarUrl', e.target.result, { shouldValidate: true });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   async function onSubmit(data: ProfileFormValues) {
     setIsSubmitting(true);
@@ -100,7 +116,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         <Card>
           <CardHeader>
             <CardTitle>Profile Picture</CardTitle>
-            <CardDescription>Select a new avatar for your profile.</CardDescription>
+            <CardDescription>Select a new avatar for your profile or upload your own.</CardDescription>
           </CardHeader>
           <CardContent>
             <FormField
@@ -123,6 +139,20 @@ export function ProfileForm({ user }: ProfileFormProps) {
                           </Avatar>
                         </button>
                       ))}
+                       <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          className="hidden"
+                          accept="image/*"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-full bg-muted ring-offset-background ring-offset-2 transition-all hover:ring-2 hover:ring-primary/50"
+                      >
+                        <Camera className="h-8 w-8 text-muted-foreground" />
+                      </button>
                     </div>
                   </FormControl>
                   <FormMessage />
