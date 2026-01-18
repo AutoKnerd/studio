@@ -233,6 +233,65 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
             </CardContent>
         </Card>
         
+        {canAssignLessons && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Assign a Lesson</CardTitle>
+                    <CardDescription>Assign a specific lesson for this team member to complete.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center gap-4">
+                    <Select onValueChange={setSelectedLessonToAssign} value={selectedLessonToAssign}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a lesson to assign..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {assignableLessons.length > 0 ? (
+                                assignableLessons.map(lesson => (
+                                    <SelectItem key={lesson.lessonId} value={lesson.lessonId}>
+                                        {lesson.title}
+                                    </SelectItem>
+                                ))
+                            ) : (
+                                <SelectItem value="none" disabled>No lessons available for this role.</SelectItem>
+                            )}
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={handleAssignLesson} disabled={isAssigningLesson || !selectedLessonToAssign}>
+                        {isAssigningLesson ? <Spinner size="sm" /> : "Assign"}
+                    </Button>
+                </CardContent>
+            </Card>
+        )}
+      
+       <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Most Recent Activity
+            </CardTitle>
+            <CardDescription>Performance from the last completed lesson.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-1/4" />
+              </div>
+            ) : recentActivity ? (
+              <div className="space-y-2">
+                <p className="text-lg font-semibold text-primary">{lessons.find(l => l.lessonId === recentActivity.lessonId)?.title || 'Unknown Lesson'}</p>
+                <p className="text-sm text-muted-foreground">
+                  Completed on {new Date(recentActivity.timestamp).toLocaleDateString()}
+                </p>
+                <p className="text-2xl font-bold text-accent">+{recentActivity.xpGained} XP</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No recent activity found.</p>
+            )}
+          </CardContent>
+        </Card>
+
         {canManageAssignments && (
             <Card>
                 <CardHeader>
@@ -319,65 +378,6 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
                 </CardContent>
             </Card>
         )}
-
-        {canAssignLessons && (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Assign a Lesson</CardTitle>
-                    <CardDescription>Assign a specific lesson for this team member to complete.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center gap-4">
-                    <Select onValueChange={setSelectedLessonToAssign} value={selectedLessonToAssign}>
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a lesson to assign..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {assignableLessons.length > 0 ? (
-                                assignableLessons.map(lesson => (
-                                    <SelectItem key={lesson.lessonId} value={lesson.lessonId}>
-                                        {lesson.title}
-                                    </SelectItem>
-                                ))
-                            ) : (
-                                <SelectItem value="none" disabled>No lessons available for this role.</SelectItem>
-                            )}
-                        </SelectContent>
-                    </Select>
-                    <Button onClick={handleAssignLesson} disabled={isAssigningLesson || !selectedLessonToAssign}>
-                        {isAssigningLesson ? <Spinner size="sm" /> : "Assign"}
-                    </Button>
-                </CardContent>
-            </Card>
-        )}
-      
-       <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Most Recent Activity
-            </CardTitle>
-            <CardDescription>Performance from the last completed lesson.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-4 w-1/4" />
-              </div>
-            ) : recentActivity ? (
-              <div className="space-y-2">
-                <p className="text-lg font-semibold text-primary">{lessons.find(l => l.lessonId === recentActivity.lessonId)?.title || 'Unknown Lesson'}</p>
-                <p className="text-sm text-muted-foreground">
-                  Completed on {new Date(recentActivity.timestamp).toLocaleDateString()}
-                </p>
-                <p className="text-2xl font-bold text-accent">+{recentActivity.xpGained} XP</p>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No recent activity found.</p>
-            )}
-          </CardContent>
-        </Card>
     </div>
   );
 }
