@@ -221,32 +221,31 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
 
         {/* Assigned Lessons */}
         <section className="space-y-4">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white">Assigned Lessons</h2>
-            </div>
+            <h2 className="text-xl font-bold text-white">Assigned Lessons</h2>
             {loading ? (
-                <div className="grid grid-cols-2 gap-4">
-                    <Skeleton className="h-28 w-full rounded-xl" />
-                    <Skeleton className="h-28 w-full rounded-xl" />
-                </div>
+                <Skeleton className="h-28 w-full rounded-xl" />
             ) : assignedLessons.length > 0 ? (
-                <Carousel opts={{ align: "start", slidesToScroll: 1 }}>
-                    <CarouselContent className="-ml-2">
-                        {assignedLessons.map((lesson) => {
-                            const Icon = lessonIcons[lesson.title] || BookOpen;
-                            return (
-                                <CarouselItem key={lesson.lessonId} className="basis-[45%] md:basis-1/3 pl-2">
-                                     <Link href={`/lesson/${lesson.lessonId}`}>
-                                        <div className="bg-black/20 backdrop-blur-lg border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center aspect-square text-center space-y-2 transition-all hover:border-cyan-400/50 hover:-translate-y-1 shadow-md">
-                                            <Icon className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
-                                            <p className="font-semibold text-sm text-white">{lesson.title}</p>
+                <div className="space-y-4">
+                    {assignedLessons.map((lesson) => {
+                         const Icon = lessonIcons[lesson.title] || BookOpen;
+                         return (
+                            <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`}>
+                                <div className="bg-slate-900/50 backdrop-blur-md border border-cyan-400/30 rounded-2xl p-4 flex items-center gap-4 shadow-lg shadow-cyan-500/10 transition-all hover:border-cyan-400/80">
+                                    <div className="p-3 bg-slate-900/70 rounded-lg border border-white/10">
+                                        <Icon className="h-12 w-12 text-cyan-400 drop-shadow-[0_0_8px_hsl(var(--primary))]" strokeWidth={1.5} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-xl font-bold text-white">{lesson.title}</h3>
+                                        <p className="text-sm text-muted-foreground">{lesson.category}</p>
+                                        <div className="text-sm font-medium text-cyan-400 hover:text-cyan-300 mt-1 flex items-center gap-1">
+                                            Start Lesson <ChevronRight className="h-4 w-4" />
                                         </div>
-                                    </Link>
-                                </CarouselItem>
-                            );
-                        })}
-                    </CarouselContent>
-                </Carousel>
+                                    </div>
+                                </div>
+                            </Link>
+                         );
+                    })}
+                </div>
             ) : (
                 <div className="bg-slate-900/50 backdrop-blur-md border border-white/20 rounded-xl p-4 flex items-center justify-center gap-3 text-muted-foreground">
                     <p className="font-medium text-sm text-center">You have no lessons assigned by your manager.</p>
@@ -283,3 +282,5 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     </div>
   );
 }
+
+    
