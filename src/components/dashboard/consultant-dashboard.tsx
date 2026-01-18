@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { User, Lesson, LessonLog, CxTrait } from '@/lib/definitions';
-import { getLessons, getConsultantActivity, getDailyLessonLimits } from '@/lib/data';
+import { getLessons, getConsultantActivity, getDailyLessonLimits, getAssignedLessons } from '@/lib/data';
 import { calculateLevel } from '@/lib/xp';
 import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile, LogOut } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -98,6 +98,7 @@ const RecentActivityItem = ({ icon, text }: { icon: LucideIcon, text: string }) 
 export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [activity, setActivity] = useState<LessonLog[]>([]);
+  const [assignedLessons, setAssignedLessons] = useState<Lesson[]>([]);
   const [lessonLimits, setLessonLimits] = useState({ recommendedTaken: false, otherTaken: false });
   const [loading, setLoading] = useState(true);
   const { logout } = useAuth();
@@ -106,18 +107,20 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const [fetchedLessons, fetchedActivity, limits] = await Promise.all([
-        getLessons('Sales Consultant'),
+      const [fetchedLessons, fetchedActivity, limits, fetchedAssignedLessons] = await Promise.all([
+        getLessons(user.role),
         getConsultantActivity(user.userId),
         getDailyLessonLimits(user.userId),
+        getAssignedLessons(user.userId),
       ]);
       setLessons(fetchedLessons);
       setActivity(fetchedActivity);
       setLessonLimits(limits);
+      setAssignedLessons(fetchedAssignedLessons);
       setLoading(false);
     }
     fetchData();
-  }, [user.userId]);
+  }, [user.userId, user.role]);
   
   const averageScores = useMemo(() => {
     if (!activity.length) return {
@@ -141,13 +144,12 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     return lessons.find(l => l.associatedTrait === lowestScoringTrait.trait) || lessons[0];
   }, [lessons, averageScores]);
 
-  const otherLessons = useMemo(() => lessons.filter(l => l.lessonId !== recommendedLesson?.lessonId), [lessons, recommendedLesson]);
-
   const recentActivities = useMemo(() => {
     if (!activity.length) return [];
     
+    const allLessons = [...lessons, ...assignedLessons];
     const activities = activity.slice(0, 4).map(log => {
-      const lessonTitle = lessons.find(l => l.lessonId === log.lessonId)?.title || 'a lesson';
+      const lessonTitle = allLessons.find(l => l.lessonId === log.lessonId)?.title || 'a lesson';
       return {
         icon: activityIcons.completed,
         text: `Completed: ${lessonTitle} on ${new Date(log.timestamp).toLocaleDateString()}`
@@ -155,7 +157,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     });
 
     return activities;
-  }, [activity, lessons]);
+  }, [activity, lessons, assignedLessons]);
 
   return (
     <div className="space-y-8 pb-24 text-gray-300">
@@ -217,26 +219,20 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
             </div>
         </section>
 
-        {/* Additional Lessons */}
+        {/* Assigned Lessons */}
         <section className="space-y-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white">Additional Lessons</h2>
-                <button className="text-sm font-semibold text-cyan-400 bg-slate-800/80 border border-cyan-400/30 px-3 py-1 rounded-lg hover:bg-slate-700">View All</button>
+                <h2 className="text-xl font-bold text-white">Assigned Lessons</h2>
             </div>
             {loading ? (
                 <div className="grid grid-cols-2 gap-4">
                     <Skeleton className="h-28 w-full rounded-xl" />
                     <Skeleton className="h-28 w-full rounded-xl" />
                 </div>
-            ) : lessonLimits.otherTaken ? (
-                <div className="bg-slate-900/50 backdrop-blur-md border border-white/20 rounded-xl p-4 flex items-center gap-3 text-muted-foreground">
-                    <Lock className="h-5 w-5" />
-                    <p className="font-medium text-sm">You have completed your additional lesson for today.</p>
-                </div>
-            ) : (
+            ) : assignedLessons.length > 0 ? (
                 <Carousel opts={{ align: "start", slidesToScroll: 1 }}>
                     <CarouselContent className="-ml-2">
-                        {otherLessons.map((lesson) => {
+                        {assignedLessons.map((lesson) => {
                             const Icon = lessonIcons[lesson.title] || BookOpen;
                             return (
                                 <CarouselItem key={lesson.lessonId} className="basis-[45%] md:basis-1/3 pl-2">
@@ -251,8 +247,13 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                         })}
                     </CarouselContent>
                 </Carousel>
+            ) : (
+                <div className="bg-slate-900/50 backdrop-blur-md border border-white/20 rounded-xl p-4 flex items-center justify-center gap-3 text-muted-foreground">
+                    <p className="font-medium text-sm text-center">You have no lessons assigned by your manager.</p>
+                </div>
             )}
         </section>
+
 
         {/* Level & XP */}
         <section className="space-y-3">

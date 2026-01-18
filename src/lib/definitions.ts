@@ -21,7 +21,7 @@ export type User = {
   xp: number;
 };
 
-export type LessonRole = Exclude<UserRole, 'Owner' | 'Admin'>;
+export type LessonRole = Exclude<UserRole, 'Owner' | 'Admin'> | 'global';
 
 export type LessonCategory =
   | 'Sales - Meet and Greet'
@@ -146,4 +146,13 @@ export type Dealership = {
   id: string;
   name: string;
   trainerId?: string;
+};
+
+export type LessonAssignment = {
+  assignmentId: string;
+  userId: string;
+  lessonId: string;
+  assignerId: string;
+  timestamp: Date;
+  completed: boolean;
 };

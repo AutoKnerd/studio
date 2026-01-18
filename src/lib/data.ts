@@ -1,6 +1,6 @@
 
 import { isToday } from 'date-fns';
-import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership } from './definitions';
+import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment } from './definitions';
 
 // --- MOCK DATABASE ---
 
@@ -47,6 +47,9 @@ const lessonLogs: LessonLog[] = [
   { logId: 'log-5', timestamp: new Date('2024-07-12T11:00:00Z'), userId: 'user-5', lessonId: 'lesson-6', stepResults: { final: 'pass' }, xpGained: 90, empathy: 95, listening: 85, trust: 90, followUp: 80, closing: 80, relationshipBuilding: 90, isRecommended: true },
 ];
 
+const lessonAssignments: LessonAssignment[] = [
+    { assignmentId: 'assign-1', userId: 'user-1', lessonId: 'lesson-3', assignerId: 'user-2', timestamp: new Date(), completed: false }
+];
 
 // --- MOCK API FUNCTIONS ---
 
@@ -136,7 +139,9 @@ export async function updateUserDealerships(userId: string, newDealershipIds: st
 // LESSONS
 export async function getLessons(role: LessonRole): Promise<Lesson[]> {
     await simulateNetworkDelay();
-    return lessons.filter(l => l.role === role);
+    const globalLessons = lessons.filter(l => l.role === 'global');
+    const roleLessons = lessons.filter(l => l.role === role);
+    return [...globalLessons, ...roleLessons];
 }
 
 export async function getLessonById(lessonId: string): Promise<Lesson | null> {
@@ -158,32 +163,44 @@ export async function createLesson(lessonData: {
 }) {
     await simulateNetworkDelay();
     
-    const baseLesson = {
+    const newLesson: Lesson = {
+        lessonId: `lesson-${Math.floor(1000 + Math.random() * 9000)}`,
         title: lessonData.title,
         category: lessonData.category,
         associatedTrait: lessonData.associatedTrait,
+        role: lessonData.targetRole as LessonRole,
         customScenario: lessonData.scenario,
     };
-
-    const rolesToCreate: LessonRole[] = [];
-    const validRoles: UserRole[] = ['Sales Consultant', 'manager', 'Service Writer', 'Service Manager', 'Finance Manager', 'Parts Consultant', 'Parts Manager', 'Trainer'];
     
-    if (lessonData.targetRole === 'global') {
-        rolesToCreate.push(...validRoles as LessonRole[]);
-    } else if (validRoles.includes(lessonData.targetRole as UserRole)) {
-        rolesToCreate.push(lessonData.targetRole as LessonRole);
-    }
-
-    for (const role of rolesToCreate) {
-        const newLesson: Lesson = {
-            ...baseLesson,
-            lessonId: `lesson-${Math.floor(1000 + Math.random() * 9000)}`,
-            role: role,
-        };
-        lessons.unshift(newLesson);
-    }
+    lessons.unshift(newLesson);
 
     return { success: true };
+}
+
+export async function getAssignedLessons(userId: string): Promise<Lesson[]> {
+    await simulateNetworkDelay();
+    const assignments = lessonAssignments.filter(a => a.userId === userId && !a.completed);
+    const assignedLessonIds = assignments.map(a => a.lessonId);
+    return lessons.filter(l => assignedLessonIds.includes(l.lessonId));
+}
+
+export async function assignLesson(userId: string, lessonId: string, assignerId: string): Promise<LessonAssignment> {
+    await simulateNetworkDelay();
+    if (!users.some(u => u.userId === userId)) throw new Error("User to assign to not found.");
+    if (!users.some(u => u.userId === assignerId)) throw new Error("Assigner not found.");
+    if (!lessons.some(l => l.lessonId === lessonId)) throw new Error("Lesson not found.");
+
+    const newAssignment: LessonAssignment = {
+        assignmentId: `assign-${lessonAssignments.length + 1}`,
+        userId,
+        lessonId,
+        assignerId,
+        timestamp: new Date(),
+        completed: false,
+    };
+    lessonAssignments.push(newAssignment);
+    console.log(`Assigned lesson ${lessonId} to user ${userId} by ${assignerId}`);
+    return newAssignment;
 }
 
 
@@ -230,9 +247,16 @@ export async function logLessonCompletion(data: {
     };
     lessonLogs.unshift(newLog);
 
+    // 3. Mark assignment as complete
+    const assignmentIndex = lessonAssignments.findIndex(a => a.userId === data.userId && a.lessonId === data.lessonId && !a.completed);
+    if (assignmentIndex !== -1) {
+        lessonAssignments[assignmentIndex].completed = true;
+        console.log(`Marked assignment as complete for user ${data.userId} and lesson ${data.lessonId}`);
+    }
+
     console.log(`Logged lesson ${data.lessonId} for ${data.userId}. XP Gained: ${data.xpGained}. New total XP: ${users[userIndex].xp}`);
 
-    // 3. Return updated user object
+    // 4. Return updated user object
     return users[userIndex];
 }
 

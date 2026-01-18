@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { User, UserRole, CxTrait, LessonCategory, lessonCategories, lessonCategoriesByRole } from '@/lib/definitions';
+import { User, UserRole, CxTrait, LessonCategory, lessonCategories, lessonCategoriesByRole, LessonRole } from '@/lib/definitions';
 import { getTeamMemberRoles, createLesson } from '@/lib/data';
 import { suggestScenario } from '@/ai/flows/suggest-scenario-flow';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ const createLessonSchema = z.object({
   category: z.string(),
   scenario: z.string().min(20, 'The scenario must be at least 20 characters long.'),
 }).refine((data) => {
-    const role = data.targetRole as UserRole | 'global';
+    const role = data.targetRole as LessonRole;
     const availableCategories = role === 'global' 
       ? lessonCategories 
       : (lessonCategoriesByRole[role] || []);
@@ -81,7 +81,7 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
     setAvailableCategories(newCategories);
 
     const currentCategory = form.getValues('category');
-    if (!newCategories.includes(currentCategory)) {
+    if (!newCategories.includes(currentCategory as LessonCategory)) {
         form.setValue('category', newCategories[0] || '', { shouldValidate: true });
     }
   }, [targetRole, form]);
@@ -193,7 +193,7 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
                     <SelectContent>
                       {availableRoles.map(role => (
                         <SelectItem key={role} value={role}>
-                          {role === 'global' ? 'All Roles (Global)' : role}
+                          {role === 'global' ? 'All Roles (Global)' : (role === 'manager' ? 'Sales Manager' : role)}
                         </SelectItem>
                       ))}
                     </SelectContent>

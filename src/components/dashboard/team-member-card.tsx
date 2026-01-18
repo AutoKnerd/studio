@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { User, Lesson, LessonLog, CxTrait, LessonRole, Dealership } from '@/lib/definitions';
-import { getLessons, getConsultantActivity, updateUserDealerships } from '@/lib/data';
+import { getLessons, getConsultantActivity, updateUserDealerships, assignLesson } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import isEqual from 'lodash.isequal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 
 interface TeamMemberCardProps {
@@ -38,17 +39,22 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
   const { toast } = useToast();
   const [selectedDealerships, setSelectedDealerships] = useState(user.dealershipIds);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [assignableLessons, setAssignableLessons] = useState<Lesson[]>([]);
+  const [selectedLessonToAssign, setSelectedLessonToAssign] = useState('');
+  const [isAssigningLesson, setIsAssigningLesson] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       if (!user) return;
-      const [fetchedLessons, fetchedActivity] = await Promise.all([
+      const [fetchedLessons, fetchedActivity, lessonsForRole] = await Promise.all([
         getLessons(user.role as LessonRole),
         getConsultantActivity(user.userId),
+        getLessons(user.role as LessonRole)
       ]);
       setLessons(fetchedLessons);
       setActivity(fetchedActivity);
+      setAssignableLessons(lessonsForRole);
       setLoading(false);
     }
     fetchData();
@@ -91,6 +97,27 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
     });
   }
 
+  async function handleAssignLesson() {
+    if (!selectedLessonToAssign) {
+        toast({ variant: 'destructive', title: 'Please select a lesson.' });
+        return;
+    }
+    setIsAssigningLesson(true);
+    try {
+        await assignLesson(user.userId, selectedLessonToAssign, currentUser.userId);
+        toast({ title: 'Lesson Assigned!', description: `You have assigned a new lesson to ${user.name}.` });
+        setSelectedLessonToAssign('');
+    } catch (e) {
+        toast({
+            variant: 'destructive',
+            title: 'Assignment Failed',
+            description: (e as Error).message || 'An error occurred.',
+        });
+    } finally {
+        setIsAssigningLesson(false);
+    }
+  }
+
   const recentActivity = useMemo(() => {
     if (!activity.length) return null;
     return activity[0];
@@ -123,6 +150,8 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
   }, [activity]);
   
   const canAssign = ['Owner', 'Admin', 'Trainer'].includes(currentUser.role) && ['manager', 'Service Manager', 'Parts Manager', 'Finance Manager'].includes(user.role)
+  const canAssignLessons = ['Owner', 'Admin', 'Trainer', 'manager', 'Service Manager', 'Parts Manager'].includes(currentUser.role);
+
 
   return (
     <div className="space-y-4">
@@ -172,6 +201,36 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
                     </DropdownMenu>
                     <Button onClick={handleAssignDealerships} disabled={isAssigning || isEqual([...user.dealershipIds].sort(), [...selectedDealerships].sort())}>
                         {isAssigning ? <Spinner size="sm" /> : "Assign"}
+                    </Button>
+                </CardContent>
+            </Card>
+        )}
+
+        {canAssignLessons && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Assign a Lesson</CardTitle>
+                    <CardDescription>Assign a specific lesson for this team member to complete.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center gap-4">
+                    <Select onValueChange={setSelectedLessonToAssign} value={selectedLessonToAssign}>
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a lesson to assign..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {assignableLessons.length > 0 ? (
+                                assignableLessons.map(lesson => (
+                                    <SelectItem key={lesson.lessonId} value={lesson.lessonId}>
+                                        {lesson.title}
+                                    </SelectItem>
+                                ))
+                            ) : (
+                                <SelectItem value="none" disabled>No lessons available for this role.</SelectItem>
+                            )}
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={handleAssignLesson} disabled={isAssigningLesson || !selectedLessonToAssign}>
+                        {isAssigningLesson ? <Spinner size="sm" /> : "Assign"}
                     </Button>
                 </CardContent>
             </Card>
