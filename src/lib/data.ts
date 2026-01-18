@@ -30,6 +30,23 @@ const users: User[] = [
 
 const emailInvitations: EmailInvitation[] = [];
 
+const lessons: Lesson[] = [
+    { lessonId: 'lesson-1', title: 'Building Rapport on the Lot', role: 'Sales Consultant', category: 'Sales - Meet and Greet', associatedTrait: 'relationshipBuilding', customScenario: 'A customer arrives on the lot and is looking at a new SUV. They seem hesitant to be approached. What are your first words?' },
+    { lessonId: 'lesson-2', title: 'Uncovering Customer Needs', role: 'Sales Consultant', category: 'Sales - Needs Assessment', associatedTrait: 'listening', customScenario: 'A customer says they "just want something reliable." How do you dig deeper to find out what "reliable" means to them and what other needs they might have?' },
+    { lessonId: 'lesson-3', title: 'Handling Price Objections', role: 'Sales Consultant', category: 'Sales - Negotiation', associatedTrait: 'trust', customScenario: 'After presenting the numbers, the customer says, "That\'s more than I was hoping to spend. Can you do better?" What is your response?' },
+    { lessonId: 'lesson-4', title: 'Confident Closing', role: 'Sales Consultant', category: 'Sales - Closing', associatedTrait: 'closing', customScenario: 'The test drive went great and the customer loves the car. How do you transition from the test drive to asking for the sale?' },
+    { lessonId: 'lesson-5', title: 'Service Follow-up Excellence', role: 'Service Writer', category: 'Service - Status Updates', associatedTrait: 'followUp', customScenario: 'A customer dropped their car off for a complex repair. It\'s mid-afternoon. What information do you provide when you call them with an update?' },
+    { lessonId: 'lesson-6', title: 'The Perfect Service Greeting', role: 'Service Writer', category: 'Service - Write-up', associatedTrait: 'empathy', customScenario: 'A customer pulls into the service drive. They look stressed and tell you "the car is making a funny noise." How do you greet them and begin the write-up process?'},
+];
+
+const lessonLogs: LessonLog[] = [
+  { logId: 'log-1', timestamp: new Date('2024-07-10T10:00:00Z'), userId: 'user-1', lessonId: 'lesson-1', stepResults: { final: 'pass' }, xpGained: 75, empathy: 80, listening: 70, trust: 85, followUp: 60, closing: 65, relationshipBuilding: 90, isRecommended: true },
+  { logId: 'log-2', timestamp: new Date('2024-07-09T11:00:00Z'), userId: 'user-1', lessonId: 'lesson-2', stepResults: { final: 'pass' }, xpGained: 60, empathy: 70, listening: 55, trust: 75, followUp: 65, closing: 60, relationshipBuilding: 80, isRecommended: false },
+  { logId: 'log-3', timestamp: new Date('2024-07-11T14:00:00Z'), userId: 'user-3', lessonId: 'lesson-1', stepResults: { final: 'pass' }, xpGained: 80, empathy: 85, listening: 75, trust: 90, followUp: 70, closing: 70, relationshipBuilding: 95, isRecommended: true },
+  { logId: 'log-4', timestamp: new Date('2024-07-12T09:30:00Z'), userId: 'user-4', lessonId: 'lesson-2', stepResults: { final: 'fail' }, xpGained: 20, empathy: 60, listening: 40, trust: 50, followUp: 55, closing: 45, relationshipBuilding: 60, isRecommended: true },
+  { logId: 'log-5', timestamp: new Date('2024-07-12T11:00:00Z'), userId: 'user-5', lessonId: 'lesson-6', stepResults: { final: 'pass' }, xpGained: 90, empathy: 95, listening: 85, trust: 90, followUp: 80, closing: 80, relationshipBuilding: 90, isRecommended: true },
+];
+
 
 // --- MOCK API FUNCTIONS ---
 
