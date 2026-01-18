@@ -78,7 +78,7 @@ export function RemoveUserForm({ manageableUsers, onUserRemoved }: RemoveUserFor
   }
 
   return (
-    <ScrollArea className="max-h-[60vh] -mx-6">
+    <ScrollArea className="max-h-[400px] -mx-6">
       <div className="space-y-2 px-6">
         {manageableUsers.length > 0 ? (
           manageableUsers.map(user => (

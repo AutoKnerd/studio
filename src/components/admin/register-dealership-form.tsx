@@ -139,7 +139,7 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
 
   return (
     <Form {...form}>
-       <ScrollArea className="max-h-[70vh] -mx-6">
+       <ScrollArea className="max-h-[450px] -mx-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4 px-6">
           <FormField
             control={form.control}
