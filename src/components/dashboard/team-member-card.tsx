@@ -9,21 +9,11 @@ import { TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon, P
 import { Skeleton } from '../ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import isEqual from 'lodash.isequal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Input } from '../ui/input';
 
 
@@ -54,7 +44,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
   const [selectedLessonToAssign, setSelectedLessonToAssign] = useState('');
   const [isAssigningLesson, setIsAssigningLesson] = useState(false);
   const [isModifying, setIsModifying] = useState(false);
-  const [isRemoveConfirmationOpen, setRemoveConfirmationOpen] = useState(false);
+  const [isConfirmingRemoval, setIsConfirmingRemoval] = useState(false);
   const [confirmationInput, setConfirmationInput] = useState('');
 
   useEffect(() => {
@@ -111,7 +101,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
                 description: `${user.name} has been unassigned from all dealerships.`,
             });
             setIsModifying(false);
-            setRemoveConfirmationOpen(false);
+            setIsConfirmingRemoval(false);
             onAssignmentUpdated();
         } catch (e) {
             toast({
@@ -215,7 +205,31 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {!isModifying ? (
+                    {isConfirmingRemoval ? (
+                         <div className="space-y-4 rounded-lg border border-destructive bg-destructive/10 p-4">
+                            <h4 className="font-semibold text-destructive">Confirm Unassignment</h4>
+                            <p className="text-sm text-destructive/90">
+                                To unassign {user.name} from all dealerships, type <strong>UNASSIGN</strong> below. This action does not delete the user account.
+                            </p>
+                            <Input 
+                                value={confirmationInput}
+                                onChange={(e) => setConfirmationInput(e.target.value)}
+                                placeholder="UNASSIGN"
+                                autoFocus
+                                className="border-destructive/50 focus-visible:ring-destructive"
+                            />
+                            <div className='flex justify-end gap-2'>
+                                <Button variant="ghost" onClick={() => { setIsConfirmingRemoval(false); setConfirmationInput(''); }}>Cancel</Button>
+                                <Button 
+                                    onClick={handleUnassignUser} 
+                                    disabled={confirmationInput.toUpperCase() !== 'UNASSIGN' || isUpdating}
+                                    variant="destructive"
+                                >
+                                    {isUpdating ? <Spinner size="sm" /> : 'Confirm Unassignment'}
+                                </Button>
+                            </div>
+                        </div>
+                    ) : !isModifying ? (
                          <div className='flex items-center justify-between'>
                             <p className='text-sm text-muted-foreground'>
                                 Assigned to: <span className='font-medium text-foreground'>{currentDealershipNames}</span>
@@ -255,7 +269,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
                                 </DropdownMenu>
                             </div>
                              <div className='flex justify-between items-center'>
-                                <Button variant="destructive" onClick={() => setRemoveConfirmationOpen(true)} disabled={isUpdating}>Remove User</Button>
+                                <Button variant="destructive" onClick={() => setIsConfirmingRemoval(true)} disabled={isUpdating}>Remove User</Button>
                                 <div className='flex gap-2'>
                                     <Button variant="ghost" onClick={() => { setIsModifying(false); setSelectedDealerships(user.dealershipIds); }}>Cancel</Button>
                                     <Button onClick={handleUpdateAssignments} disabled={isUpdating || isEqual([...user.dealershipIds].sort(), [...selectedDealerships].sort())}>
@@ -355,34 +369,8 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
             )}
           </CardContent>
         </Card>
-        <AlertDialog open={isRemoveConfirmationOpen} onOpenChange={setRemoveConfirmationOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will unassign {user.name} from all dealerships. They will not be able to access dealership-specific content until they are reassigned. This action does not delete the user account.
-                        <br /><br />
-                        To confirm, please type <strong>UNASSIGN</strong> in the box below.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <Input 
-                    value={confirmationInput}
-                    onChange={(e) => setConfirmationInput(e.target.value)}
-                    placeholder="UNASSIGN"
-                    autoFocus
-                />
-                <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setConfirmationInput('')}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                        onClick={handleUnassignUser} 
-                        disabled={confirmationInput.toUpperCase() !== 'UNASSIGN' || isUpdating}
-                        className={buttonVariants({ variant: "destructive" })}
-                    >
-                        {isUpdating ? <Spinner size="sm" /> : 'Unassign User'}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
     </div>
   );
 }
+
+    
