@@ -195,6 +195,34 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
                 </div>
             </CardHeader>
         </Card>
+        
+        <Card>
+            <CardHeader>
+            <CardTitle>Average CX Scores</CardTitle>
+            <CardDescription>Average performance across all completed lessons.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+            {loading ? (
+                Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)
+            ) : Object.keys(averageScores).length > 0 && averageScores.empathy > 0 ? (
+                Object.entries(averageScores).map(([key, value]) => {
+                const Icon = metricIcons[key as keyof typeof metricIcons];
+                const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                return (
+                    <div key={key} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm font-medium">{title}</span>
+                    </div>
+                    <span className="font-bold">{value}%</span>
+                    </div>
+                );
+                })
+            ) : (
+                <p className="text-muted-foreground col-span-full text-center">No scores available yet.</p>
+            )}
+            </CardContent>
+        </Card>
 
         {canManageAssignments && (
             <Card>
@@ -314,34 +342,6 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
         )}
       
        <Card>
-        <CardHeader>
-          <CardTitle>Average CX Scores</CardTitle>
-          <CardDescription>Average performance across all completed lessons.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-          {loading ? (
-            Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)
-          ) : Object.keys(averageScores).length > 0 && averageScores.empathy > 0 ? (
-            Object.entries(averageScores).map(([key, value]) => {
-              const Icon = metricIcons[key as keyof typeof metricIcons];
-              const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-              return (
-                <div key={key} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm font-medium">{title}</span>
-                  </div>
-                  <span className="font-bold">{value}%</span>
-                </div>
-              );
-            })
-          ) : (
-            <p className="text-muted-foreground col-span-full text-center">No scores available yet.</p>
-          )}
-        </CardContent>
-      </Card>
-      
-       <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
@@ -372,5 +372,3 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
     </div>
   );
 }
-
-    
