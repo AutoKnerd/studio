@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,6 +18,15 @@ import { CreateLessonForm } from '../lessons/create-lesson-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TeamMemberCard } from './team-member-card';
 import { RegisterDealershipForm } from '../admin/register-dealership-form';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ManagerDashboardProps {
   user: User;
@@ -41,6 +50,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
 
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
   const [selectedDealershipId, setSelectedDealershipId] = useState<string | null>(null);
+  const { logout } = useAuth();
 
   useEffect(() => {
     async function fetchInitialData() {
@@ -168,12 +178,42 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
 
 
   return (
-    <>
-      <CardHeader>
-        <CardTitle>Manager Dashboard</CardTitle>
-      </CardHeader>
+    <div className="space-y-8">
+      <header className="flex items-center justify-between">
+          <div className="flex flex-col">
+              <h1 className="text-3xl font-bold text-gray-200 tracking-wide">AutoDrive</h1>
+              <p className="text-sm font-light text-gray-400 -mt-1">powered by AutoKnerd</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-14 w-14 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 p-0">
+                <Avatar className="h-14 w-14 border-2 border-cyan-400/50">
+                    <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 rounded-full border-2 border-cyan-400 blur-md" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user.name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => logout()}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+      </header>
+
       {(['Owner', 'Admin', 'Trainer'].includes(user.role) || (dealerships && dealerships.length > 1)) && (
-        <Card className="mb-4">
+        <Card>
             <CardHeader>
                 <CardTitle>Dealership Overview</CardTitle>
                 <CardDescription>Select a dealership to view its performance statistics.</CardDescription>
@@ -400,6 +440,6 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
           )}
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }
