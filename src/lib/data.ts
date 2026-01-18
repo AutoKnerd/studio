@@ -73,6 +73,11 @@ export async function getUserById(userId: string): Promise<User | null> {
     return users.find(u => u.userId === userId) || null;
 }
 
+export async function findUserByEmail(email: string): Promise<User | null> {
+    await simulateNetworkDelay();
+    return users.find(u => u.email.toLowerCase() === email.toLowerCase()) || null;
+}
+
 export async function redeemInvitation(token: string, name: string, email: string): Promise<User> {
     await simulateNetworkDelay();
     

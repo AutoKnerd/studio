@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { AssignUserForm } from '../admin/assign-user-form';
 
 interface ManagerDashboardProps {
   user: User;
@@ -48,6 +49,8 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [isCreateLessonOpen, setCreateLessonOpen] = useState(false);
   const [isRegisterOpen, setRegisterOpen] = useState(false);
+  const [isAssignUserOpen, setAssignUserOpen] = useState(false);
+
 
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
   const [selectedDealershipId, setSelectedDealershipId] = useState<string | null>(null);
@@ -169,6 +172,11 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     if (!['Owner', 'Admin', 'Trainer'].includes(user.role)) {
         setRegisterOpen(false);
     }
+  }
+
+  async function handleUserAssigned() {
+    setAssignUserOpen(false);
+    fetchData();
   }
 
   const canInvite = ['Admin', 'Trainer', 'Owner', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
@@ -337,6 +345,25 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                 </DialogDescription>
                             </DialogHeader>
                             <RegisterDealershipForm user={user} onDealershipRegistered={handleDealershipRegistered} />
+                        </DialogContent>
+                    </Dialog>
+                )}
+                {canInvite && (
+                    <Dialog open={isAssignUserOpen} onOpenChange={setAssignUserOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Assign User
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Assign Existing User</DialogTitle>
+                                <DialogDescription>
+                                    Find a user by email and assign them to dealerships you manage.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <AssignUserForm currentUser={user} onUserAssigned={handleUserAssigned} />
                         </DialogContent>
                     </Dialog>
                 )}
