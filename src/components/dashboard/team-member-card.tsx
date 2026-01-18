@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { User, Lesson, LessonLog, CxTrait, LessonRole, Dealership } from '@/lib/definitions';
-import { getLessons, getConsultantActivity, updateUserDealerships, assignLesson } from '@/lib/data';
+import { getLessons, getConsultantActivity, updateUserDealerships, assignLesson, getTeamMemberRoles } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
@@ -20,7 +20,7 @@ interface TeamMemberCardProps {
   user: User;
   currentUser: User;
   dealerships: Dealership[];
-  onAssignment: () => void;
+  onAssignmentUpdated: () => void;
 }
 
 const metricIcons: Record<CxTrait, LucideIcon> = {
@@ -32,13 +32,13 @@ const metricIcons: Record<CxTrait, LucideIcon> = {
   relationshipBuilding: Users,
 };
 
-export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }: TeamMemberCardProps) {
+export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpdated }: TeamMemberCardProps) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [activity, setActivity] = useState<LessonLog[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [selectedDealerships, setSelectedDealerships] = useState(user.dealershipIds);
-  const [isAssigning, setIsAssigning] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [assignableLessons, setAssignableLessons] = useState<Lesson[]>([]);
   const [selectedLessonToAssign, setSelectedLessonToAssign] = useState('');
   const [isAssigningLesson, setIsAssigningLesson] = useState(false);
@@ -64,18 +64,18 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
     return user.dealershipIds
         .map(id => dealerships.find(d => d.id === id)?.name)
         .filter(Boolean)
-        .join(', ');
+        .join(', ') || 'Unassigned';
   }, [dealerships, user.dealershipIds]);
 
-  async function handleAssignDealerships() {
-    setIsAssigning(true);
+  async function handleUpdateAssignments() {
+    setIsUpdating(true);
     try {
         await updateUserDealerships(user.userId, selectedDealerships);
         toast({
             title: 'Success',
-            description: `${user.name} has been assigned to new dealerships.`,
+            description: `${user.name}'s assignments have been updated.`,
         });
-        onAssignment(); // This will trigger a re-fetch in the parent
+        onAssignmentUpdated(); // This will trigger a re-fetch in the parent
     } catch(e) {
         toast({
             variant: 'destructive',
@@ -83,7 +83,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
             description: (e as Error).message || 'An error occurred.',
         });
     } finally {
-        setIsAssigning(false);
+        setIsUpdating(false);
     }
   }
 
@@ -149,7 +149,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
     };
   }, [activity]);
   
-  const canAssign = ['Owner', 'Admin', 'Trainer'].includes(currentUser.role) && ['manager', 'Service Manager', 'Parts Manager', 'Finance Manager'].includes(user.role)
+  const canManageAssignments = currentUser.userId !== user.userId && getTeamMemberRoles(currentUser.role).includes(user.role);
   const canAssignLessons = ['Owner', 'Admin', 'Trainer', 'manager', 'Service Manager', 'Parts Manager'].includes(currentUser.role);
 
 
@@ -168,11 +168,11 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
             </CardHeader>
         </Card>
 
-        {canAssign && (
+        {canManageAssignments && (
             <Card>
                 <CardHeader>
-                    <CardTitle>Assign Dealerships</CardTitle>
-                    <CardDescription>Assign this manager to one or more dealerships.</CardDescription>
+                    <CardTitle>Dealership Assignments</CardTitle>
+                    <CardDescription>Assign or un-assign this user from dealerships you manage.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center gap-4">
                     <DropdownMenu>
@@ -181,12 +181,12 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
                                 <span className="truncate">
                                     {selectedDealerships.length > 0 ? 
                                         dealerships.filter(d => selectedDealerships.includes(d.id)).map(d => d.name).join(', ') :
-                                        "Select dealerships..."}
+                                        "Unassigned"}
                                 </span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="start">
-                            <DropdownMenuLabel>Dealerships</DropdownMenuLabel>
+                        <DropdownMenuContent className="w-64" align="start">
+                            <DropdownMenuLabel>Managed Dealerships</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             {dealerships.map(dealership => (
                                 <DropdownMenuCheckboxItem
@@ -199,8 +199,8 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button onClick={handleAssignDealerships} disabled={isAssigning || isEqual([...user.dealershipIds].sort(), [...selectedDealerships].sort())}>
-                        {isAssigning ? <Spinner size="sm" /> : "Assign"}
+                    <Button onClick={handleUpdateAssignments} disabled={isUpdating || isEqual([...user.dealershipIds].sort(), [...selectedDealerships].sort())}>
+                        {isUpdating ? <Spinner size="sm" /> : "Update"}
                     </Button>
                 </CardContent>
             </Card>
@@ -295,3 +295,5 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignment }:
     </div>
   );
 }
+
+    
