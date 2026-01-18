@@ -4,13 +4,13 @@ import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCate
 
 // --- MOCK DATABASE ---
 
-const dealerships: Dealership[] = [
+let dealerships: Dealership[] = [
   { id: 'dealership-A', name: 'Dealership A', trainerId: 'user-12' },
   { id: 'dealership-B', name: 'Dealership B' },
   { id: 'autoknerd-hq', name: 'AutoKnerd HQ' },
 ];
 
-const users: User[] = [
+let users: User[] = [
   { userId: 'user-1', name: 'Alice Johnson', email: 'consultant@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/101/200/200', xp: 2580, phone: '555-0101', address: { street: '123 Oak Lane', city: 'Sunnyvale', state: 'CA', zip: '94086' } },
   { userId: 'user-2', name: 'Bob Williams', email: 'manager@autodrive.com', role: 'manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/102/200/200', xp: 5200, phone: '555-0102', address: { street: '456 Maple Drive', city: 'Sunnyvale', state: 'CA', zip: '94086' } },
   { userId: 'user-3', name: 'Charlie Brown', email: 'charlie@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/103/200/200', xp: 550 },
@@ -28,9 +28,9 @@ const users: User[] = [
   { userId: 'user-15', name: 'Consultant B1', email: 'consultant.b1@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-B'], avatarUrl: 'https://picsum.photos/seed/115/200/200', xp: 30 },
 ];
 
-const emailInvitations: EmailInvitation[] = [];
+let emailInvitations: EmailInvitation[] = [];
 
-const lessons: Lesson[] = [
+let lessons: Lesson[] = [
     { lessonId: 'lesson-1', title: 'Building Rapport on the Lot', role: 'Sales Consultant', category: 'Sales - Meet and Greet', associatedTrait: 'relationshipBuilding', customScenario: 'A customer arrives on the lot and is looking at a new SUV. They seem hesitant to be approached. What are your first words?' },
     { lessonId: 'lesson-2', title: 'Uncovering Customer Needs', role: 'Sales Consultant', category: 'Sales - Needs Assessment', associatedTrait: 'listening', customScenario: 'A customer says they "just want something reliable." How do you dig deeper to find out what "reliable" means to them and what other needs they might have?' },
     { lessonId: 'lesson-3', title: 'Handling Price Objections', role: 'Sales Consultant', category: 'Sales - Negotiation', associatedTrait: 'trust', customScenario: 'After presenting the numbers, the customer says, "That\'s more than I was hoping to spend. Can you do better?" What is your response?' },
@@ -39,7 +39,7 @@ const lessons: Lesson[] = [
     { lessonId: 'lesson-6', title: 'The Perfect Service Greeting', role: 'Service Writer', category: 'Service - Write-up', associatedTrait: 'empathy', customScenario: 'A customer pulls into the service drive. They look stressed and tell you "the car is making a funny noise." How do you greet them and begin the write-up process?'},
 ];
 
-const lessonLogs: LessonLog[] = [
+let lessonLogs: LessonLog[] = [
   { logId: 'log-1', timestamp: new Date('2024-07-10T10:00:00Z'), userId: 'user-1', lessonId: 'lesson-1', stepResults: { final: 'pass' }, xpGained: 75, empathy: 80, listening: 70, trust: 85, followUp: 60, closing: 65, relationshipBuilding: 90, isRecommended: true },
   { logId: 'log-2', timestamp: new Date('2024-07-09T11:00:00Z'), userId: 'user-1', lessonId: 'lesson-2', stepResults: { final: 'pass' }, xpGained: 60, empathy: 70, listening: 55, trust: 75, followUp: 65, closing: 60, relationshipBuilding: 80, isRecommended: false },
   { logId: 'log-3', timestamp: new Date('2024-07-11T14:00:00Z'), userId: 'user-3', lessonId: 'lesson-1', stepResults: { final: 'pass' }, xpGained: 80, empathy: 85, listening: 75, trust: 90, followUp: 70, closing: 70, relationshipBuilding: 95, isRecommended: true },
@@ -47,7 +47,7 @@ const lessonLogs: LessonLog[] = [
   { logId: 'log-5', timestamp: new Date('2024-07-12T11:00:00Z'), userId: 'user-5', lessonId: 'lesson-6', stepResults: { final: 'pass' }, xpGained: 90, empathy: 95, listening: 85, trust: 90, followUp: 80, closing: 80, relationshipBuilding: 90, isRecommended: true },
 ];
 
-const lessonAssignments: LessonAssignment[] = [
+let lessonAssignments: LessonAssignment[] = [
     { assignmentId: 'assign-1', userId: 'user-1', lessonId: 'lesson-3', assignerId: 'user-2', timestamp: new Date(), completed: false }
 ];
 

@@ -5,10 +5,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { User, Dealership } from '@/lib/definitions';
-import { updateUser, getDealerships } from '@/lib/data';
+import { updateUser, getDealerships, updateUserDealerships } from '@/lib/data';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,17 @@ import { Spinner } from '@/components/ui/spinner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import placeholderImagesData from '@/lib/placeholder-images.json';
-import { Camera } from 'lucide-react';
+import { Camera, X } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ProfileFormProps {
   user: User;
@@ -44,6 +54,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [allDealerships, setAllDealerships] = useState<Dealership[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [dealershipToRemove, setDealershipToRemove] = useState<string | null>(null);
+  const [confirmationInput, setConfirmationInput] = useState('');
+  const [isRemoving, setIsRemoving] = useState(false);
+
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -68,10 +82,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
     fetchDealerships();
   }, []);
 
-  const userDealershipNames = useMemo(() => {
+  const userDealerships = useMemo(() => {
     return user.dealershipIds
-      .map(id => allDealerships.find(d => d.id === id)?.name)
-      .filter(Boolean);
+      .map(id => allDealerships.find(d => d.id === id))
+      .filter((d): d is Dealership => d !== undefined);
   }, [user.dealershipIds, allDealerships]);
 
   const { placeholderImages } = placeholderImagesData;
@@ -88,6 +102,31 @@ export function ProfileForm({ user }: ProfileFormProps) {
       reader.readAsDataURL(file);
     }
   };
+  
+  async function handleRemoveDealership() {
+    if (!dealershipToRemove) return;
+
+    setIsRemoving(true);
+    try {
+        const newDealershipIds = user.dealershipIds.filter(id => id !== dealershipToRemove);
+        const updatedUser = await updateUserDealerships(user.userId, newDealershipIds);
+        setUser(updatedUser);
+        toast({
+            title: 'Dealership Removed',
+            description: `You have been removed from the dealership.`,
+        });
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Removal Failed',
+            description: (error as Error).message || 'Could not remove you from the dealership.',
+        });
+    } finally {
+        setIsRemoving(false);
+        setDealershipToRemove(null);
+        setConfirmationInput('');
+    }
+  }
 
 
   async function onSubmit(data: ProfileFormValues) {
@@ -278,7 +317,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         <Card>
             <CardHeader>
                 <CardTitle>Work Information</CardTitle>
-                <CardDescription>Your role and dealership assignments are managed by an administrator.</CardDescription>
+                <CardDescription>Your role and dealership assignments.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
@@ -288,8 +327,20 @@ export function ProfileForm({ user }: ProfileFormProps) {
                  <div>
                     <FormLabel>Dealership(s)</FormLabel>
                     <div className="flex flex-wrap gap-2 pt-2">
-                        {userDealershipNames.length > 0 ? (
-                            userDealershipNames.map(name => <Badge key={name} variant="secondary">{name}</Badge>)
+                        {userDealerships.length > 0 ? (
+                            userDealerships.map(dealership => (
+                                <Badge key={dealership.id} variant="secondary" className="flex items-center gap-1.5 py-1 pl-2.5 pr-1 text-sm">
+                                    {dealership.name}
+                                    <button
+                                        type="button"
+                                        onClick={() => setDealershipToRemove(dealership.id)}
+                                        className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                                        aria-label={`Remove ${dealership.name}`}
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                </Badge>
+                            ))
                         ) : (
                             <p className="text-sm text-muted-foreground">Not assigned to any dealership.</p>
                         )}
@@ -304,6 +355,34 @@ export function ProfileForm({ user }: ProfileFormProps) {
           </Button>
         </div>
       </form>
+      <AlertDialog open={!!dealershipToRemove} onOpenChange={(open) => !open && setDealershipToRemove(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. You will lose access to this dealership and will need an administrator to add you back.
+                    <br /><br />
+                    To confirm, please type <strong>remove</strong> in the box below.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Input 
+                value={confirmationInput}
+                onChange={(e) => setConfirmationInput(e.target.value)}
+                placeholder="remove"
+                autoFocus
+            />
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => { setDealershipToRemove(null); setConfirmationInput(''); }}>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                    onClick={handleRemoveDealership} 
+                    disabled={confirmationInput.toLowerCase() !== 'remove' || isRemoving}
+                    className={buttonVariants({ variant: "destructive" })}
+                >
+                    {isRemoving ? <Spinner size="sm" /> : 'Remove'}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Form>
   );
 }
