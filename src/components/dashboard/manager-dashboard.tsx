@@ -59,63 +59,68 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const { logout } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    async function fetchInitialData() {
-        if(['Owner', 'Admin', 'Trainer'].includes(user.role)) {
-            const fetchedDealerships = await getDealerships(user);
-            setDealerships(fetchedDealerships);
-            setSelectedDealershipId('all');
-        } else {
-            const managedDealerships = await Promise.all(
-                user.dealershipIds.map(id => getDealershipById(id))
-            );
-            const validDealerships = managedDealerships.filter((d): d is Dealership => d !== null);
-            setDealerships(validDealerships);
-            if (validDealerships.length > 0) {
-                setSelectedDealershipId(validDealerships[0].id);
-            }
-        }
-        const usersToManage = await getManageableUsers(user.userId);
-        setManageableUsers(usersToManage);
-    }
-    fetchInitialData();
-  }, [user]);
-
   const fetchData = useCallback(async () => {
     if (!selectedDealershipId) return;
 
     setLoading(true);
 
-    const promises: Promise<any>[] = [
+    const [managerStats, activity, usersToManage] = await Promise.all([
       getManagerStats(selectedDealershipId, user.role),
       getTeamActivity(selectedDealershipId, user.role),
-    ];
-
-    if (!['Owner', 'Admin', 'Trainer'].includes(user.role)) {
-      promises.push(getLessons(user.role as LessonRole));
-      promises.push(getConsultantActivity(user.userId));
-    } else {
-      promises.push(Promise.resolve([]));
-      promises.push(Promise.resolve([]));
-    }
-
-    const [managerStats, activity, fetchedLessons, fetchedManagerActivity] = await Promise.all(promises);
+      getManageableUsers(user.userId)
+    ]);
     
-    setStats(managerStats as { totalLessons: number, avgEmpathy: number });
-    setTeamActivity(activity as TeamMemberStats[]);
-    if (fetchedLessons) {
-      setLessons(fetchedLessons as Lesson[]);
-    }
-    if (fetchedManagerActivity) {
-      setManagerActivity(fetchedManagerActivity as LessonLog[]);
+    setStats(managerStats);
+    setTeamActivity(activity);
+    setManageableUsers(usersToManage);
+
+    // This part only for non-admins
+    if (!['Owner', 'Admin', 'Trainer'].includes(user.role)) {
+        const [fetchedLessons, fetchedManagerActivity] = await Promise.all([
+            getLessons(user.role as LessonRole),
+            getConsultantActivity(user.userId)
+        ]);
+        setLessons(fetchedLessons);
+        setManagerActivity(fetchedManagerActivity);
     }
 
     setLoading(false);
-  }, [user.userId, user.role, selectedDealershipId]);
+  }, [selectedDealershipId, user.userId, user.role]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    async function fetchInitialDealerships() {
+      let initialDealerships: Dealership[];
+      if (['Owner', 'Admin', 'Trainer'].includes(user.role)) {
+        initialDealerships = await getDealerships(user);
+      } else {
+        const managedDealerships = await Promise.all(
+          user.dealershipIds.map(id => getDealershipById(id))
+        );
+        initialDealerships = managedDealerships.filter((d): d is Dealership => d !== null);
+      }
+      setDealerships(initialDealerships);
+
+      // Set the initial selected dealership ID, only if it's not already set
+      if (selectedDealershipId === null) {
+        if (['Owner', 'Admin', 'Trainer'].includes(user.role)) {
+          setSelectedDealershipId('all');
+        } else if (initialDealerships.length > 0) {
+          setSelectedDealershipId(initialDealerships[0].id);
+        } else {
+          // If no dealerships, set loading to false to prevent infinite spinner
+          setLoading(false);
+        }
+      }
+    }
+    fetchInitialDealerships();
+  }, [user.userId, user.role]);
+
+
+  useEffect(() => {
+    if (selectedDealershipId) {
+      fetchData();
+    }
+  }, [fetchData, selectedDealershipId]);
 
 
   const managerAverageScores = useMemo(() => {
@@ -176,8 +181,6 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     if (!['Owner', 'Admin', 'Trainer'].includes(user.role)) {
         setManageUsersOpen(false);
     }
-    const usersToManage = await getManageableUsers(user.userId);
-    setManageableUsers(usersToManage);
     fetchData(); // Refetch dashboard data after user management
   }
 
@@ -230,7 +233,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                 <CardDescription>Select a dealership to view its performance statistics.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Select value={selectedDealershipId || 'all'} onValueChange={setSelectedDealershipId}>
+                <Select value={selectedDealershipId || ''} onValueChange={setSelectedDealershipId}>
                     <SelectTrigger className="w-full md:w-1/3">
                         <SelectValue placeholder="Select a dealership" />
                     </SelectTrigger>
@@ -473,7 +476,3 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     </div>
   );
 }
-
-    
-
-    
