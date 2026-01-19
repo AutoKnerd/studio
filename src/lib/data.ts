@@ -37,6 +37,8 @@ let lessons: Lesson[] = [
     { lessonId: 'lesson-4', title: 'Confident Closing', role: 'Sales Consultant', category: 'Sales - Closing', associatedTrait: 'closing', customScenario: 'The test drive went great and the customer loves the car. How do you transition from the test drive to asking for the sale?' },
     { lessonId: 'lesson-5', title: 'Service Follow-up Excellence', role: 'Service Writer', category: 'Service - Status Updates', associatedTrait: 'followUp', customScenario: 'A customer dropped their car off for a complex repair. It\'s mid-afternoon. What information do you provide when you call them with an update?' },
     { lessonId: 'lesson-6', title: 'The Perfect Service Greeting', role: 'Service Writer', category: 'Service - Write-up', associatedTrait: 'empathy', customScenario: 'A customer pulls into the service drive. They look stressed and tell you "the car is making a funny noise." How do you greet them and begin the write-up process?'},
+    { lessonId: 'lesson-7', title: 'Mastering the F&I Menu', role: 'Finance Manager', category: 'F&I - Menu Selling', associatedTrait: 'trust', customScenario: 'You are presenting the F&I menu to a customer who seems skeptical about additional products. How do you build trust and explain the value?' },
+    { lessonId: 'lesson-8', title: 'Precision in Parts Identification', role: 'Parts Consultant', category: 'Parts - Identifying Needs', associatedTrait: 'listening', customScenario: 'A technician asks for a "water pump for a 2018 Accord." What clarifying questions do you ask to ensure you provide the exact right part?' },
 ];
 
 let lessonLogs: LessonLog[] = [
@@ -45,6 +47,14 @@ let lessonLogs: LessonLog[] = [
   { logId: 'log-3', timestamp: new Date('2024-07-11T14:00:00Z'), userId: 'user-3', lessonId: 'lesson-1', stepResults: { final: 'pass' }, xpGained: 80, empathy: 85, listening: 75, trust: 90, followUp: 70, closing: 70, relationshipBuilding: 95, isRecommended: true },
   { logId: 'log-4', timestamp: new Date('2024-07-12T09:30:00Z'), userId: 'user-4', lessonId: 'lesson-2', stepResults: { final: 'fail' }, xpGained: 20, empathy: 60, listening: 40, trust: 50, followUp: 55, closing: 45, relationshipBuilding: 60, isRecommended: true },
   { logId: 'log-5', timestamp: new Date('2024-07-12T11:00:00Z'), userId: 'user-5', lessonId: 'lesson-6', stepResults: { final: 'pass' }, xpGained: 90, empathy: 95, listening: 85, trust: 90, followUp: 80, closing: 80, relationshipBuilding: 90, isRecommended: true },
+  { logId: 'log-6', timestamp: new Date('2024-07-12T13:00:00Z'), userId: 'user-11', lessonId: 'lesson-5', stepResults: { final: 'pass' }, xpGained: 70, empathy: 70, listening: 80, trust: 75, followUp: 90, closing: 50, relationshipBuilding: 60, isRecommended: false },
+  { logId: 'log-7', timestamp: new Date('2024-07-12T15:00:00Z'), userId: 'user-8', lessonId: 'lesson-8', stepResults: { final: 'pass' }, xpGained: 85, empathy: 75, listening: 95, trust: 80, followUp: 88, closing: 70, relationshipBuilding: 80, isRecommended: true },
+  { logId: 'log-8', timestamp: new Date('2024-07-11T09:00:00Z'), userId: 'user-7', lessonId: 'lesson-7', stepResults: { final: 'pass' }, xpGained: 95, empathy: 80, listening: 85, trust: 98, followUp: 80, closing: 92, relationshipBuilding: 85, isRecommended: false },
+  { logId: 'log-9', timestamp: new Date('2024-07-10T16:00:00Z'), userId: 'user-15', lessonId: 'lesson-4', stepResults: { final: 'fail' }, xpGained: 30, empathy: 65, listening: 60, trust: 55, followUp: 70, closing: 40, relationshipBuilding: 50, isRecommended: true },
+  { logId: 'log-10', timestamp: new Date('2024-07-08T10:00:00Z'), userId: 'user-2', lessonId: 'lesson-3', stepResults: { final: 'pass' }, xpGained: 100, empathy: 90, listening: 90, trust: 95, followUp: 85, closing: 90, relationshipBuilding: 90, isRecommended: false },
+  { logId: 'log-11', timestamp: new Date('2024-07-09T10:00:00Z'), userId: 'user-6', lessonId: 'lesson-5', stepResults: { final: 'pass' }, xpGained: 80, empathy: 88, listening: 85, trust: 80, followUp: 95, closing: 70, relationshipBuilding: 82, isRecommended: false },
+  { logId: 'log-12', timestamp: new Date('2024-07-10T10:00:00Z'), userId: 'user-9', lessonId: 'lesson-8', stepResults: { final: 'pass' }, xpGained: 75, empathy: 80, listening: 90, trust: 85, followUp: 70, closing: 70, relationshipBuilding: 75, isRecommended: false },
+  { logId: 'log-13', timestamp: new Date('2024-07-11T10:00:00Z'), userId: 'user-14', lessonId: 'lesson-1', stepResults: { final: 'pass' }, xpGained: 85, empathy: 80, listening: 80, trust: 85, followUp: 80, closing: 85, relationshipBuilding: 95, isRecommended: false },
 ];
 
 let lessonAssignments: LessonAssignment[] = [
