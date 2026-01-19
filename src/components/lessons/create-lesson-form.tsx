@@ -70,6 +70,7 @@ export function CreateLessonForm({ user, onLessonCreated, assignOnCreateToUserId
   });
   
   const targetRole = form.watch('targetRole');
+  const { getValues, setValue } = form;
   const [availableCategories, setAvailableCategories] = useState<LessonCategory[]>([]);
 
   useEffect(() => {
@@ -82,11 +83,11 @@ export function CreateLessonForm({ user, onLessonCreated, assignOnCreateToUserId
     
     setAvailableCategories(newCategories);
 
-    const currentCategory = form.getValues('category');
+    const currentCategory = getValues('category');
     if (!newCategories.includes(currentCategory as LessonCategory)) {
-        form.setValue('category', newCategories[0] || '', { shouldValidate: true });
+        setValue('category', newCategories[0] || '', { shouldValidate: true });
     }
-  }, [targetRole, form]);
+  }, [targetRole, getValues, setValue]);
 
 
   const canCreateGlobal = ['Owner', 'Admin', 'Trainer'].includes(user.role);
