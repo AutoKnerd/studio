@@ -367,6 +367,12 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                 </div>
             )}
         </section>
+
+        <p className="pt-4 text-center text-xs text-muted-foreground">
+            *XP is earned based on the quality of the interaction during lessons.
+        </p>
     </div>
   );
 }
+
+    

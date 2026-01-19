@@ -193,7 +193,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const canManage = ['Admin', 'Trainer', 'Owner', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-8">
       <header className="flex items-center justify-between">
           <div className="flex flex-col">
               <h1 className="text-3xl font-bold text-gray-200 tracking-wide">AutoDrive</h1>
@@ -489,6 +489,11 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
           )}
         </CardContent>
       </Card>
+      <p className="pt-4 text-center text-xs text-muted-foreground">
+        *XP is earned based on the quality of the interaction during lessons.
+      </p>
     </div>
   );
 }
+
+    
