@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
@@ -10,7 +11,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Switch } from '../ui/switch';
 
 interface ProfileFormProps {
   user: User;
@@ -43,6 +45,7 @@ const profileSchema = z.object({
     state: z.string().optional(),
     zip: z.string().optional(),
   }).optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -71,6 +74,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         state: user.address?.state || '',
         zip: user.address?.zip || '',
       },
+      isPrivate: user.isPrivate || false,
     },
   });
 
@@ -346,6 +350,37 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         )}
                     </div>
                 </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Privacy Settings</CardTitle>
+                <CardDescription>Control how your performance metrics are displayed to management.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <FormField
+                control={form.control}
+                name="isPrivate"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                        Private Mode
+                        </FormLabel>
+                        <FormDescription>
+                        When enabled, your name and individual stats will be hidden from non-administrator roles on dashboards.
+                        </FormDescription>
+                    </div>
+                    <FormControl>
+                        <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                    </FormItem>
+                )}
+                />
             </CardContent>
         </Card>
 

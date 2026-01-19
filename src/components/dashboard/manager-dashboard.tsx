@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon, ShieldOff } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -113,7 +113,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       }
     }
     fetchInitialDealerships();
-  }, [user.userId, user.role]);
+  }, [user.userId, user.role, user.dealershipIds, selectedDealershipId]);
 
 
   useEffect(() => {
@@ -401,47 +401,73 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {teamActivity.length > 0 ? teamActivity.map(member => (
-                  <Dialog key={member.consultant.userId}>
-                    <DialogTrigger asChild>
-                        <TableRow className="cursor-pointer">
-                            <TableCell>
-                            <div className="flex items-center gap-3">
-                                <Avatar>
-                                <AvatarImage src={member.consultant.avatarUrl} data-ai-hint="person portrait" />
-                                <AvatarFallback>{member.consultant.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                <p className="font-medium">{member.consultant.name}</p>
-                                <p className="text-sm text-muted-foreground">{member.consultant.email}</p>
-                                </div>
-                            </div>
-                            </TableCell>
-                            <TableCell>
-                                <Badge variant="outline">{member.consultant.role === 'manager' ? 'Sales Manager' : member.consultant.role}</Badge>
-                            </TableCell>
-                            <TableCell className="text-center font-medium">{member.lessonsCompleted}</TableCell>
-                            <TableCell className="text-center font-medium">{member.totalXp.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                                <span className="font-medium">{member.avgScore}%</span>
-                                <Progress value={member.avgScore} className="h-2 w-20" />
-                            </div>
-                            </TableCell>
-                        </TableRow>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Performance Snapshot</DialogTitle>
-                        </DialogHeader>
-                        <ScrollArea className="max-h-[70vh]">
-                            <div className="pr-6">
-                                <TeamMemberCard user={member.consultant} currentUser={user} dealerships={dealerships} onAssignmentUpdated={fetchData} />
-                            </div>
-                        </ScrollArea>
-                    </DialogContent>
-                  </Dialog>
-                )) : (
+                {teamActivity.length > 0 ? teamActivity.map(member => {
+                  const isPrivate = member.consultant.isPrivate && !['Owner', 'Admin'].includes(user.role);
+
+                  if (isPrivate) {
+                      return (
+                          <TableRow key={member.consultant.userId}>
+                              <TableCell>
+                                  <div className="flex items-center gap-3">
+                                      <Avatar>
+                                          <AvatarFallback><ShieldOff className="h-5 w-5 text-muted-foreground" /></AvatarFallback>
+                                      </Avatar>
+                                      <div>
+                                          <p className="font-medium">Anonymous Consultant</p>
+                                      </div>
+                                  </div>
+                              </TableCell>
+                              <TableCell>
+                                  <Badge variant="outline">{member.consultant.role === 'manager' ? 'Sales Manager' : member.consultant.role}</Badge>
+                              </TableCell>
+                              <TableCell className="text-center font-medium">{member.lessonsCompleted}</TableCell>
+                              <TableCell colSpan={2} className="text-center text-muted-foreground italic">Stats are hidden for privacy</TableCell>
+                          </TableRow>
+                      );
+                  }
+
+                  return (
+                    <Dialog key={member.consultant.userId}>
+                      <DialogTrigger asChild>
+                          <TableRow className="cursor-pointer">
+                              <TableCell>
+                              <div className="flex items-center gap-3">
+                                  <Avatar>
+                                  <AvatarImage src={member.consultant.avatarUrl} data-ai-hint="person portrait" />
+                                  <AvatarFallback>{member.consultant.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                  <p className="font-medium">{member.consultant.name}</p>
+                                  <p className="text-sm text-muted-foreground">{member.consultant.email}</p>
+                                  </div>
+                              </div>
+                              </TableCell>
+                              <TableCell>
+                                  <Badge variant="outline">{member.consultant.role === 'manager' ? 'Sales Manager' : member.consultant.role}</Badge>
+                              </TableCell>
+                              <TableCell className="text-center font-medium">{member.lessonsCompleted}</TableCell>
+                              <TableCell className="text-center font-medium">{member.totalXp.toLocaleString()}</TableCell>
+                              <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                  <span className="font-medium">{member.avgScore}%</span>
+                                  <Progress value={member.avgScore} className="h-2 w-20" />
+                              </div>
+                              </TableCell>
+                          </TableRow>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-2xl">
+                          <DialogHeader>
+                              <DialogTitle>Performance Snapshot</DialogTitle>
+                          </DialogHeader>
+                          <ScrollArea className="max-h-[70vh]">
+                              <div className="pr-6">
+                                  <TeamMemberCard user={member.consultant} currentUser={user} dealerships={dealerships} onAssignmentUpdated={fetchData} />
+                              </div>
+                          </ScrollArea>
+                      </DialogContent>
+                    </Dialog>
+                  );
+                }) : (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground">
                       No team activity found for this dealership.

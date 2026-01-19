@@ -28,6 +28,7 @@ export type User = {
   xp: number;
   phone?: string;
   address?: Address;
+  isPrivate?: boolean;
 };
 
 export type LessonRole = Exclude<UserRole, 'Owner' | 'Admin'> | 'global';
