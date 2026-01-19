@@ -182,7 +182,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
   return (
     <div className="space-y-4">
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+            <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                 <div className="flex items-center gap-4">
                     <Avatar className="h-16 w-16">
                         <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
@@ -191,6 +191,11 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
                     <div>
                         <CardTitle className="text-2xl">{user.name}</CardTitle>
                         <CardDescription>{user.role === 'manager' ? 'Sales Manager' : user.role} at {currentDealershipNames}</CardDescription>
+                        {user.memberSince && (
+                            <CardDescription className="pt-1">
+                                Member since {new Date(user.memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </CardDescription>
+                        )}
                     </div>
                 </div>
                 <div className="text-right">

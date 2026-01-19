@@ -30,6 +30,7 @@ export type User = {
   address?: Address;
   isPrivate?: boolean;
   isPrivateFromOwner?: boolean;
+  memberSince?: string;
 };
 
 export type LessonRole = Exclude<UserRole, 'Owner' | 'Admin'> | 'global';

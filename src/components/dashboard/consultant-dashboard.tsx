@@ -242,7 +242,16 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
 
         {/* Level & XP */}
         <section className="space-y-3">
-             {loading ? <Skeleton className="h-20 w-full" /> : <LevelDisplay xp={user.xp} />}
+             {loading ? <Skeleton className="h-24 w-full" /> : (
+                <div>
+                    <LevelDisplay xp={user.xp} />
+                    {user.memberSince && (
+                        <p className="text-center text-sm text-muted-foreground mt-2">
+                            Member since {new Date(user.memberSince).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                    )}
+                </div>
+             )}
         </section>
 
         {/* My Stats */}
