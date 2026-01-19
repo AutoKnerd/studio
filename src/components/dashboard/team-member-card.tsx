@@ -6,17 +6,16 @@ import type { User, Lesson, LessonLog, CxTrait, LessonRole, Dealership } from '@
 import { getLessons, getConsultantActivity, updateUserDealerships, assignLesson, getTeamMemberRoles } from '@/lib/data';
 import { calculateLevel } from '@/lib/xp';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon, Pencil, PlusCircle } from 'lucide-react';
+import { TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon, Pencil } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import isEqual from 'lodash.isequal';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Input } from '../ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { CreateLessonForm } from '../lessons/create-lesson-form';
 
 
@@ -43,13 +42,9 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
   const { toast } = useToast();
   const [selectedDealerships, setSelectedDealerships] = useState(user.dealershipIds);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [assignableLessons, setAssignableLessons] = useState<Lesson[]>([]);
-  const [selectedLessonToAssign, setSelectedLessonToAssign] = useState('');
-  const [isAssigningLesson, setIsAssigningLesson] = useState(false);
   const [isModifying, setIsModifying] = useState(false);
   const [isConfirmingRemoval, setIsConfirmingRemoval] = useState(false);
   const [confirmationInput, setConfirmationInput] = useState('');
-  const [isCreateLessonOpen, setCreateLessonOpen] = useState(false);
 
   const { level } = calculateLevel(user.xp);
 
@@ -57,14 +52,12 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
     async function fetchData() {
       setLoading(true);
       if (!user) return;
-      const [fetchedLessons, fetchedActivity, lessonsForRole] = await Promise.all([
+      const [fetchedLessons, fetchedActivity] = await Promise.all([
         getLessons(user.role as LessonRole),
         getConsultantActivity(user.userId),
-        getLessons(user.role as LessonRole)
       ]);
       setLessons(fetchedLessons);
       setActivity(fetchedActivity);
-      setAssignableLessons(lessonsForRole);
       setLoading(false);
     }
     fetchData();
@@ -131,34 +124,9 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
     });
   }
 
-  async function handleAssignLesson() {
-    if (!selectedLessonToAssign) {
-        toast({ variant: 'destructive', title: 'Please select a lesson.' });
-        return;
-    }
-    setIsAssigningLesson(true);
-    try {
-        await assignLesson(user.userId, selectedLessonToAssign, currentUser.userId);
-        toast({ title: 'Lesson Assigned!', description: `You have assigned a new lesson to ${user.name}.` });
-        setSelectedLessonToAssign('');
-    } catch (e) {
-        toast({
-            variant: 'destructive',
-            title: 'Assignment Failed',
-            description: (e as Error).message || 'An error occurred.',
-        });
-    } finally {
-        setIsAssigningLesson(false);
-    }
-  }
-
-  const handleLessonCreated = async () => {
-    setCreateLessonOpen(false);
-    setLoading(true);
-    const lessonsForRole = await getLessons(user.role as LessonRole);
-    setAssignableLessons(lessonsForRole);
-    setLessons(lessonsForRole); // Also update lessons for recent activity title
-    setLoading(false);
+  const handleLessonCreated = () => {
+    // The form handles its own state and success message.
+    // Re-fetching activity could be a future enhancement to show the new assigned lesson.
   };
 
   const recentActivity = useMemo(() => {
@@ -275,50 +243,18 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
         </Card>
 
         {canAssignLessons && (
-            <Card>
-                <CardHeader className="flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Assign a Lesson</CardTitle>
-                        <CardDescription>Assign a specific lesson for this team member to complete.</CardDescription>
-                    </div>
-                    <Dialog open={isCreateLessonOpen} onOpenChange={setCreateLessonOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline">
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Create Lesson
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[625px]">
-                            <DialogHeader>
-                                <DialogTitle>Create New Training Lesson</DialogTitle>
-                                <DialogDescription>
-                                    Design a new lesson for your team. Use AI to suggest a scenario based on your team's performance.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <CreateLessonForm user={currentUser} onLessonCreated={handleLessonCreated} />
-                        </DialogContent>
-                    </Dialog>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Create & Assign Custom Lesson</CardTitle>
+                    <CardDescription>Design a new lesson and assign it directly to this team member.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex items-center gap-4">
-                    <Select onValueChange={setSelectedLessonToAssign} value={selectedLessonToAssign}>
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a lesson to assign..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {assignableLessons.length > 0 ? (
-                                assignableLessons.map(lesson => (
-                                    <SelectItem key={lesson.lessonId} value={lesson.lessonId}>
-                                        {lesson.title}
-                                    </SelectItem>
-                                ))
-                            ) : (
-                                <SelectItem value="none" disabled>No lessons available for this role.</SelectItem>
-                            )}
-                        </SelectContent>
-                    </Select>
-                    <Button onClick={handleAssignLesson} disabled={isAssigningLesson || !selectedLessonToAssign}>
-                        {isAssigningLesson ? <Spinner size="sm" /> : "Assign"}
-                    </Button>
+                <CardContent>
+                    <CreateLessonForm 
+                        user={currentUser} 
+                        onLessonCreated={handleLessonCreated}
+                        assignOnCreateToUserId={user.userId}
+                        assignerId={currentUser.userId}
+                    />
                 </CardContent>
             </Card>
         )}

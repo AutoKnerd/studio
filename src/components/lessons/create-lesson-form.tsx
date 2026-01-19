@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { User, UserRole, CxTrait, LessonCategory, lessonCategories, lessonCategoriesByRole, LessonRole } from '@/lib/definitions';
-import { getTeamMemberRoles, createLesson } from '@/lib/data';
+import { User, UserRole, CxTrait, LessonCategory, lessonCategories, lessonCategoriesByRole, LessonRole, Lesson } from '@/lib/definitions';
+import { getTeamMemberRoles, createLesson, assignLesson } from '@/lib/data';
 import { suggestScenario } from '@/ai/flows/suggest-scenario-flow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CreateLessonFormProps {
   user: User;
-  onLessonCreated?: () => void;
+  onLessonCreated?: (newLesson?: Lesson) => void;
+  assignOnCreateToUserId?: string;
+  assignerId?: string;
 }
 
 const cxTraits: CxTrait[] = ['empathy', 'listening', 'trust', 'followUp', 'closing', 'relationshipBuilding'];
@@ -51,7 +53,7 @@ const createLessonSchema = z.object({
 
 type CreateLessonFormValues = z.infer<typeof createLessonSchema>;
 
-export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProps) {
+export function CreateLessonForm({ user, onLessonCreated, assignOnCreateToUserId, assignerId }: CreateLessonFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const { toast } = useToast();
@@ -135,7 +137,7 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
   async function onSubmit(data: CreateLessonFormValues) {
     setIsSubmitting(true);
     try {
-      await createLesson({
+      const newLesson = await createLesson({
         title: data.title,
         category: data.category as LessonCategory,
         associatedTrait: data.associatedTrait,
@@ -143,17 +145,26 @@ export function CreateLessonForm({ user, onLessonCreated }: CreateLessonFormProp
         scenario: data.scenario,
       });
 
-      toast({
-        title: 'Lesson Created!',
-        description: `'${data.title}' has been added to the training curriculum.`,
-      });
+      if (assignOnCreateToUserId && assignerId) {
+        await assignLesson(assignOnCreateToUserId, newLesson.lessonId, assignerId);
+        toast({
+          title: 'Lesson Created & Assigned!',
+          description: `'${data.title}' has been created and assigned.`,
+        });
+      } else {
+        toast({
+          title: 'Lesson Created!',
+          description: `'${data.title}' has been added to the training curriculum.`,
+        });
+      }
+
       form.reset();
-      onLessonCreated?.();
+      onLessonCreated?.(newLesson);
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Failed to Create Lesson',
-        description: 'An error occurred while saving the lesson.',
+        description: (error as Error).message || 'An error occurred while saving the lesson.',
       });
     } finally {
       setIsSubmitting(false);

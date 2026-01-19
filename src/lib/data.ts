@@ -208,7 +208,7 @@ export async function createLesson(lessonData: {
     associatedTrait: CxTrait;
     targetRole: UserRole | 'global';
     scenario: string;
-}) {
+}): Promise<Lesson> {
     await simulateNetworkDelay();
     
     const newLesson: Lesson = {
@@ -222,7 +222,7 @@ export async function createLesson(lessonData: {
     
     lessons.unshift(newLesson);
 
-    return { success: true };
+    return newLesson;
 }
 
 export async function getAssignedLessons(userId: string): Promise<Lesson[]> {
