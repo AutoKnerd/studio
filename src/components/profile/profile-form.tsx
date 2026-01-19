@@ -385,7 +385,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         Private Mode
                         </FormLabel>
                         <FormDescription>
-                        When enabled, your detailed CX scores will be hidden from non-administrator roles on dashboards.
+                        When enabled, your detailed CX scores will be hidden from non-administrator roles on dashboards. Your anonymized data will still contribute to dealership-wide average statistics.
                         </FormDescription>
                     </div>
                     <FormControl>
