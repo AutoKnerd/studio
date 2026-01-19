@@ -46,6 +46,7 @@ const profileSchema = z.object({
     zip: z.string().optional(),
   }).optional(),
   isPrivate: z.boolean().optional(),
+  isPrivateFromOwner: z.boolean().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -60,6 +61,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [dealershipToRemove, setDealershipToRemove] = useState<string | null>(null);
   const [confirmationInput, setConfirmationInput] = useState('');
   const [isRemoving, setIsRemoving] = useState(false);
+  const [showOwnerPrivacyDialog, setShowOwnerPrivacyDialog] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -75,6 +77,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         zip: user.address?.zip || '',
       },
       isPrivate: user.isPrivate || false,
+      isPrivateFromOwner: user.isPrivateFromOwner || false,
     },
   });
 
@@ -152,6 +155,19 @@ export function ProfileForm({ user }: ProfileFormProps) {
       setIsSubmitting(false);
     }
   }
+
+  const handleOwnerPrivacyChange = (checked: boolean) => {
+    if (checked) {
+        setShowOwnerPrivacyDialog(true);
+    } else {
+        form.setValue('isPrivateFromOwner', false);
+    }
+  };
+
+  const confirmOwnerPrivacy = () => {
+    form.setValue('isPrivateFromOwner', true);
+    setShowOwnerPrivacyDialog(false);
+  };
 
   return (
     <Form {...form}>
@@ -358,7 +374,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 <CardTitle>Privacy Settings</CardTitle>
                 <CardDescription>Control how your performance metrics are displayed to management.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
                 <FormField
                 control={form.control}
                 name="isPrivate"
@@ -369,13 +385,36 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         Private Mode
                         </FormLabel>
                         <FormDescription>
-                        When enabled, your name and individual stats will be hidden from non-administrator roles on dashboards.
+                        When enabled, your detailed CX scores will be hidden from non-administrator roles on dashboards.
                         </FormDescription>
                     </div>
                     <FormControl>
                         <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="isPrivateFromOwner"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                        Hide from Owner
+                        </FormLabel>
+                        <FormDescription>
+                        When enabled, your profile metrics will also be hidden from users with the &apos;Owner&apos; role.
+                        </FormDescription>
+                    </div>
+                    <FormControl>
+                        <Switch
+                            checked={field.value}
+                            onCheckedChange={handleOwnerPrivacyChange}
+                            disabled={!form.watch('isPrivate')}
                         />
                     </FormControl>
                     </FormItem>
@@ -414,6 +453,22 @@ export function ProfileForm({ user }: ProfileFormProps) {
                     className={buttonVariants({ variant: "destructive" })}
                 >
                     {isRemoving ? <Spinner size="sm" /> : 'Remove'}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={showOwnerPrivacyDialog} onOpenChange={setShowOwnerPrivacyDialog}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Hiding your data from ownership may result in lost opportunities for recognition, bonuses, or promotions that are based on performance metrics visible to company leadership.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setShowOwnerPrivacyDialog(false)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmOwnerPrivacy}>
+                    I Understand, Hide My Data
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

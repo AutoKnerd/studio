@@ -11,21 +11,21 @@ let dealerships: Dealership[] = [
 ];
 
 let users: User[] = [
-  { userId: 'user-1', name: 'Alice Johnson', email: 'consultant@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/101/200/200', xp: 2580, phone: '555-0101', address: { street: '123 Oak Lane', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false },
-  { userId: 'user-2', name: 'Bob Williams', email: 'manager@autodrive.com', role: 'manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/102/200/200', xp: 5200, phone: '555-0102', address: { street: '456 Maple Drive', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false },
-  { userId: 'user-3', name: 'Charlie Brown', email: 'charlie@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/103/200/200', xp: 550, isPrivate: false },
-  { userId: 'user-4', name: 'Diana Prince', email: 'diana@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-B'], avatarUrl: 'https://picsum.photos/seed/104/200/200', xp: 120, isPrivate: false },
-  { userId: 'user-5', name: 'Eve Adams', email: 'service.writer@autodrive.com', role: 'Service Writer', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/105/200/200', xp: 800, isPrivate: false },
-  { userId: 'user-6', name: 'Frank Miller', email: 'service.manager@autodrive.com', role: 'Service Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/106/200/200', xp: 4800, isPrivate: false },
-  { userId: 'user-7', name: 'Grace Lee', email: 'finance.manager@autodrive.com', role: 'Finance Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/107/200/200', xp: 6000, isPrivate: false },
-  { userId: 'user-8', name: 'Henry Wilson', email: 'parts.consultant@autodrive.com', role: 'Parts Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/108/200/200', xp: 450, isPrivate: false },
-  { userId: 'user-9', name: 'Ivy Green', email: 'parts.manager@autodrive.com', role: 'Parts Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/109/200/200', xp: 3200, isPrivate: false },
-  { userId: 'user-10', name: 'Jack King', email: 'owner@autodrive.com', role: 'Owner', dealershipIds: ['dealership-A', 'dealership-B'], avatarUrl: 'https://picsum.photos/seed/110/200/200', xp: 10000, isPrivate: false },
-  { userId: 'user-11', name: 'Sam Smith', email: 'sam.sw@autodrive.com', role: 'Service Writer', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/111/200/200', xp: 150, isPrivate: false },
-  { userId: 'user-12', name: 'Travis Trainer', email: 'trainer@autoknerd.com', role: 'Trainer', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/112/200/200', xp: 15000, isPrivate: false },
-  { userId: 'user-13', name: 'Andy Admin', email: 'admin@autoknerd.com', role: 'Admin', dealershipIds: ['autoknerd-hq'], avatarUrl: 'https://picsum.photos/seed/113/200/200', xp: 20000, isPrivate: false },
-  { userId: 'user-14', name: 'Manager B', email: 'manager.b@autodrive.com', role: 'manager', dealershipIds: ['dealership-B'], avatarUrl: 'https://picsum.photos/seed/114/200/200', xp: 4500, isPrivate: false },
-  { userId: 'user-15', name: 'Consultant B1', email: 'consultant.b1@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-B'], avatarUrl: 'https://picsum.photos/seed/115/200/200', xp: 30, isPrivate: false },
+  { userId: 'user-1', name: 'Alice Johnson', email: 'consultant@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/101/200/200', xp: 2580, phone: '555-0101', address: { street: '123 Oak Lane', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-2', name: 'Bob Williams', email: 'manager@autodrive.com', role: 'manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/102/200/200', xp: 5200, phone: '555-0102', address: { street: '456 Maple Drive', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-3', name: 'Charlie Brown', email: 'charlie@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/103/200/200', xp: 550, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-4', name: 'Diana Prince', email: 'diana@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-B'], avatarUrl: 'https://picsum.photos/seed/104/200/200', xp: 120, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-5', name: 'Eve Adams', email: 'service.writer@autodrive.com', role: 'Service Writer', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/105/200/200', xp: 800, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-6', name: 'Frank Miller', email: 'service.manager@autodrive.com', role: 'Service Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/106/200/200', xp: 4800, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-7', name: 'Grace Lee', email: 'finance.manager@autodrive.com', role: 'Finance Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/107/200/200', xp: 6000, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-8', name: 'Henry Wilson', email: 'parts.consultant@autodrive.com', role: 'Parts Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/108/200/200', xp: 450, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-9', name: 'Ivy Green', email: 'parts.manager@autodrive.com', role: 'Parts Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/109/200/200', xp: 3200, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-10', name: 'Jack King', email: 'owner@autodrive.com', role: 'Owner', dealershipIds: ['dealership-A', 'dealership-B'], avatarUrl: 'https://picsum.photos/seed/110/200/200', xp: 10000, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-11', name: 'Sam Smith', email: 'sam.sw@autodrive.com', role: 'Service Writer', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/111/200/200', xp: 150, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-12', name: 'Travis Trainer', email: 'trainer@autoknerd.com', role: 'Trainer', dealershipIds: ['dealership-A'], avatarUrl: 'https://picsum.photos/seed/112/200/200', xp: 15000, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-13', name: 'Andy Admin', email: 'admin@autoknerd.com', role: 'Admin', dealershipIds: ['autoknerd-hq'], avatarUrl: 'https://picsum.photos/seed/113/200/200', xp: 20000, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-14', name: 'Manager B', email: 'manager.b@autodrive.com', role: 'manager', dealershipIds: ['dealership-B'], avatarUrl: 'https://picsum.photos/seed/114/200/200', xp: 4500, isPrivate: false, isPrivateFromOwner: false },
+  { userId: 'user-15', name: 'Consultant B1', email: 'consultant.b1@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-B'], avatarUrl: 'https://picsum.photos/seed/115/200/200', xp: 30, isPrivate: false, isPrivateFromOwner: false },
 ];
 
 let emailInvitations: EmailInvitation[] = [];
@@ -135,6 +135,7 @@ export async function redeemInvitation(token: string, name: string, email: strin
         avatarUrl: `https://picsum.photos/seed/${newUserId}/200/200`,
         xp: 0,
         isPrivate: false,
+        isPrivateFromOwner: false,
     };
 
     users.push(newUser);

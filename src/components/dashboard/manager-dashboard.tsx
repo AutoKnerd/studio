@@ -407,7 +407,12 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
               </TableHeader>
               <TableBody>
                 {teamActivity.length > 0 ? teamActivity.map(member => {
-                  const isPrivate = member.consultant.isPrivate && !['Owner', 'Admin'].includes(user.role);
+                  const consultant = member.consultant;
+                  const viewerIsAdmin = user.role === 'Admin';
+                  const viewerIsOwner = user.role === 'Owner';
+                  
+                  const hideMetrics = (consultant.isPrivate && !viewerIsAdmin && !viewerIsOwner) || 
+                                    (consultant.isPrivate && consultant.isPrivateFromOwner && viewerIsOwner);
 
                   return (
                     <Dialog key={member.consultant.userId}>
@@ -431,7 +436,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                               <TableCell className="text-center font-medium">{member.lessonsCompleted}</TableCell>
                               <TableCell className="text-center font-medium">{member.totalXp.toLocaleString()}</TableCell>
                               <TableCell className="text-right">
-                                {isPrivate ? (
+                                {hideMetrics ? (
                                     <div className="flex items-center justify-end gap-2 text-muted-foreground italic">
                                         <ShieldOff className="h-4 w-4" />
                                         <span>Metrics Hidden</span>
@@ -495,5 +500,3 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     </div>
   );
 }
-
-    

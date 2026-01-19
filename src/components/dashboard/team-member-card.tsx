@@ -6,7 +6,7 @@ import type { User, Lesson, LessonLog, CxTrait, LessonRole, Dealership } from '@
 import { getLessons, getConsultantActivity, updateUserDealerships, assignLesson, getTeamMemberRoles } from '@/lib/data';
 import { calculateLevel } from '@/lib/xp';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon, Pencil, PlusCircle } from 'lucide-react';
+import { TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon, Pencil, PlusCircle, ShieldOff } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,15 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
 
 
   const { level } = calculateLevel(user.xp);
-  const isPrivate = user.isPrivate && !['Owner', 'Admin'].includes(currentUser.role);
+
+  const viewerIsAdmin = currentUser.role === 'Admin';
+  const viewerIsOwner = currentUser.role === 'Owner';
+  const consultantIsPrivate = user.isPrivate;
+  const consultantIsPrivateFromOwner = user.isPrivateFromOwner;
+
+  const hideMetrics =
+    (consultantIsPrivate && !viewerIsAdmin && !viewerIsOwner) ||
+    (consultantIsPrivate && consultantIsPrivateFromOwner && viewerIsOwner);
 
 
   useEffect(() => {
@@ -192,7 +200,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
             </CardHeader>
         </Card>
 
-        {!isPrivate && (
+        {!hideMetrics && (
             <Card>
                 <CardHeader>
                 <CardTitle>Average CX Scores</CardTitle>
