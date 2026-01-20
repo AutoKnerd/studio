@@ -105,7 +105,7 @@ export function ManageDealershipForm({ dealerships, onDealershipManaged }: Manag
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="font-semibold text-lg">{selectedDealership.name}</h3>
-                    <p className="text-sm text-muted-foreground">Current Status: {getStatusBadge(selectedDealership.status)}</p>
+                    <div className="text-sm text-muted-foreground">Current Status: {getStatusBadge(selectedDealership.status)}</div>
                 </div>
             </div>
             
