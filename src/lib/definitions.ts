@@ -162,6 +162,7 @@ export type Dealership = {
   name: string;
   trainerId?: string;
   status: 'active' | 'paused' | 'deactivated';
+  address?: Address;
 };
 
 export type LessonAssignment = {

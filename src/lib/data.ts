@@ -8,8 +8,8 @@ import { calculateLevel } from './xp';
 // --- MOCK DATABASE ---
 
 let dealerships: Dealership[] = [
-  { id: 'dealership-A', name: 'Dealership A', trainerId: 'user-12', status: 'active' },
-  { id: 'dealership-B', name: 'Dealership B', status: 'active' },
+  { id: 'dealership-A', name: 'Dealership A', trainerId: 'user-12', status: 'active', address: { street: '100 Main St', city: 'Sunnyvale', state: 'CA', zip: '94086' } },
+  { id: 'dealership-B', name: 'Dealership B', status: 'active', address: { street: '200 Market St', city: 'San Francisco', state: 'CA', zip: '94105' } },
   { id: 'autoknerd-hq', name: 'AutoKnerd HQ', status: 'active' },
 ];
 
@@ -572,7 +572,8 @@ export async function sendInvitation(
     dealershipName: string, 
     userEmail: string, 
     role: UserRole,
-    creatorId: string
+    creatorId: string,
+    address?: Partial<Address>
 ): Promise<void> {
     await simulateNetworkDelay();
 
@@ -588,6 +589,7 @@ export async function sendInvitation(
                 id: dealershipId,
                 name: dealershipName,
                 status: 'active',
+                address: address as Address,
             };
             if (creator.role === 'Trainer') {
                 newDealership.trainerId = creatorId;

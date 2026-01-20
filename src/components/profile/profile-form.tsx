@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Switch } from '../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { cn } from '@/lib/utils';
 
 interface ProfileFormProps {
   user: User;
@@ -351,19 +352,26 @@ export function ProfileForm({ user }: ProfileFormProps) {
                  <div>
                     <FormLabel>Dealership(s)</FormLabel>
                     {userDealerships.length > 0 ? (
-                        <div className="flex flex-wrap gap-2 pt-2">
+                        <div className="space-y-2 pt-2">
                             {userDealerships.map(dealership => (
-                                <UiBadge key={dealership.id} variant="secondary" className="flex items-center gap-1.5 py-1 pl-2.5 pr-1 text-sm">
-                                    {dealership.name}
+                                <div key={dealership.id} className="flex items-start justify-between rounded-lg border p-3">
+                                    <div>
+                                        <p className="font-semibold">{dealership.name}</p>
+                                        {dealership.address && (
+                                            <p className="text-xs text-muted-foreground">
+                                                {dealership.address.street}, {dealership.address.city}, {dealership.address.state} {dealership.address.zip}
+                                            </p>
+                                        )}
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => setDealershipToRemove(dealership.id)}
-                                        className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                                        className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'h-7 w-7 shrink-0')}
                                         aria-label={`Remove ${dealership.name}`}
                                     >
-                                        <X className="h-3.5 w-3.5" />
+                                        <X className="h-4 w-4" />
                                     </button>
-                                </UiBadge>
+                                </div>
                             ))}
                         </div>
                      ) : (

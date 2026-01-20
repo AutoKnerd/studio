@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { sendInvitation, getDealerships, getTeamMemberRoles, getDealershipById } from '@/lib/data';
-import { User, UserRole, Dealership } from '@/lib/definitions';
+import { User, UserRole, Dealership, Address } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -26,6 +26,10 @@ const registerSchema = z.object({
   dealershipName: z.string().min(1, 'Dealership name is required.'),
   userEmail: z.string().email('Please enter a valid email address for the intended user.'),
   role: z.string().min(1, "A role must be selected."),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -47,6 +51,10 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
       dealershipName: '',
       userEmail: '',
       role: '',
+      street: '',
+      city: '',
+      state: '',
+      zip: '',
     },
   });
 
@@ -83,7 +91,14 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
         throw new Error('Dealership name is missing.');
       }
       
-      await sendInvitation(dealershipToUse, data.userEmail, data.role as UserRole, user.userId);
+      const address: Partial<Address> = {
+        street: data.street,
+        city: data.city,
+        state: data.state,
+        zip: data.zip,
+      };
+
+      await sendInvitation(dealershipToUse, data.userEmail, data.role as UserRole, user.userId, address);
       
       setInvitationSent(true);
       toast({
@@ -96,6 +111,10 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
         dealershipName: (dealerships.length === 1 && !canManageAllDealerships && user.role !== 'Owner') ? dealerships[0].name : '',
         userEmail: '',
         role: '',
+        street: '',
+        city: '',
+        state: '',
+        zip: '',
       });
 
       if (canManageAllDealerships) {
@@ -139,8 +158,8 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
 
   return (
     <Form {...form}>
-       <ScrollArea className="max-h-[60vh]">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4 pr-4">
+       <ScrollArea className="max-h-[60vh] -mx-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4 px-6">
           <FormField
             control={form.control}
             name="dealershipName"
@@ -179,21 +198,64 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
                               ))}
                           </SelectContent>
                           </Select>
-                          {isNewDealership && canManageAllDealerships && (
-                            <div className="mt-2">
-                                <FormLabel>New Dealership Name</FormLabel>
-                                <FormControl>
-                                    <Input 
-                                        placeholder="Enter new dealership name"
-                                        {...field} 
-                                        className="mt-2"
-                                    />
-                                </FormControl>
-                                <FormMessage className="mt-2" />
-                            </div>
-                          )}
+                          
                       </>
                   )}
+                  {isNewDealership && canManageAllDealerships && (
+                      <div className="mt-4 space-y-4 rounded-md border p-4">
+                          <FormLabel>New Dealership Details</FormLabel>
+                           <FormControl>
+                              <Input 
+                                  placeholder="Enter new dealership name"
+                                  {...field} 
+                              />
+                          </FormControl>
+                          <FormMessage />
+
+                          <FormField
+                              control={form.control}
+                              name="street"
+                              render={({ field }) => (
+                                  <FormItem>
+                                      <FormLabel>Street Address</FormLabel>
+                                      <FormControl><Input placeholder="123 Auto Lane" {...field} /></FormControl>
+                                  </FormItem>
+                              )}
+                          />
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <FormField
+                                  control={form.control}
+                                  name="city"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>City</FormLabel>
+                                          <FormControl><Input placeholder="Carville" {...field} /></FormControl>
+                                      </FormItem>
+                                  )}
+                              />
+                              <FormField
+                                  control={form.control}
+                                  name="state"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>State</FormLabel>
+                                          <FormControl><Input placeholder="CA" {...field} /></FormControl>
+                                      </FormItem>
+                                  )}
+                              />
+                              <FormField
+                                  control={form.control}
+                                  name="zip"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>ZIP Code</FormLabel>
+                                          <FormControl><Input placeholder="90210" {...field} /></FormControl>
+                                      </FormItem>
+                                  )}
+                              />
+                          </div>
+                      </div>
+                    )}
                 <FormMessage />
               </FormItem>
             )}
