@@ -408,9 +408,17 @@ export const getTeamMemberRoles = (managerRole: UserRole): UserRole[] => {
         case 'Parts Manager':
             return ['Parts Consultant'];
         case 'General Manager':
+             // GMs can invite roles below them, but not other GMs, Owners, etc.
+             const gmRoles = users.filter(u => u.role !== 'Owner' && u.role !== 'Admin' && u.role !== 'Trainer' && u.role !== 'General Manager').map(u => u.role)
+             return [...new Set(gmRoles)];
         case 'Owner':
-             const ownerRoles = users.filter(u => u.role !== 'Owner' && u.role !== 'Admin' && u.role !== 'Trainer' && u.role !== 'General Manager').map(u => u.role)
-             return [...new Set(ownerRoles)];
+             // Owners can invite anyone below them, INCLUDING General Managers.
+             const ownerRoles = users.filter(u => u.role !== 'Owner' && u.role !== 'Admin' && u.role !== 'Trainer').map(u => u.role)
+             const uniqueRoles = [...new Set(ownerRoles)];
+             if (!uniqueRoles.includes('General Manager')) {
+                uniqueRoles.push('General Manager');
+             }
+             return uniqueRoles;
         case 'Trainer':
             const trainerRoles = users.filter(u => u.role !== 'Admin' && u.role !== 'Trainer').map(u => u.role);
             return [...new Set(trainerRoles)];
