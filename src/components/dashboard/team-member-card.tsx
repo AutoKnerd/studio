@@ -80,11 +80,18 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
   }, [user]);
   
   const currentDealershipNames = useMemo(() => {
-    return user.dealershipIds
-        .map(id => dealerships.find(d => d.id === id)?.name)
-        .filter(Boolean)
-        .join(', ') || 'Unassigned';
-  }, [dealerships, user.dealershipIds]);
+    if (user.dealershipIds && user.dealershipIds.length > 0) {
+        return user.dealershipIds
+            .map(id => dealerships.find(d => d.id === id)?.name)
+            .filter(Boolean)
+            .join(', ') || 'Unassigned';
+    }
+    if (user.selfDeclaredDealershipId) {
+        const dealershipName = dealerships.find(d => d.id === user.selfDeclaredDealershipId)?.name;
+        return dealershipName ? `${dealershipName}` : 'Unassigned';
+    }
+    return 'Unassigned';
+  }, [dealerships, user.dealershipIds, user.selfDeclaredDealershipId]);
 
   async function handleUpdateAssignments() {
     setIsUpdating(true);

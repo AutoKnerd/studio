@@ -33,6 +33,7 @@ export type User = {
   isPrivate?: boolean;
   isPrivateFromOwner?: boolean;
   memberSince?: string;
+  selfDeclaredDealershipId?: string;
 };
 
 export type LessonRole = Exclude<UserRole, 'Owner' | 'Admin'> | 'global';

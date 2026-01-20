@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Switch } from '../ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface ProfileFormProps {
   user: User;
@@ -48,6 +49,7 @@ const profileSchema = z.object({
   }).optional(),
   isPrivate: z.boolean().optional(),
   isPrivateFromOwner: z.boolean().optional(),
+  selfDeclaredDealershipId: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -79,6 +81,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       },
       isPrivate: user.isPrivate || false,
       isPrivateFromOwner: user.isPrivateFromOwner || false,
+      selfDeclaredDealershipId: user.selfDeclaredDealershipId || '',
     },
   });
 
@@ -347,9 +350,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 </div>
                  <div>
                     <FormLabel>Dealership(s)</FormLabel>
-                    <div className="flex flex-wrap gap-2 pt-2">
-                        {userDealerships.length > 0 ? (
-                            userDealerships.map(dealership => (
+                    {userDealerships.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                            {userDealerships.map(dealership => (
                                 <UiBadge key={dealership.id} variant="secondary" className="flex items-center gap-1.5 py-1 pl-2.5 pr-1 text-sm">
                                     {dealership.name}
                                     <button
@@ -361,11 +364,37 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                         <X className="h-3.5 w-3.5" />
                                     </button>
                                 </UiBadge>
-                            ))
-                        ) : (
-                            <p className="text-sm text-muted-foreground">Not assigned to any dealership.</p>
-                        )}
-                    </div>
+                            ))}
+                        </div>
+                     ) : (
+                        <div className="space-y-2 pt-2">
+                            <FormField
+                                control={form.control}
+                                name="selfDeclaredDealershipId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <Select onValueChange={(value) => field.onChange(value === 'none' ? '' : value)} value={field.value || 'none'}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a dealership to affiliate with..." />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="none">-- Not Affiliated --</SelectItem>
+                                                {allDealerships.filter(d => d.status === 'active').map(d => (
+                                                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormDescription>
+                                            As an individual subscriber, you can display a public affiliation with one dealership. This does not grant access to dealership-specific data.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
