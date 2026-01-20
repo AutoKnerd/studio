@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -22,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Logo } from '@/components/layout/logo';
 
 interface ConsultantDashboardProps {
   user: User;
@@ -204,10 +204,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     <div className="space-y-8 pb-24 text-gray-300">
         {/* Header */}
         <header className="flex items-center justify-between">
-             <div className="flex flex-col">
-                <h1 className="text-3xl font-bold text-gray-200 tracking-wide">AutoDrive</h1>
-                <p className="text-sm font-light text-gray-400 -mt-1">powered by AutoKnerd</p>
-            </div>
+            <Logo variant="full" width={183} height={61} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-14 w-14 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 p-0">

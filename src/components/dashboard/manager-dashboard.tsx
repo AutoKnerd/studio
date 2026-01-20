@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -34,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RemoveUserForm } from '../admin/remove-user-form';
 import { cn } from '@/lib/utils';
 import { calculateLevel } from '@/lib/xp';
+import { Logo } from '@/components/layout/logo';
 
 interface ManagerDashboardProps {
   user: User;
@@ -292,10 +292,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   return (
     <div className="space-y-8 pb-8">
       <header className="flex items-center justify-between">
-          <div className="flex flex-col">
-              <h1 className="text-3xl font-bold text-gray-200 tracking-wide">AutoDrive</h1>
-              <p className="text-sm font-light text-gray-400 -mt-1">powered by AutoKnerd</p>
-          </div>
+          <Logo variant="full" width={183} height={61} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-14 w-14 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 p-0">
