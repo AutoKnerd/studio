@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, Lesson, LessonLog, CxTrait } from '@/lib/definitions';
-import { getLessons, getConsultantActivity, getDailyLessonLimits, getAssignedLessons } from '@/lib/data';
+import type { User, Lesson, LessonLog, CxTrait, Badge } from '@/lib/definitions';
+import { getLessons, getConsultantActivity, getDailyLessonLimits, getAssignedLessons, getEarnedBadgesByUserId } from '@/lib/data';
 import { calculateLevel } from '@/lib/xp';
 import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile, LogOut, User as UserIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -22,6 +23,7 @@ import {
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/layout/logo';
+import { BadgeShowcase } from '../profile/badge-showcase';
 
 interface ConsultantDashboardProps {
   user: User;
@@ -109,6 +111,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   const [activity, setActivity] = useState<LessonLog[]>([]);
   const [assignedLessons, setAssignedLessons] = useState<Lesson[]>([]);
   const [lessonLimits, setLessonLimits] = useState({ recommendedTaken: false, otherTaken: false });
+  const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
   const { logout } = useAuth();
   const router = useRouter();
@@ -117,16 +120,18 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const [fetchedLessons, fetchedActivity, limits, fetchedAssignedLessons] = await Promise.all([
+      const [fetchedLessons, fetchedActivity, limits, fetchedAssignedLessons, fetchedBadges] = await Promise.all([
         getLessons(user.role),
         getConsultantActivity(user.userId),
         getDailyLessonLimits(user.userId),
         getAssignedLessons(user.userId),
+        getEarnedBadgesByUserId(user.userId),
       ]);
       setLessons(fetchedLessons);
       setActivity(fetchedActivity);
       setLessonLimits(limits);
       setAssignedLessons(fetchedAssignedLessons);
+      setBadges(fetchedBadges);
       setLoading(false);
     }
     fetchData();
@@ -280,6 +285,15 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                 )}
                 </CardContent>
             </Card>
+        </section>
+
+        {/* My Badges */}
+        <section>
+             {loading ? (
+                <Skeleton className="h-40 w-full rounded-2xl bg-slate-900/50" />
+             ) : (
+                <BadgeShowcase badges={badges} className="bg-slate-900/50 backdrop-blur-md border border-cyan-400/30" />
+             )}
         </section>
 
         {/* Recommended Lesson */}

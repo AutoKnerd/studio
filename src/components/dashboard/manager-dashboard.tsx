@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership } from '@/lib/definitions';
-import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers } from '@/lib/data';
+import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge } from '@/lib/definitions';
+import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId } from '@/lib/data';
 import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon, ShieldOff, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
-import { Badge } from '../ui/badge';
+import { Badge as UiBadge } from '../ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '../ui/button';
 import { CreateLessonForm } from '../lessons/create-lesson-form';
@@ -34,6 +35,7 @@ import { RemoveUserForm } from '../admin/remove-user-form';
 import { cn } from '@/lib/utils';
 import { calculateLevel } from '@/lib/xp';
 import { Logo } from '@/components/layout/logo';
+import { BadgeShowcase } from '../profile/badge-showcase';
 
 interface ManagerDashboardProps {
   user: User;
@@ -82,6 +84,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [teamActivity, setTeamActivity] = useState<TeamMemberStats[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [managerActivity, setManagerActivity] = useState<LessonLog[]>([]);
+  const [managerBadges, setManagerBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateLessonOpen, setCreateLessonOpen] = useState(false);
   const [isManageUsersOpen, setManageUsersOpen] = useState(false);
@@ -123,12 +126,14 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       setManageableUsers(usersToManage);
 
       if (!['Owner', 'Admin', 'Trainer'].includes(user.role)) {
-          const [fetchedLessons, fetchedManagerActivity] = await Promise.all([
+          const [fetchedLessons, fetchedManagerActivity, fetchedBadges] = await Promise.all([
               getLessons(user.role as LessonRole),
-              getConsultantActivity(user.userId)
+              getConsultantActivity(user.userId),
+              getEarnedBadgesByUserId(user.userId)
           ]);
           setLessons(fetchedLessons);
           setManagerActivity(fetchedManagerActivity);
+          setManagerBadges(fetchedBadges);
       }
 
       setLoading(false);
@@ -340,6 +345,16 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
         </section>
       )}
 
+      {!['Owner', 'Admin', 'Trainer'].includes(user.role) && (
+        <section>
+             {loading ? (
+                <Skeleton className="h-40 w-full" />
+             ) : (
+                <BadgeShowcase badges={managerBadges} />
+             )}
+        </section>
+      )}
+
       {(['Owner', 'Admin', 'Trainer'].includes(user.role) || (dealerships && dealerships.length > 1)) && (
         <Card>
             <CardHeader>
@@ -383,7 +398,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                     <p className="font-medium">{recommendedLesson.title}</p>
                     <p className="text-sm text-muted-foreground">Focus on your weakest skill: <span className="font-semibold capitalize">{recommendedLesson.associatedTrait.replace(/([A-Z])/g, ' $1')}</span></p>
                   </div>
-                  <Badge variant="secondary">{recommendedLesson.category}</Badge>
+                  <UiBadge variant="secondary">{recommendedLesson.category}</UiBadge>
                 </div>
               </Link>
             ) : (
@@ -561,7 +576,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                               </div>
                               </TableCell>
                               <TableCell>
-                                  <Badge variant="outline">{member.consultant.role === 'manager' ? 'Sales Manager' : member.consultant.role}</Badge>
+                                  <UiBadge variant="outline">{member.consultant.role === 'manager' ? 'Sales Manager' : member.consultant.role}</UiBadge>
                               </TableCell>
                               <TableCell className="text-center font-medium">{member.lessonsCompleted}</TableCell>
                               <TableCell className="text-center font-medium">{member.totalXp.toLocaleString()}</TableCell>

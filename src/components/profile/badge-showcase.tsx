@@ -5,15 +5,17 @@ import * as icons from 'lucide-react';
 import type { Badge } from '@/lib/definitions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { cn } from '@/lib/utils';
 
 interface BadgeShowcaseProps {
   badges: Badge[];
+  className?: string;
 }
 
-export function BadgeShowcase({ badges }: BadgeShowcaseProps) {
+export function BadgeShowcase({ badges, className }: BadgeShowcaseProps) {
   if (badges.length === 0) {
     return (
-      <Card>
+      <Card className={cn(className)}>
         <CardHeader>
           <CardTitle>My Badges</CardTitle>
         </CardHeader>
@@ -25,7 +27,7 @@ export function BadgeShowcase({ badges }: BadgeShowcaseProps) {
   }
 
   return (
-    <Card>
+    <Card className={cn(className)}>
       <CardHeader>
         <CardTitle>My Badges</CardTitle>
         <CardDescription>Your collection of earned achievements.</CardDescription>

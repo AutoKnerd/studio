@@ -6,7 +6,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { User, Dealership, Badge } from '@/lib/definitions';
+import { User, Dealership } from '@/lib/definitions';
 import { updateUser, getDealerships, updateUserDealerships } from '@/lib/data';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -30,13 +30,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Switch } from '../ui/switch';
-import { BadgeShowcase } from './badge-showcase';
-import { Skeleton } from '../ui/skeleton';
 
 interface ProfileFormProps {
   user: User;
-  badges: Badge[];
-  loadingBadges: boolean;
 }
 
 const profileSchema = z.object({
@@ -56,7 +52,7 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-export function ProfileForm({ user, badges, loadingBadges }: ProfileFormProps) {
+export function ProfileForm({ user }: ProfileFormProps) {
   const { setUser } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -338,15 +334,6 @@ export function ProfileForm({ user, badges, loadingBadges }: ProfileFormProps) {
             </div>
           </CardContent>
         </Card>
-
-        {loadingBadges ? (
-            <Card>
-                <CardHeader><CardTitle>My Badges</CardTitle></CardHeader>
-                <CardContent><Skeleton className="h-24 w-full" /></CardContent>
-            </Card>
-        ) : (
-            <BadgeShowcase badges={badges} />
-        )}
 
         <Card>
             <CardHeader>
