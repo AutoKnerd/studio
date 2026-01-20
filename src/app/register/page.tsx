@@ -8,11 +8,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center justify-center text-center">
             <div className="mb-4">
-                <Logo variant="full" width={180} height={60} />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">AutoDrive</h1>
-              <p className="text-sm font-medium text-muted-foreground">powered by AutoKnerd</p>
+                <Logo variant="full" width={252} height={84} />
             </div>
             <p className="mt-4 text-muted-foreground">Activate your account</p>
         </div>
