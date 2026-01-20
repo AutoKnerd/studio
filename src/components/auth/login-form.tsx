@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -118,9 +118,12 @@ export function LoginForm() {
 
   return (
     <Card className="bg-card/80 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="text-center text-xl font-semibold tracking-tight">Sign in to your account</CardTitle>
+      </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="space-y-4">
             <FormField
               control={form.control}
               name="email"

@@ -8,9 +8,8 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center justify-center text-center">
             <div className="mb-4">
-                <Logo variant="full" width={423} height={141} />
+                <Logo variant="full" width={610} height={203} />
             </div>
-            <p className="mt-4 text-muted-foreground">Activate your account</p>
         </div>
         <RegisterForm />
          <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
