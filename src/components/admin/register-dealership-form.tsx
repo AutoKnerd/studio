@@ -235,8 +235,8 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
 
   return (
     <Form {...form}>
-       <ScrollArea className="max-h-[60vh] -mx-6">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4 px-6">
+       <ScrollArea className="max-h-[60vh]">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4 pr-4">
           <FormField
             control={form.control}
             name="dealershipName"
