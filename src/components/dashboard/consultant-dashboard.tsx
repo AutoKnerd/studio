@@ -3,10 +3,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, Lesson, LessonLog, CxTrait, Badge } from '@/lib/definitions';
-import { getLessons, getConsultantActivity, getDailyLessonLimits, getAssignedLessons, getEarnedBadgesByUserId } from '@/lib/data';
+import type { User, Lesson, LessonLog, CxTrait, Badge, Dealership } from '@/lib/definitions';
+import { getLessons, getConsultantActivity, getDailyLessonLimits, getAssignedLessons, getEarnedBadgesByUserId, getDealershipById } from '@/lib/data';
 import { calculateLevel } from '@/lib/xp';
-import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile, LogOut, User as UserIcon } from 'lucide-react';
+import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile, LogOut, User as UserIcon, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
@@ -24,6 +24,8 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/layout/logo';
 import { BadgeShowcase } from '../profile/badge-showcase';
+import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { cn } from '@/lib/utils';
 
 interface ConsultantDashboardProps {
   user: User;
@@ -113,6 +115,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   const [lessonLimits, setLessonLimits] = useState({ recommendedTaken: false, otherTaken: false });
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   const { logout } = useAuth();
   const router = useRouter();
 
@@ -132,10 +135,19 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
       setLessonLimits(limits);
       setAssignedLessons(fetchedAssignedLessons);
       setBadges(fetchedBadges);
+      
+      if (user.dealershipIds.length > 0) {
+          const dealershipData = await Promise.all(user.dealershipIds.map(id => getDealershipById(id)));
+          const activeDealerships = dealershipData.filter(d => d && d.status === 'active');
+          if (activeDealerships.length === 0) {
+              setIsPaused(true);
+          }
+      }
+
       setLoading(false);
     }
     fetchData();
-  }, [user.userId, user.role]);
+  }, [user.userId, user.role, user.dealershipIds]);
   
   const averageScores = useMemo(() => {
     if (!activity.length) return {
@@ -242,6 +254,16 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
             </DropdownMenu>
         </header>
 
+        {isPaused && (
+            <Alert variant="destructive" className="mb-6 bg-destructive/10 border-destructive/50 text-destructive-foreground">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                <AlertTitle>Account Activity Paused</AlertTitle>
+                <AlertDescription>
+                    Your dealership's account is currently paused. Access to new lessons is temporarily unavailable. Please contact your manager for more information.
+                </AlertDescription>
+            </Alert>
+        )}
+
         {/* Level & XP */}
         <section className="space-y-3">
              {loading ? <Skeleton className="h-24 w-full" /> : (
@@ -301,7 +323,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
             {loading ? (
                 <Skeleton className="h-28 w-full rounded-2xl" />
             ) : recommendedLesson && !lessonLimits.recommendedTaken ? (
-                <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`} className="block group">
+                <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`} className={cn("block group", isPaused && "pointer-events-none opacity-50")}>
                     <div className="bg-slate-900/50 backdrop-blur-md border border-cyan-400/30 rounded-2xl p-4 flex items-center gap-4 shadow-lg shadow-cyan-500/10 transition-all group-hover:border-cyan-400/80 group-hover:bg-slate-900/70">
                         <div className="p-3 bg-slate-900/70 rounded-lg border border-white/10">
                             <SteeringWheelIcon className="h-12 w-12 text-cyan-400 drop-shadow-[0_0_8px_hsl(var(--primary))]" strokeWidth={1.5} />
@@ -343,7 +365,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                     {assignedLessons.map((lesson) => {
                          const Icon = lessonIcons[lesson.title] || BookOpen;
                          return (
-                            <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`} className="block group">
+                            <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`} className={cn("block group", isPaused && "pointer-events-none opacity-50")}>
                                 <div className="bg-slate-900/50 backdrop-blur-md border border-cyan-400/30 rounded-2xl p-4 flex items-center gap-4 shadow-lg shadow-cyan-500/10 transition-all group-hover:border-cyan-400/80 group-hover:bg-slate-900/70">
                                     <div className="p-3 bg-slate-900/70 rounded-lg border border-white/10">
                                         <Icon className="h-12 w-12 text-cyan-400 drop-shadow-[0_0_8px_hsl(var(--primary))]" strokeWidth={1.5} />

@@ -8,9 +8,9 @@ import { calculateLevel } from './xp';
 // --- MOCK DATABASE ---
 
 let dealerships: Dealership[] = [
-  { id: 'dealership-A', name: 'Dealership A', trainerId: 'user-12' },
-  { id: 'dealership-B', name: 'Dealership B' },
-  { id: 'autoknerd-hq', name: 'AutoKnerd HQ' },
+  { id: 'dealership-A', name: 'Dealership A', trainerId: 'user-12', status: 'active' },
+  { id: 'dealership-B', name: 'Dealership B', status: 'active' },
+  { id: 'autoknerd-hq', name: 'AutoKnerd HQ', status: 'active' },
 ];
 
 let users: User[] = [
@@ -435,15 +435,28 @@ export async function getDealerships(user?: User): Promise<Dealership[]> {
 
     let relevantDealerships = dealerships.filter(d => d.id !== 'autoknerd-hq');
 
+    // Admins can see all dealerships including deactivated ones for management purposes.
+    if (user && user.role === 'Admin') {
+        // no extra filtering
+    } else {
+        // Other users should not see deactivated dealerships.
+        relevantDealerships = relevantDealerships.filter(d => d.status !== 'deactivated');
+    }
+
     if (user && user.role === 'Trainer') {
         relevantDealerships = relevantDealerships.filter(d => d.trainerId === user.userId);
     }
     
-    return relevantDealerships;
+    return relevantDealerships.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getManagerStats(dealershipId: string, userRole: UserRole): Promise<{ totalLessons: number; avgScores: Record<CxTrait, number> | null }> {
     await simulateNetworkDelay();
+
+    const selectedDealership = dealerships.find(d => d.id === dealershipId);
+    if (selectedDealership?.status === 'paused') {
+        return { totalLessons: 0, avgScores: null };
+    }
 
     const teamRoles = getTeamMemberRoles(userRole);
     
@@ -477,6 +490,11 @@ export async function getManagerStats(dealershipId: string, userRole: UserRole):
 
 export async function getTeamActivity(dealershipId: string, userRole: UserRole): Promise<{ consultant: User; lessonsCompleted: number; totalXp: number; avgScore: number; }[]> {
     await simulateNetworkDelay();
+
+    const selectedDealership = dealerships.find(d => d.id === dealershipId);
+    if (selectedDealership?.status === 'paused') {
+        return [];
+    }
 
     const teamRoles = getTeamMemberRoles(userRole);
 
@@ -569,6 +587,7 @@ export async function sendInvitation(
             const newDealership: Dealership = {
                 id: dealershipId,
                 name: dealershipName,
+                status: 'active',
             };
             if (creator.role === 'Trainer') {
                 newDealership.trainerId = creatorId;
@@ -611,4 +630,31 @@ export async function getEarnedBadgesByUserId(userId: string): Promise<Badge[]> 
     await simulateNetworkDelay();
     const userBadgeIds = earnedBadges.filter(b => b.userId === userId).map(b => b.badgeId);
     return allBadges.filter(b => userBadgeIds.includes(b.id));
+}
+
+// DEALERSHIPS
+export async function updateDealershipStatus(dealershipId: string, status: 'active' | 'paused' | 'deactivated'): Promise<Dealership> {
+    await simulateNetworkDelay();
+    const dealershipIndex = dealerships.findIndex(d => d.id === dealershipId);
+    if (dealershipIndex === -1) {
+        throw new Error("Dealership not found.");
+    }
+
+    dealerships[dealershipIndex].status = status;
+    console.log(`Updated dealership ${dealershipId} status to ${status}`);
+
+    if (status === 'deactivated') {
+        console.log(`Deactivating dealership ${dealershipId}. Removing from all users.`);
+        users = users.map(user => {
+            if (user.dealershipIds.includes(dealershipId)) {
+                return {
+                    ...user,
+                    dealershipIds: user.dealershipIds.filter(id => id !== dealershipId)
+                };
+            }
+            return user;
+        });
+    }
+
+    return dealerships[dealershipIndex];
 }

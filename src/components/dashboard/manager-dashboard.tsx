@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon, ShieldOff, TrendingUp, TrendingDown } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon, ShieldOff, TrendingUp, TrendingDown, Building } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { calculateLevel } from '@/lib/xp';
 import { Logo } from '@/components/layout/logo';
 import { BadgeShowcase } from '../profile/badge-showcase';
+import { ManageDealershipForm } from '../admin/ManageDealershipForm';
 
 interface ManagerDashboardProps {
   user: User;
@@ -92,6 +93,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
 
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
   const [manageableUsers, setManageableUsers] = useState<User[]>([]);
+  const [allDealershipsForAdmin, setAllDealershipsForAdmin] = useState<Dealership[]>([]);
   const [selectedDealershipId, setSelectedDealershipId] = useState<string | null>(null);
   const [allDealershipStats, setAllDealershipStats] = useState<Record<string, { bestStat: DealershipInsight | null, watchStat: DealershipInsight | null }>>({});
   const { logout } = useAuth();
@@ -145,14 +147,17 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
         let initialDealerships: Dealership[];
 
         if (['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) {
-            initialDealerships = await getDealerships(user);
+             initialDealerships = await getDealerships(user);
+             if (user.role === 'Admin') {
+                setAllDealershipsForAdmin(initialDealerships);
+             }
         } else {
             const managedDealerships = await Promise.all(
                 user.dealershipIds.map(id => getDealershipById(id))
             );
             initialDealerships = managedDealerships.filter((d): d is Dealership => d !== null);
         }
-        setDealerships(initialDealerships);
+        setDealerships(initialDealerships.filter(d => user.role === 'Admin' ? true : d.status !== 'deactivated'));
         
         let currentSelectedId = selectedDealershipId;
 
@@ -283,12 +288,26 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   async function handleUserManaged() {
     if (['Admin', 'Trainer'].includes(user.role)) {
         const fetchedDealerships = await getDealerships(user);
-        setDealerships(fetchedDealerships);
+        if (user.role === 'Admin') {
+            setAllDealershipsForAdmin(fetchedDealerships);
+        }
+        setDealerships(fetchedDealerships.filter(d => user.role === 'Admin' ? true : d.status !== 'deactivated'));
     }
     if (!['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) {
         setManageUsersOpen(false);
     }
     fetchData(selectedDealershipId);
+  }
+
+  const getStatusBadge = (status: Dealership['status']) => {
+      switch(status) {
+          case 'active':
+              return <UiBadge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">Active</UiBadge>;
+          case 'paused':
+              return <UiBadge variant="secondary" className="bg-amber-500/20 text-amber-400 border-amber-500/30">Paused</UiBadge>;
+          case 'deactivated':
+              return <UiBadge variant="destructive">Deactivated</UiBadge>;
+      }
   }
 
 
@@ -487,10 +506,11 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                     </DialogDescription>
                                 </DialogHeader>
                                 <Tabs defaultValue="assign" className="pt-4">
-                                    <TabsList className={`grid w-full ${user.role === 'Admin' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                                    <TabsList className={`grid w-full ${user.role === 'Admin' ? 'grid-cols-4' : 'grid-cols-2'}`}>
                                         <TabsTrigger value="assign">Assign Existing</TabsTrigger>
                                         <TabsTrigger value="invite">Invite New</TabsTrigger>
                                         {user.role === 'Admin' && <TabsTrigger value="remove" className="text-destructive">Remove User</TabsTrigger>}
+                                        {user.role === 'Admin' && <TabsTrigger value="dealerships">Dealerships</TabsTrigger>}
                                     </TabsList>
                                     <TabsContent value="assign" className="pt-2">
                                         <AssignUserForm 
@@ -507,6 +527,14 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                             <RemoveUserForm 
                                                 manageableUsers={manageableUsers}
                                                 onUserRemoved={handleUserManaged} 
+                                            />
+                                        </TabsContent>
+                                    )}
+                                    {user.role === 'Admin' && (
+                                        <TabsContent value="dealerships" className="pt-2">
+                                            <ManageDealershipForm 
+                                                dealerships={allDealershipsForAdmin}
+                                                onDealershipManaged={handleUserManaged} 
                                             />
                                         </TabsContent>
                                     )}
@@ -632,9 +660,16 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                 {dealership.name}
                                 <Store className="h-5 w-5 text-muted-foreground" />
                                 </CardTitle>
+                                {dealership.status !== 'active' && (
+                                    <CardDescription>
+                                        Status: {getStatusBadge(dealership.status)}
+                                    </CardDescription>
+                                )}
                             </CardHeader>
                             <CardContent className="space-y-2">
-                                {(!insights || (!insights.bestStat && !insights.watchStat)) ? (
+                                {dealership.status === 'paused' ? (
+                                    <p className="text-sm text-muted-foreground">This dealership's activity is currently paused.</p>
+                                ) : (!insights || (!insights.bestStat && !insights.watchStat)) ? (
                                     <p className="text-sm text-muted-foreground">Click to view team performance.</p>
                                 ) : (
                                     <>

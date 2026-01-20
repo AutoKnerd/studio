@@ -160,6 +160,7 @@ export type Dealership = {
   id: string;
   name: string;
   trainerId?: string;
+  status: 'active' | 'paused' | 'deactivated';
 };
 
 export type LessonAssignment = {
