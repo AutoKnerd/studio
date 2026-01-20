@@ -27,7 +27,7 @@ export default function Home() {
     );
   }
 
-  const managerialRoles: UserRole[] = ['manager', 'Service Manager', 'Parts Manager', 'Finance Manager', 'Owner', 'Trainer', 'Admin'];
+  const managerialRoles: UserRole[] = ['manager', 'Service Manager', 'Parts Manager', 'Finance Manager', 'Owner', 'Trainer', 'Admin', 'General Manager'];
 
   const isManager = managerialRoles.includes(user.role);
 
