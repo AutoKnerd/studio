@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -12,7 +11,7 @@ interface LogoProps {
 }
 
 export function Logo({ width = 24, height = 24, className, variant = 'icon' }: LogoProps) {
-  const src = variant === 'full' ? '/logo-full1.png' : '/logo-icon.png';
+  const src = variant === 'full' ? '/projects/logo-full1.png' : '/projects/logo-icon.png';
   const alt = variant === 'full' ? 'AutoDrive Logo' : 'AutoDrive Icon';
   
   return (
