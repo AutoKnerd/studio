@@ -279,7 +279,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
         </section>
         
         {/* Today's Lessons */}
-        <section className="space-y-4">
+        <section id="lessons" className="space-y-4">
             <h2 className="text-xl font-bold text-white">Today's Lessons</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Recommended Lesson Card */}
@@ -372,7 +372,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
         )}
 
         {/* My Stats */}
-        <section>
+        <section id="stats">
             <Card className="bg-slate-900/50 backdrop-blur-md border border-cyan-400/30">
                 <CardHeader>
                 <CardTitle>My Average CX Scores</CardTitle>
@@ -438,5 +438,3 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     </div>
   );
 }
-
-    
