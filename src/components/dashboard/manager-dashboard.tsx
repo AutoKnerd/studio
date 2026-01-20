@@ -128,7 +128,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       setTeamActivity(activity);
       setManageableUsers(usersToManage);
 
-      if (!['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) {
+      if (!['Owner', 'Admin', 'Trainer'].includes(user.role)) {
           const [fetchedLessons, fetchedManagerActivity, fetchedBadges] = await Promise.all([
               getLessons(user.role as LessonRole),
               getConsultantActivity(user.userId),
@@ -215,7 +215,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   };
 
   const managerAverageScores = useMemo(() => {
-      if (['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) return null;
+      if (['Owner', 'Admin', 'Trainer'].includes(user.role)) return null;
       if (!managerActivity.length) return {
           empathy: 75, listening: 62, trust: 80, followUp: 70, closing: 68, relationshipBuilding: 85
       };
@@ -242,7 +242,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   }, [managerActivity, user.role]);
 
   const recommendedLesson = useMemo(() => {
-    if (['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role) || loading || lessons.length === 0 || !managerAverageScores) return null;
+    if (['Owner', 'Admin', 'Trainer'].includes(user.role) || loading || lessons.length === 0 || !managerAverageScores) return null;
 
     const lowestScoringTrait = Object.entries(managerAverageScores).reduce((lowest, [trait, score]) => {
         if (score < lowest.score) {
@@ -350,7 +350,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
           </DropdownMenu>
       </header>
       
-      {!['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role) && (
+      {!['Owner', 'Admin', 'Trainer'].includes(user.role) && (
         <section className="space-y-3">
              {loading ? <Skeleton className="h-24 w-full" /> : (
                 <div>
@@ -365,7 +365,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
         </section>
       )}
 
-      {!['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role) && (
+      {!['Owner', 'Admin', 'Trainer'].includes(user.role) && (
         <section>
              {loading ? (
                 <Skeleton className="h-40 w-full" />
@@ -397,7 +397,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
         </Card>
       )}
 
-      {!['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role) && (
+      {!['Owner', 'Admin', 'Trainer'].includes(user.role) && (
         <Card className="mb-4">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -57,7 +57,13 @@ export type LessonCategory =
   | 'Parts - Sourcing'
   | 'F&I - Menu Selling'
   | 'F&I - Objection Handling'
-  | 'Product Knowledge';
+  | 'Product Knowledge'
+  | 'Management - Coaching'
+  | 'Management - Performance Review'
+  | 'Leadership - Team Motivation'
+  | 'Leadership - Conflict Resolution'
+  | 'Operations - Financial Acumen'
+  | 'Operations - Process Improvement';
 
 export const lessonCategoriesByRole: Record<string, LessonCategory[]> = {
   'Sales Consultant': [
@@ -81,6 +87,8 @@ export const lessonCategoriesByRole: Record<string, LessonCategory[]> = {
     'Sales - Delivery',
     'Sales - Follow-up',
     'Product Knowledge',
+    'Management - Coaching',
+    'Management - Performance Review',
   ],
   'Service Writer': [
     'Service - Appointment',
@@ -114,6 +122,12 @@ export const lessonCategoriesByRole: Record<string, LessonCategory[]> = {
     'Parts - Identifying Needs',
     'Parts - Sourcing',
     'Product Knowledge',
+  ],
+   'General Manager': [
+    'Leadership - Team Motivation',
+    'Leadership - Conflict Resolution',
+    'Operations - Financial Acumen',
+    'Operations - Process Improvement',
   ],
   // No categories for trainer
 };
