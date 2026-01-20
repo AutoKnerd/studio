@@ -8,9 +8,9 @@ import { calculateLevel } from './xp';
 // --- MOCK DATABASE ---
 
 let dealerships: Dealership[] = [
-  { id: 'dealership-A', name: 'Dealership A', address: { street: '100 Auto Drive', city: 'Carville', state: 'CA', zip: '90210' }, trainerId: 'user-12', status: 'active' },
-  { id: 'dealership-B', name: 'Dealership B', address: { street: '200 Electric Ave', city: 'Motor City', state: 'MI', zip: '48226' }, status: 'active' },
-  { id: 'autoknerd-hq', name: 'AutoKnerd HQ', address: { street: '1 Nerd Way', city: 'Palo Alto', state: 'CA', zip: '94304' }, status: 'active' },
+  { id: 'dealership-A', name: 'Dealership A', trainerId: 'user-12', status: 'active' },
+  { id: 'dealership-B', name: 'Dealership B', status: 'active' },
+  { id: 'autoknerd-hq', name: 'AutoKnerd HQ', status: 'active' },
 ];
 
 let users: User[] = [
@@ -572,8 +572,7 @@ export async function sendInvitation(
     dealershipName: string, 
     userEmail: string, 
     role: UserRole,
-    creatorId: string,
-    dealershipAddress?: Address
+    creatorId: string
 ): Promise<void> {
     await simulateNetworkDelay();
 
@@ -589,7 +588,6 @@ export async function sendInvitation(
                 id: dealershipId,
                 name: dealershipName,
                 status: 'active',
-                address: dealershipAddress ? { ...dealershipAddress } : undefined
             };
             if (creator.role === 'Trainer') {
                 newDealership.trainerId = creatorId;
@@ -660,4 +658,3 @@ export async function updateDealershipStatus(dealershipId: string, status: 'acti
 
     return dealerships[dealershipIndex];
 }
-

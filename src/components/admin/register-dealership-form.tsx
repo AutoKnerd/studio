@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { sendInvitation, getDealerships, getTeamMemberRoles, getDealershipById } from '@/lib/data';
-import { User, UserRole, Dealership, Address } from '@/lib/definitions';
+import { User, UserRole, Dealership } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -17,9 +17,6 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { MailCheck } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 
-// This lets TypeScript know that the `google` object will be available on the window
-declare const google: any;
-
 interface RegisterDealershipFormProps {
   user: User;
   onDealershipRegistered?: () => void;
@@ -27,10 +24,6 @@ interface RegisterDealershipFormProps {
 
 const registerSchema = z.object({
   dealershipName: z.string().min(1, 'Dealership name is required.'),
-  street: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
   userEmail: z.string().email('Please enter a valid email address for the intended user.'),
   role: z.string().min(1, "A role must be selected."),
 });
@@ -41,7 +34,6 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [invitationSent, setInvitationSent] = useState(false);
   const { toast } = useToast();
-  const autocompleteInputRef = useRef<HTMLInputElement | null>(null);
 
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
   const [isNewDealership, setIsNewDealership] = useState(false);
@@ -53,87 +45,10 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
     resolver: zodResolver(registerSchema),
     defaultValues: {
       dealershipName: '',
-      street: '',
-      city: '',
-      state: '',
-      zip: '',
       userEmail: '',
       role: '',
     },
   });
-
-  useEffect(() => {
-    if (!isNewDealership) {
-      return;
-    }
-
-    const initAutocomplete = () => {
-      if (window.google && autocompleteInputRef.current) {
-        const autocomplete = new google.maps.places.Autocomplete(autocompleteInputRef.current, {
-          types: ['establishment'],
-          fields: ['address_components', 'name', 'place_id'],
-          componentRestrictions: { country: ["us", "ca"] },
-        });
-
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (place && place.address_components) {
-            const address = { street: '', city: '', state: '', zip: '' };
-            let streetNumber = '';
-            let route = '';
-
-            for (const component of place.address_components) {
-              const componentType = component.types[0];
-              switch (componentType) {
-                case "street_number":
-                  streetNumber = component.long_name;
-                  break;
-                case "route":
-                  route = component.long_name;
-                  break;
-                case "locality":
-                  address.city = component.long_name;
-                  break;
-                case "administrative_area_level_1":
-                  address.state = component.short_name;
-                  break;
-                case "postal_code":
-                  address.zip = component.long_name;
-                  break;
-              }
-            }
-            
-            address.street = `${streetNumber} ${route}`.trim();
-
-            form.setValue('dealershipName', place.name || '', { shouldValidate: true });
-            form.setValue('street', address.street, { shouldValidate: true });
-            form.setValue('city', address.city, { shouldValidate: true });
-            form.setValue('state', address.state, { shouldValidate: true });
-            form.setValue('zip', address.zip, { shouldValidate: true });
-          }
-        });
-      }
-    };
-
-    if (!(window as any).google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`;
-      script.async = true;
-      (window as any).initAutocomplete = initAutocomplete;
-      document.head.appendChild(script);
-      
-      return () => {
-        // Cleanup script and window function
-        const scriptTag = document.querySelector(`script[src*="maps.googleapis.com"]`);
-        if (scriptTag) {
-          document.head.removeChild(scriptTag);
-        }
-        delete (window as any).initAutocomplete;
-      }
-    } else {
-      initAutocomplete();
-    }
-  }, [isNewDealership, form]);
 
   useEffect(() => {
     async function fetchDealershipData() {
@@ -168,14 +83,7 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
         throw new Error('Dealership name is missing.');
       }
       
-      const newDealershipAddress = (isNewDealership && data.street) ? {
-          street: data.street,
-          city: data.city || '',
-          state: data.state || '',
-          zip: data.zip || '',
-      } : undefined;
-
-      await sendInvitation(dealershipToUse, data.userEmail, data.role as UserRole, user.userId, newDealershipAddress);
+      await sendInvitation(dealershipToUse, data.userEmail, data.role as UserRole, user.userId);
       
       setInvitationSent(true);
       toast({
@@ -188,10 +96,6 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
         dealershipName: (dealerships.length === 1 && !canManageAllDealerships && user.role !== 'Owner') ? dealerships[0].name : '',
         userEmail: '',
         role: '',
-        street: '',
-        city: '',
-        state: '',
-        zip: '',
       });
 
       if (canManageAllDealerships) {
@@ -240,9 +144,7 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
           <FormField
             control={form.control}
             name="dealershipName"
-            render={({ field }) => {
-              const { ref, ...restOfField } = field;
-              return (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>Dealership</FormLabel>
                   { !showDealershipSelect ? (
@@ -278,79 +180,23 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
                           </SelectContent>
                           </Select>
                           {isNewDealership && canManageAllDealerships && (
-                            <div className="mt-4 space-y-4 rounded-lg border p-4">
-                                <div className="space-y-2">
-                                    <FormLabel>Dealership Name</FormLabel>
-                                    <FormControl>
-                                    <Input
-                                        placeholder="Search by name or address with Google..."
-                                        {...restOfField}
-                                        ref={(el) => {
-                                          ref(el);
-                                          autocompleteInputRef.current = el;
-                                        }}
-                                        autoFocus
+                            <div className="mt-2">
+                                <FormLabel>New Dealership Name</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        placeholder="Enter new dealership name"
+                                        {...field} 
+                                        className="mt-2"
                                     />
-                                    </FormControl>
-                                    <FormMessage />
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <FormField
-                                    control={form.control}
-                                    name="street"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Street</FormLabel>
-                                        <FormControl><Input {...field} /></FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                    <FormField
-                                    control={form.control}
-                                    name="city"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>City</FormLabel>
-                                        <FormControl><Input {...field} /></FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <FormField
-                                    control={form.control}
-                                    name="state"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>State / Province</FormLabel>
-                                        <FormControl><Input {...field} /></FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                    <FormField
-                                    control={form.control}
-                                    name="zip"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>ZIP / Postal Code</FormLabel>
-                                        <FormControl><Input {...field} /></FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                </div>
+                                </FormControl>
+                                <FormMessage className="mt-2" />
                             </div>
                           )}
                       </>
                   )}
                 <FormMessage />
               </FormItem>
-              )
-            }}
+            )}
           />
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
