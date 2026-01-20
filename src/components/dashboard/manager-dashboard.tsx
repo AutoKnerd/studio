@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -505,40 +506,42 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                         Invite new members, assign existing users, or remove users from the system.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <Tabs defaultValue="assign" className="pt-4">
-                                    <TabsList className={`grid w-full ${user.role === 'Admin' ? 'grid-cols-4' : 'grid-cols-2'}`}>
-                                        <TabsTrigger value="assign">Assign Existing</TabsTrigger>
-                                        <TabsTrigger value="invite">Invite New</TabsTrigger>
-                                        {user.role === 'Admin' && <TabsTrigger value="remove" className="text-destructive">Remove User</TabsTrigger>}
-                                        {user.role === 'Admin' && <TabsTrigger value="dealerships">Dealerships</TabsTrigger>}
-                                    </TabsList>
-                                    <TabsContent value="assign" className="pt-2">
-                                        <AssignUserForm 
-                                            manageableUsers={manageableUsers}
-                                            dealerships={dealerships}
-                                            onUserAssigned={handleUserManaged} 
-                                        />
-                                    </TabsContent>
-                                    <TabsContent value="invite" className="pt-2">
-                                        <RegisterDealershipForm user={user} onDealershipRegistered={handleUserManaged} />
-                                    </TabsContent>
-                                    {user.role === 'Admin' && (
-                                        <TabsContent value="remove" className="pt-2">
-                                            <RemoveUserForm 
+                                <ScrollArea className="max-h-[70vh] -mx-6 px-6 pb-6">
+                                    <Tabs defaultValue="assign" className="pt-4">
+                                        <TabsList className={`grid w-full ${user.role === 'Admin' ? 'grid-cols-4' : 'grid-cols-2'}`}>
+                                            <TabsTrigger value="assign">Assign Existing</TabsTrigger>
+                                            <TabsTrigger value="invite">Invite New</TabsTrigger>
+                                            {user.role === 'Admin' && <TabsTrigger value="remove" className="text-destructive">Remove User</TabsTrigger>}
+                                            {user.role === 'Admin' && <TabsTrigger value="dealerships">Dealerships</TabsTrigger>}
+                                        </TabsList>
+                                        <TabsContent value="assign" className="pt-2">
+                                            <AssignUserForm 
                                                 manageableUsers={manageableUsers}
-                                                onUserRemoved={handleUserManaged} 
+                                                dealerships={dealerships}
+                                                onUserAssigned={handleUserManaged} 
                                             />
                                         </TabsContent>
-                                    )}
-                                    {user.role === 'Admin' && (
-                                        <TabsContent value="dealerships" className="pt-2">
-                                            <ManageDealershipForm 
-                                                dealerships={allDealershipsForAdmin}
-                                                onDealershipManaged={handleUserManaged} 
-                                            />
+                                        <TabsContent value="invite" className="pt-2">
+                                            <RegisterDealershipForm user={user} onDealershipRegistered={handleUserManaged} />
                                         </TabsContent>
-                                    )}
-                                </Tabs>
+                                        {user.role === 'Admin' && (
+                                            <TabsContent value="remove" className="pt-2">
+                                                <RemoveUserForm 
+                                                    manageableUsers={manageableUsers}
+                                                    onUserRemoved={handleUserManaged} 
+                                                />
+                                            </TabsContent>
+                                        )}
+                                        {user.role === 'Admin' && (
+                                            <TabsContent value="dealerships" className="pt-2">
+                                                <ManageDealershipForm 
+                                                    dealerships={allDealershipsForAdmin}
+                                                    onDealershipManaged={handleUserManaged} 
+                                                />
+                                            </TabsContent>
+                                        )}
+                                    </Tabs>
+                                </ScrollArea>
                             </DialogContent>
                         </Dialog>
                     )}

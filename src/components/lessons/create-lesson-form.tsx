@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -175,7 +176,7 @@ export function CreateLessonForm({ user, onLessonCreated, assignOnCreateToUserId
   return (
     <Form {...form}>
       <ScrollArea className="max-h-[70vh]">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4 pr-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4 pr-6">
           <FormField
             control={form.control}
             name="title"

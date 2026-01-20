@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -158,153 +159,151 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
 
   return (
     <Form {...form}>
-       <ScrollArea className="max-h-[60vh]">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4 pr-6">
-          <FormField
-            control={form.control}
-            name="dealershipName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Dealership</FormLabel>
-                  { !showDealershipSelect ? (
-                      <Input value={field.value || ''} disabled />
-                  ) : (
-                      <>
-                          <Select 
-                              onValueChange={(value) => {
-                                  if (value === '---new---') {
-                                      setIsNewDealership(true);
-                                      field.onChange('');
-                                  } else {
-                                      setIsNewDealership(false);
-                                      field.onChange(value);
-                                  }
-                              }} 
-                              value={isNewDealership ? '---new---' : (field.value || '')}
-                          >
-                          <FormControl>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="Select an existing dealership..." />
-                              </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              {canManageAllDealerships && (
-                                <SelectItem value="---new---">
-                                    <span className="font-semibold">-- Add New Dealership --</span>
-                                </SelectItem>
-                              )}
-                              {dealerships.map(d => (
-                                  <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
-                              ))}
-                          </SelectContent>
-                          </Select>
-                          
-                      </>
-                  )}
-                  {isNewDealership && canManageAllDealerships && (
-                      <div className="mt-4 space-y-4 rounded-md border p-4">
-                          <FormLabel>New Dealership Details</FormLabel>
-                           <FormControl>
-                              <Input 
-                                  placeholder="Enter new dealership name"
-                                  {...field} 
-                              />
-                          </FormControl>
-                          <FormMessage />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+        <FormField
+          control={form.control}
+          name="dealershipName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Dealership</FormLabel>
+                { !showDealershipSelect ? (
+                    <Input value={field.value || ''} disabled />
+                ) : (
+                    <>
+                        <Select 
+                            onValueChange={(value) => {
+                                if (value === '---new---') {
+                                    setIsNewDealership(true);
+                                    field.onChange('');
+                                } else {
+                                    setIsNewDealership(false);
+                                    field.onChange(value);
+                                }
+                            }} 
+                            value={isNewDealership ? '---new---' : (field.value || '')}
+                        >
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select an existing dealership..." />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {canManageAllDealerships && (
+                              <SelectItem value="---new---">
+                                  <span className="font-semibold">-- Add New Dealership --</span>
+                              </SelectItem>
+                            )}
+                            {dealerships.map(d => (
+                                <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        
+                    </>
+                )}
+                {isNewDealership && canManageAllDealerships && (
+                    <div className="mt-4 space-y-4 rounded-md border p-4">
+                        <FormLabel>New Dealership Details</FormLabel>
+                         <FormControl>
+                            <Input 
+                                placeholder="Enter new dealership name"
+                                {...field} 
+                            />
+                        </FormControl>
+                        <FormMessage />
 
-                          <FormField
-                              control={form.control}
-                              name="street"
-                              render={({ field }) => (
-                                  <FormItem>
-                                      <FormLabel>Street Address</FormLabel>
-                                      <FormControl><Input placeholder="123 Auto Lane" {...field} /></FormControl>
-                                  </FormItem>
-                              )}
-                          />
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <FormField
-                                  control={form.control}
-                                  name="city"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                          <FormLabel>City</FormLabel>
-                                          <FormControl><Input placeholder="Carville" {...field} /></FormControl>
-                                      </FormItem>
-                                  )}
-                              />
-                              <FormField
-                                  control={form.control}
-                                  name="state"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                          <FormLabel>State</FormLabel>
-                                          <FormControl><Input placeholder="CA" {...field} /></FormControl>
-                                      </FormItem>
-                                  )}
-                              />
-                              <FormField
-                                  control={form.control}
-                                  name="zip"
-                                  render={({ field }) => (
-                                      <FormItem>
-                                          <FormLabel>ZIP Code</FormLabel>
-                                          <FormControl><Input placeholder="90210" {...field} /></FormControl>
-                                      </FormItem>
-                                  )}
-                              />
-                          </div>
-                      </div>
-                    )}
+                        <FormField
+                            control={form.control}
+                            name="street"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Street Address</FormLabel>
+                                    <FormControl><Input placeholder="123 Auto Lane" {...field} /></FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="city"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>City</FormLabel>
+                                        <FormControl><Input placeholder="Carville" {...field} /></FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="state"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>State</FormLabel>
+                                        <FormControl><Input placeholder="CA" {...field} /></FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="zip"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>ZIP Code</FormLabel>
+                                        <FormControl><Input placeholder="90210" {...field} /></FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+                  )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormField
+            control={form.control}
+            name="userEmail"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>New User's Email</FormLabel>
+                <FormControl>
+                    <Input placeholder="user@example.com" {...field} />
+                </FormControl>
                 <FormMessage />
-              </FormItem>
+                </FormItem>
             )}
-          />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-              control={form.control}
-              name="userEmail"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>New User's Email</FormLabel>
-                  <FormControl>
-                      <Input placeholder="user@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                  </FormItem>
-              )}
-              />
-              <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                  <FormItem>
-                      <FormLabel>New User's Role</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Select a role..." />
-                          </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              {registrationRoles.length === 0 && <SelectItem value="" disabled>No roles available to invite.</SelectItem>}
-                              {registrationRoles.map(role => (
-                                  <SelectItem key={role} value={role}>
-                                      {role === 'manager' ? 'Sales Manager' : role}
-                                  </SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                  </FormItem>
-              )}
-              />
-          </div>
-          <Button type="submit" disabled={isSubmitting || registrationRoles.length === 0}>
-            {isSubmitting ? <Spinner size="sm" /> : 'Send Invitation'}
-          </Button>
-        </form>
-      </ScrollArea>
+            />
+            <FormField
+            control={form.control}
+            name="role"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>New User's Role</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a role..." />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {registrationRoles.length === 0 && <SelectItem value="" disabled>No roles available to invite.</SelectItem>}
+                            {registrationRoles.map(role => (
+                                <SelectItem key={role} value={role}>
+                                    {role === 'manager' ? 'Sales Manager' : role}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+        <Button type="submit" disabled={isSubmitting || registrationRoles.length === 0}>
+          {isSubmitting ? <Spinner size="sm" /> : 'Send Invitation'}
+        </Button>
+      </form>
     </Form>
   );
 }
