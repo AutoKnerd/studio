@@ -1,7 +1,7 @@
 
 
 import { isToday } from 'date-fns';
-import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address } from './definitions';
+import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
 
@@ -81,6 +81,28 @@ let earnedBadges: EarnedBadge[] = [
     { userId: 'user-1', badgeId: 'top-performer', timestamp: new Date('2024-07-10T10:00:00Z') },
     { userId: 'user-1', badgeId: 'relationship-ace', timestamp: new Date('2024-07-11T14:00:00Z') },
     { userId: 'user-1', badgeId: 'night-owl', timestamp: new Date('2024-07-11T01:00:00Z') },
+];
+
+let messages: Message[] = [
+    {
+        id: 'msg-1',
+        senderId: 'user-10', // Owner
+        senderName: 'Jack King',
+        timestamp: new Date(new Date().setDate(new Date().getDate() - 1)),
+        content: 'Big news! We just became the #1 dealer group in the state for Q2. Incredible work by everyone. Let\'s keep the momentum going!',
+        scope: 'global',
+        targetId: 'all',
+    },
+    {
+        id: 'msg-2',
+        senderId: 'user-2', // Manager @ Dealership A
+        senderName: 'Bob Williams',
+        timestamp: new Date(),
+        content: 'Team, we have a fresh trade-in on the lot, a 2022 SUV with low miles. First person to sell it gets a $100 bonus. Let\'s move it today!',
+        scope: 'department',
+        targetId: 'dealership-A',
+        targetRole: 'Sales Consultant'
+    }
 ];
 
 
@@ -663,4 +685,47 @@ export async function updateDealershipStatus(dealershipId: string, status: 'acti
     }
 
     return dealerships[dealershipIndex];
+}
+
+// MESSENGER
+export async function sendMessage(
+    sender: User, 
+    content: string, 
+    target: { scope: MessageTargetScope; targetId: string; targetRole?: UserRole }
+): Promise<Message> {
+    await simulateNetworkDelay();
+
+    const newMessage: Message = {
+        id: `msg-${messages.length + 1}`,
+        senderId: sender.userId,
+        senderName: sender.name,
+        timestamp: new Date(),
+        content: content,
+        scope: target.scope,
+        targetId: target.targetId,
+        targetRole: target.targetRole,
+    };
+    
+    messages.unshift(newMessage);
+    console.log('New message sent:', newMessage);
+    return newMessage;
+}
+
+export async function getMessagesForUser(user: User): Promise<Message[]> {
+    await simulateNetworkDelay();
+    
+    const userMessages = messages.filter(msg => {
+        // Global messages for everyone
+        if (msg.scope === 'global') return true;
+        
+        // Dealership-specific messages
+        if (msg.scope === 'dealership' && user.dealershipIds.includes(msg.targetId)) return true;
+        
+        // Department-specific messages
+        if (msg.scope === 'department' && user.dealershipIds.includes(msg.targetId) && user.role === msg.targetRole) return true;
+        
+        return false;
+    });
+
+    return userMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }

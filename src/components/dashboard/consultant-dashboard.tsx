@@ -26,6 +26,7 @@ import { Logo } from '@/components/layout/logo';
 import { BadgeShowcase } from '../profile/badge-showcase';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 import { cn } from '@/lib/utils';
+import { MessageCenter } from '../messenger/message-center';
 
 interface ConsultantDashboardProps {
   user: User;
@@ -253,6 +254,8 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
               </DropdownMenuContent>
             </DropdownMenu>
         </header>
+
+        <MessageCenter user={user} />
 
         {isPaused && (
             <Alert variant="destructive" className="mb-6 bg-destructive/10 border-destructive/50 text-destructive-foreground">

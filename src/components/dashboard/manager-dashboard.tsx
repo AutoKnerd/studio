@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon, ShieldOff, TrendingUp, TrendingDown, Building } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon, ShieldOff, TrendingUp, TrendingDown, Building, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,6 +38,8 @@ import { calculateLevel } from '@/lib/xp';
 import { Logo } from '@/components/layout/logo';
 import { BadgeShowcase } from '../profile/badge-showcase';
 import { ManageDealershipForm } from '../admin/ManageDealershipForm';
+import { MessageCenter } from '../messenger/message-center';
+import { SendMessageForm } from '../messenger/send-message-form';
 
 interface ManagerDashboardProps {
   user: User;
@@ -90,6 +92,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [loading, setLoading] = useState(true);
   const [isCreateLessonOpen, setCreateLessonOpen] = useState(false);
   const [isManageUsersOpen, setManageUsersOpen] = useState(false);
+  const [isMessageDialogOpen, setMessageDialogOpen] = useState(false);
 
 
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
@@ -313,6 +316,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
 
 
   const canManage = ['Admin', 'Trainer', 'Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
+  const canMessage = ['Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
 
   return (
     <div className="space-y-8 pb-8">
@@ -349,6 +353,8 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             </DropdownMenuContent>
           </DropdownMenu>
       </header>
+
+      <MessageCenter user={user} />
       
       {!['Owner', 'Admin', 'Trainer'].includes(user.role) && (
         <section className="space-y-3">
@@ -478,7 +484,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       
       {user.role !== 'Finance Manager' && (
         <Card>
-            <CardHeader className="flex flex-col gap-4">
+            <CardHeader className="flex-col gap-4">
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         <BarChart className="h-5 w-5" />
@@ -490,7 +496,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                             : `Performance overview of staff at ${dealerships.find(d => d.id === selectedDealershipId)?.name}.`}
                     </CardDescription>
                 </div>
-                 <div className="flex flex-col gap-2 sm:flex-row">
+                 <div className="flex flex-wrap gap-2">
                     {canManage && (
                         <Dialog open={isManageUsersOpen} onOpenChange={setManageUsersOpen}>
                             <DialogTrigger asChild>
@@ -542,6 +548,22 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                         )}
                                     </Tabs>
                                 </ScrollArea>
+                            </DialogContent>
+                        </Dialog>
+                    )}
+                    {canMessage && (
+                        <Dialog open={isMessageDialogOpen} onOpenChange={setMessageDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline"><MessageSquare className="mr-2 h-4 w-4" /> Send Message</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[625px]">
+                                <DialogHeader>
+                                <DialogTitle>Send a new message</DialogTitle>
+                                <DialogDescription>
+                                    Broadcast a message to your team, a dealership, or the entire organization.
+                                </DialogDescription>
+                                </DialogHeader>
+                                <SendMessageForm user={user} dealerships={dealerships} onMessageSent={() => setMessageDialogOpen(false)} />
                             </DialogContent>
                         </Dialog>
                     )}

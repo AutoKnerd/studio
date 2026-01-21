@@ -216,3 +216,19 @@ export type EarnedBadge = {
   badgeId: BadgeId;
   timestamp: Date;
 };
+
+export type MessageTargetScope = 'global' | 'dealership' | 'department';
+
+export type Message = {
+  id: string;
+  senderId: string;
+  senderName: string;
+  timestamp: Date;
+  content: string;
+  scope: MessageTargetScope;
+  // For 'global', this is 'all'.
+  // For 'dealership', this is dealershipId.
+  // For 'department', this is dealershipId.
+  targetId: string; 
+  targetRole?: UserRole; // For 'department' scope to target specific roles
+};
