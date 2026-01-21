@@ -1,7 +1,16 @@
+'use client';
+
 import { Header } from '@/components/layout/header';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export default function PrivacyPolicyPage() {
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+  }, []);
+
   return (
     <>
       <Header />
@@ -9,7 +18,7 @@ export default function PrivacyPolicyPage() {
         <div className="w-full max-w-4xl mx-auto space-y-6">
           <div className="space-y-2 text-center">
             <h1 className="text-3xl font-bold">Privacy Policy</h1>
-            <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-muted-foreground h-5">{lastUpdated ? `Last updated: ${lastUpdated}` : ''}</p>
           </div>
           <div className="border-l-4 border-destructive p-4 bg-destructive/10 text-destructive-foreground rounded-r-lg">
               <p><strong>Disclaimer:</strong> This is a template and not a legally binding privacy policy. You should consult with a legal professional to create a policy that is compliant with all applicable laws and regulations for your business.</p>
@@ -19,7 +28,7 @@ export default function PrivacyPolicyPage() {
                 <h2 className="text-2xl font-semibold mb-2 text-foreground">1. Introduction</h2>
                 <p>Welcome to AutoDrive. We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our application. By using the service, you agree to the collection and use of information in accordance with this policy.</p>
             </section>
-            <section id="collection">
+             <section id="collection">
                 <h2 className="text-2xl font-semibold mb-2 text-foreground">2. Information We Collect</h2>
                 <p>We may collect information about you in a variety of ways. The information we may collect via the Application includes:</p>
                 <ul className="list-disc pl-6 space-y-2 mt-4">
