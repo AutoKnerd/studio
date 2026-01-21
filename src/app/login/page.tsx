@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -37,6 +38,25 @@ export default function LoginPage() {
       router.push('/');
     }
   }, [user, loading, router]);
+
+  async function handleDemoLogin() {
+    setIsSubmitting(true);
+    try {
+      await login('demo@autodrive.com', 'password'); // Password can be anything for mock auth
+      toast({
+        title: 'Welcome to the Demo!',
+        description: `You are now exploring as a Sales Consultant.`,
+      });
+      router.push('/');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: `Demo Login Failed`,
+        description: `Could not start the demo tour. Please try again.`,
+      });
+      setIsSubmitting(false);
+    }
+  }
 
   async function handleQuickLogin() {
     if (!selectedQuickLogin) {
@@ -85,9 +105,22 @@ export default function LoginPage() {
             </span>
         </div>
 
+        <div className="mt-6 w-full space-y-2 text-center">
+            <Button type="button" variant="secondary" className="w-full" onClick={handleDemoLogin} disabled={isSubmitting}>
+              {isSubmitting ? <Spinner size="sm" /> : 'Tour the App'}
+            </Button>
+             <p className="text-xs text-muted-foreground">
+                Explore the dashboard with a demo account.
+            </p>
+        </div>
+
+        <div className="relative mt-8 w-full">
+            <Separator />
+        </div>
+
         <div className="mt-6 w-full space-y-2">
             <p className="text-center text-sm text-muted-foreground">Quick login as developer role</p>
-            <Select onValueChange={setSelectedQuickLogin} value={selectedQuickLogin}>
+            <Select onValueChange={setSelectedQuickLogin} value={selectedQuickLogin} disabled={isSubmitting}>
                 <SelectTrigger>
                     <SelectValue placeholder="Select a role to log in..." />
                 </SelectTrigger>
