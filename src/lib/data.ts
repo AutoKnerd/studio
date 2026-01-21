@@ -1,6 +1,6 @@
 
 
-import { isToday } from 'date-fns';
+import { isToday, subDays } from 'date-fns';
 import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
@@ -714,7 +714,12 @@ export async function sendMessage(
 export async function getMessagesForUser(user: User): Promise<Message[]> {
     await simulateNetworkDelay();
     
+    const fourteenDaysAgo = subDays(new Date(), 14);
+
     const userMessages = messages.filter(msg => {
+        // Filter out old messages
+        if (msg.timestamp < fourteenDaysAgo) return false;
+
         // Global messages for everyone
         if (msg.scope === 'global') return true;
         
