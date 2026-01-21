@@ -2,16 +2,13 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import type { User, Lesson, LessonLog, CxTrait, Badge, Dealership } from '@/lib/definitions';
 import { getLessons, getConsultantActivity, getDailyLessonLimits, getAssignedLessons, getEarnedBadgesByUserId, getDealershipById } from '@/lib/data';
 import { calculateLevel } from '@/lib/xp';
-import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile, LogOut, User as UserIcon, AlertCircle } from 'lucide-react';
+import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { useAuth } from '@/hooks/use-auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,13 +17,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/layout/logo';
 import { BadgeShowcase } from '../profile/badge-showcase';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 import { cn } from '@/lib/utils';
-import { MessageCenter } from '../messenger/message-center';
+import { UserNav } from '../layout/user-nav';
 
 interface ConsultantDashboardProps {
   user: User;
@@ -117,8 +113,6 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
-  const { logout } = useAuth();
-  const router = useRouter();
 
 
   useEffect(() => {
@@ -223,39 +217,8 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
         {/* Header */}
         <header className="flex items-center justify-between">
             <Logo variant="full" width={183} height={61} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-14 w-14 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 p-0">
-                  <Avatar className="h-14 w-14 border-2 border-cyan-400/50">
-                      <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="absolute inset-0 rounded-full border-2 border-cyan-400 blur-md" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => router.push('/profile')}>
-                  <UserIcon className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => logout()}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserNav user={user} avatarClassName="h-14 w-14 border-2 border-cyan-400/50" withBlur />
         </header>
-
-        <MessageCenter user={user} />
 
         {isPaused && (
             <Alert variant="destructive" className="mb-6 bg-destructive/10 border-destructive/50 text-destructive-foreground">
@@ -301,11 +264,9 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                             <p className="text-sm text-muted-foreground mb-4">A daily lesson focused on your area for greatest improvement.</p>
                         </div>
                         {recommendedLesson && !lessonLimits.recommendedTaken ? (
-                            <Button asChild className="w-full bg-cyan-500/80 hover:bg-cyan-500 text-slate-900 font-bold">
-                                <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`}>
-                                    Start: {recommendedLesson.title}
-                                </Link>
-                            </Button>
+                            <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`} className={cn("w-full", buttonVariants({ className: "w-full bg-cyan-500/80 hover:bg-cyan-500 text-slate-900 font-bold" }))}>
+                                Start: {recommendedLesson.title}
+                            </Link>
                         ) : (
                             <Button variant="outline" disabled className="w-full bg-slate-800/50 border-slate-700">
                                 {recommendedLesson ? 
@@ -333,11 +294,9 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                             <p className="text-sm text-muted-foreground mb-4">Lessons assigned to you by your manager.</p>
                         </div>
                         {assignedLessons.length > 0 ? (
-                            <Button asChild className="w-full">
-                                <Link href={`/lesson/${assignedLessons[0].lessonId}`}>
-                                    Start: {assignedLessons[0].title}
-                                </Link>
-                            </Button>
+                            <Link href={`/lesson/${assignedLessons[0].lessonId}`} className={cn("w-full", buttonVariants({className: "w-full"}))}>
+                                Start: {assignedLessons[0].title}
+                            </Link>
                         ) : (
                             <Button variant="outline" disabled className="w-full bg-slate-800/50 border-slate-700">
                                 No assigned lessons
@@ -441,3 +400,5 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     </div>
   );
 }
+
+    

@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, Mail, LogOut, User as UserIcon, ShieldOff, TrendingUp, TrendingDown, Building, MessageSquare } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, TrendingUp, TrendingDown, Building, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,7 +20,6 @@ import { CreateLessonForm } from '../lessons/create-lesson-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TeamMemberCard } from './team-member-card';
 import { RegisterDealershipForm } from '../admin/register-dealership-form';
-import { useAuth } from '@/hooks/use-auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,8 +37,8 @@ import { calculateLevel } from '@/lib/xp';
 import { Logo } from '@/components/layout/logo';
 import { BadgeShowcase } from '../profile/badge-showcase';
 import { ManageDealershipForm } from '../admin/ManageDealershipForm';
-import { MessageCenter } from '../messenger/message-center';
 import { SendMessageForm } from '../messenger/send-message-form';
+import { UserNav } from '../layout/user-nav';
 
 interface ManagerDashboardProps {
   user: User;
@@ -100,7 +99,6 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [allDealershipsForAdmin, setAllDealershipsForAdmin] = useState<Dealership[]>([]);
   const [selectedDealershipId, setSelectedDealershipId] = useState<string | null>(null);
   const [allDealershipStats, setAllDealershipStats] = useState<Record<string, { bestStat: DealershipInsight | null, watchStat: DealershipInsight | null }>>({});
-  const { logout } = useAuth();
   const router = useRouter();
 
   const teamContext = useMemo(() => {
@@ -322,40 +320,9 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     <div className="space-y-8 pb-8">
       <header className="flex items-center justify-between">
           <Logo variant="full" width={183} height={61} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-14 w-14 rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 p-0">
-                <Avatar className="h-14 w-14 border-2 border-cyan-400/50">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="absolute inset-0 rounded-full border-2 border-cyan-400 blur-md" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => router.push('/profile')}>
-                <UserIcon className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => logout()}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserNav user={user} avatarClassName="h-14 w-14 border-2 border-cyan-400/50" withBlur />
       </header>
 
-      <MessageCenter user={user} />
-      
       {!['Owner', 'Admin', 'Trainer'].includes(user.role) && (
         <section className="space-y-3">
              {loading ? <Skeleton className="h-24 w-full" /> : (
@@ -637,8 +604,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                   <TableCell className="text-right">
                                     {hideMetrics ? (
                                         <div className="flex items-center justify-end gap-2 text-muted-foreground italic">
-                                            <ShieldOff className="h-4 w-4" />
-                                            <span>Metrics Hidden</span>
+                                            <UiBadge variant="outline" className="flex items-center gap-2"><ShieldOff className="h-3 w-3" /> Private</UiBadge>
                                         </div>
                                     ) : (
                                         <div className="flex items-center justify-end gap-2">
@@ -730,3 +696,5 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     </div>
   );
 }
+
+    
