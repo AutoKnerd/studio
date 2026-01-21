@@ -8,10 +8,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '../ui/skeleton';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
-import { Megaphone } from 'lucide-react';
+import { Megaphone, ChevronRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MessageCenterProps {
   user: User;
+}
+
+function MessageItem({ message }: { message: Message }) {
+    return (
+        <div key={message.id} className="flex items-start gap-3">
+            <Avatar className="h-9 w-9 border">
+                <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+                <div className="flex items-baseline justify-between">
+                    <p className="font-semibold">{message.senderName}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+                    </p>
+                </div>
+                <p className="text-sm text-muted-foreground">{message.content}</p>
+            </div>
+        </div>
+    );
 }
 
 export function MessageCenter({ user }: MessageCenterProps) {
@@ -28,6 +50,8 @@ export function MessageCenter({ user }: MessageCenterProps) {
     fetchMessages();
   }, [user]);
 
+  const mostRecentMessage = messages[0];
+
   return (
     <Card>
       <CardHeader>
@@ -39,29 +63,32 @@ export function MessageCenter({ user }: MessageCenterProps) {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
+          <Skeleton className="h-16 w-full" />
         ) : messages.length > 0 ? (
           <div className="space-y-4">
-            {messages.slice(0, 3).map((message) => (
-              <div key={message.id} className="flex items-start gap-3">
-                <Avatar className="h-9 w-9 border">
-                  {/* In a real app, you'd fetch the sender's avatar */}
-                  <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-baseline justify-between">
-                    <p className="font-semibold">{message.senderName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(message.timestamp, { addSuffix: true })}
-                    </p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{message.content}</p>
-                </div>
-              </div>
-            ))}
+            <MessageItem message={mostRecentMessage} />
+            {messages.length > 1 && (
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full">
+                            View All {messages.length} Messages
+                            <ChevronRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>All Messages</DialogTitle>
+                        </DialogHeader>
+                        <ScrollArea className="h-[60vh] pr-4">
+                            <div className="space-y-6">
+                                {messages.map((message) => (
+                                    <MessageItem key={message.id} message={message} />
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </DialogContent>
+                </Dialog>
+            )}
           </div>
         ) : (
           <p className="text-center text-sm text-muted-foreground">No messages yet.</p>
