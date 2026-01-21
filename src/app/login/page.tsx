@@ -1,6 +1,8 @@
 import { LoginForm } from '@/components/auth/login-form';
 import { Logo } from '@/components/layout/logo';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 export default function LoginPage() {
   return (
@@ -12,15 +14,22 @@ export default function LoginPage() {
             </div>
         </div>
         <LoginForm />
-        <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
-          Have an invitation code?{' '}
-          <Link
-            href="/register"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Activate Your Account
-          </Link>
-        </p>
+        
+        <div className="relative mt-8 w-full">
+            <Separator />
+            <span className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-xs text-muted-foreground">
+                OR
+            </span>
+        </div>
+
+        <div className="mt-6 w-full text-center">
+            <Button asChild className="w-full font-semibold" variant="secondary">
+                <Link href="/register">Shift Into Drive</Link>
+            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+                Create Your AutoDrive Account
+            </p>
+        </div>
       </div>
     </main>
   );
