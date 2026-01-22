@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId } from '@/lib/data';
-import { BarChart, BookOpen, CheckCircle, Smile, Star, Users, PlusCircle, Store, TrendingUp, TrendingDown, Building, MessageSquare } from 'lucide-react';
+import { BarChart, BookOpen, CheckCircle, ShieldOff, Smile, Star, Users, PlusCircle, Store, TrendingUp, TrendingDown, Building, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -92,6 +92,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [isCreateLessonOpen, setCreateLessonOpen] = useState(false);
   const [isManageUsersOpen, setManageUsersOpen] = useState(false);
   const [isMessageDialogOpen, setMessageDialogOpen] = useState(false);
+  const [memberSince, setMemberSince] = useState<string | null>(null);
 
 
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
@@ -211,6 +212,12 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     fetchInitialData();
   }, [user.role, user.userId, user.dealershipIds, selectedDealershipId, fetchData]);
 
+  useEffect(() => {
+    if (user.memberSince) {
+      setMemberSince(new Date(user.memberSince).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+    }
+  }, [user.memberSince]);
+
   const handleDealershipChange = (dealershipId: string) => {
     setSelectedDealershipId(dealershipId);
   };
@@ -328,9 +335,9 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
              {loading ? <Skeleton className="h-24 w-full" /> : (
                 <div>
                     <LevelDisplay xp={user.xp} />
-                    {user.memberSince && (
+                    {memberSince && (
                         <p className="text-sm text-muted-foreground mt-2">
-                            Member since {new Date(user.memberSince).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            Member since {memberSince}
                         </p>
                     )}
                 </div>
@@ -696,5 +703,3 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     </div>
   );
 }
-
-    

@@ -48,6 +48,8 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
   const [isConfirmingRemoval, setIsConfirmingRemoval] = useState(false);
   const [confirmationInput, setConfirmationInput] = useState('');
   const [isCreateLessonOpen, setCreateLessonOpen] = useState(false);
+  const [memberSince, setMemberSince] = useState<string | null>(null);
+  const [recentActivityDate, setRecentActivityDate] = useState<string | null>(null);
 
 
   const { level } = calculateLevel(user.xp);
@@ -74,6 +76,14 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
       setLessons(fetchedLessons);
       setActivity(fetchedActivity);
       setBadges(fetchedBadges);
+      
+      if (user.memberSince) {
+        setMemberSince(new Date(user.memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
+      }
+      if (fetchedActivity.length > 0) {
+        setRecentActivityDate(new Date(fetchedActivity[0].timestamp).toLocaleDateString());
+      }
+
       setLoading(false);
     }
     fetchData();
@@ -202,9 +212,9 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
                     <div>
                         <CardTitle className="text-2xl">{user.name}</CardTitle>
                         <CardDescription>{user.role === 'manager' ? 'Sales Manager' : user.role} at {currentDealershipNames}</CardDescription>
-                        {user.memberSince && (
+                        {memberSince && (
                             <CardDescription className="pt-1">
-                                Member since {new Date(user.memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                                Member since {memberSince}
                             </CardDescription>
                         )}
                     </div>
@@ -264,11 +274,11 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
                 <Skeleton className="h-4 w-1/2" />
                 <Skeleton className="h-4 w-1/4" />
               </div>
-            ) : recentActivity ? (
+            ) : recentActivity && recentActivityDate ? (
               <div className="space-y-2">
                 <p className="text-lg font-semibold text-primary">{lessons.find(l => l.lessonId === recentActivity.lessonId)?.title || 'Unknown Lesson'}</p>
                 <p className="text-sm text-muted-foreground">
-                  Completed on {new Date(recentActivity.timestamp).toLocaleDateString()}
+                  Completed on {recentActivityDate}
                 </p>
                 <p className="text-2xl font-bold text-accent">+{recentActivity.xpGained} XP</p>
               </div>
@@ -384,5 +394,3 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
     </div>
   );
 }
-
-    

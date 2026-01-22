@@ -114,6 +114,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const [memberSince, setMemberSince] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -140,10 +141,14 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
           }
       }
 
+      if (user.memberSince) {
+        setMemberSince(new Date(user.memberSince).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+      }
+
       setLoading(false);
     }
     fetchData();
-  }, [user.userId, user.role, user.dealershipIds]);
+  }, [user]);
   
   const averageScores = useMemo(() => {
     if (!activity.length) return {
@@ -236,9 +241,9 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
              {loading ? <Skeleton className="h-24 w-full" /> : (
                 <div>
                     <LevelDisplay xp={user.xp} />
-                    {user.memberSince && (
+                    {memberSince && (
                         <p className="text-sm text-muted-foreground mt-2">
-                            Member since {new Date(user.memberSince).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            Member since {memberSince}
                         </p>
                     )}
                 </div>
@@ -401,7 +406,3 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     </div>
   );
 }
-
-    
-
-    
