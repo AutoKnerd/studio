@@ -15,21 +15,21 @@ let dealerships: Dealership[] = [
 
 let users: User[] = [
   { userId: 'user-1', name: 'Alice Johnson', email: 'consultant@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 2580, phone: '555-0101', address: { street: '123 Oak Lane', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-01-15T09:00:00Z', subscriptionStatus: 'inactive' },
-  { userId: 'user-2', name: 'Bob Williams', email: 'manager@autodrive.com', role: 'manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 5200, phone: '555-0102', address: { street: '456 Maple Drive', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-11-20T09:00:00Z', subscriptionStatus: 'active' },
+  { userId: 'user-2', name: 'Bob Williams', email: 'manager@autodrive.com', role: 'manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 5200, phone: '555-0102', address: { street: '456 Maple Drive', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-11-20T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd1f4oXYbQW5B' },
   { userId: 'user-3', name: 'Charlie Brown', email: 'charlie@autodrive.com', role: 'Sales Consultant', dealershipIds: [], avatarUrl: 'https://images.unsplash.com/photo-1707035091770-4c548c02e5c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxnZWFyJTIwaWNvbnxlbnwwfHx8fDE3Njg5MTEwMjN8MA&ixlib=rb-4.1.0&q=80&w=1080', xp: 550, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-08-01T09:00:00Z', selfDeclaredDealershipId: 'dealership-B', subscriptionStatus: 'inactive' },
   { userId: 'user-4', name: 'Diana Prince', email: 'diana@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1605521607922-5cc483858744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGVlZG9tZXRlciUyMGljb258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 120, isPrivate: false, isPrivateFromOwner: false, memberSince: '2024-03-10T09:00:00Z', subscriptionStatus: 'inactive' },
   { userId: 'user-5', name: 'Eve Adams', email: 'service.writer@autodrive.com', role: 'Service Writer', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 800, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-05-22T09:00:00Z', subscriptionStatus: 'inactive' },
-  { userId: 'user-6', name: 'Frank Miller', email: 'service.manager@autodrive.com', role: 'Service Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 4800, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-09-15T09:00:00Z', subscriptionStatus: 'active' },
-  { userId: 'user-7', name: 'Grace Lee', email: 'finance.manager@autodrive.com', role: 'Finance Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1707035091770-4c548c02e5c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxnZWFyJTIwaWNvbnxlbnwwfHx8fDE3Njg5MTEwMjN8MA&ixlib=rb-4.1.0&q=80&w=1080', xp: 6195, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-07-01T09:00:00Z', subscriptionStatus: 'active' },
+  { userId: 'user-6', name: 'Frank Miller', email: 'service.manager@autodrive.com', role: 'Service Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 4800, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-09-15T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd2M2aYwZfA1c' },
+  { userId: 'user-7', name: 'Grace Lee', email: 'finance.manager@autodrive.com', role: 'Finance Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1707035091770-4c548c02e5c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxnZWFyJTIwaWNvbnxlbnwwfHx8fDE3Njg5MTEwMjN8MA&ixlib=rb-4.1.0&q=80&w=1080', xp: 6195, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-07-01T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd2k7bXyZcW4d' },
   { userId: 'user-8', name: 'Henry Wilson', email: 'parts.consultant@autodrive.com', role: 'Parts Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1605521607922-5cc483858744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGVlZG9tZXRlciUyMGljb258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 535, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-10-30T09:00:00Z', subscriptionStatus: 'inactive' },
-  { userId: 'user-9', name: 'Ivy Green', email: 'parts.manager@autodrive.com', role: 'Parts Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 3275, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-02-18T09:00:00Z', subscriptionStatus: 'active' },
-  { userId: 'user-10', name: 'Jack King', email: 'owner@autodrive.com', role: 'Owner', dealershipIds: ['dealership-A', 'dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 10000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2021-01-01T09:00:00Z', subscriptionStatus: 'active' },
+  { userId: 'user-9', name: 'Ivy Green', email: 'parts.manager@autodrive.com', role: 'Parts Manager', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 3275, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-02-18T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd3j3aXyZdX5e' },
+  { userId: 'user-10', name: 'Jack King', email: 'owner@autodrive.com', role: 'Owner', dealershipIds: ['dealership-A', 'dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 10000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2021-01-01T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd3l4bYyZeY6f' },
   { userId: 'user-11', name: 'Sam Smith', email: 'sam.sw@autodrive.com', role: 'Service Writer', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1707035091770-4c548c02e5c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxnZWFyJTIwaWNvbnxlbnwwfHx8fDE3Njg5MTEwMjN8MA&ixlib=rb-4.1.0&q=80&w=1080', xp: 150, isPrivate: false, isPrivateFromOwner: false, memberSince: '2024-05-01T09:00:00Z', subscriptionStatus: 'inactive' },
-  { userId: 'user-12', name: 'Travis Trainer', email: 'trainer@autoknerd.com', role: 'Trainer', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1605521607922-5cc483858744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGVlZG9tZXRlciUyMGljb258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 15000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-01-01T09:00:00Z', subscriptionStatus: 'active' },
-  { userId: 'user-13', name: 'Andy Admin', email: 'admin@autoknerd.com', role: 'Admin', dealershipIds: ['autoknerd-hq'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 20000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-01-01T09:00:00Z', subscriptionStatus: 'active' },
-  { userId: 'user-14', name: 'Manager B', email: 'manager.b@autodrive.com', role: 'manager', dealershipIds: ['dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 4585, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-03-01T09:00:00Z', subscriptionStatus: 'active' },
+  { userId: 'user-12', name: 'Travis Trainer', email: 'trainer@autoknerd.com', role: 'Trainer', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1605521607922-5cc483858744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGVlZG9tZXRlciUyMGljb258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 15000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-01-01T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd4m5cZzZfY7g' },
+  { userId: 'user-13', name: 'Andy Admin', email: 'admin@autoknerd.com', role: 'Admin', dealershipIds: ['autoknerd-hq'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 20000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-01-01T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd4n6dazAgZ8h' },
+  { userId: 'user-14', name: 'Manager B', email: 'manager.b@autodrive.com', role: 'manager', dealershipIds: ['dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 4585, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-03-01T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd5o7ebzBhA9i' },
   { userId: 'user-15', name: 'Consultant B1', email: 'consultant.b1@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1707035091770-4c548c02e5c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxnZWFyJTIwaWNvbnxlbnwwfHx8fDE3Njg5MTEwMjN8MA&ixlib=rb-4.1.0&q=80&w=1080', xp: 30, isPrivate: false, isPrivateFromOwner: false, memberSince: '2024-06-01T09:00:00Z', subscriptionStatus: 'inactive' },
-  { userId: 'user-16', name: 'Gerry Manager', email: 'gm@autodrive.com', role: 'General Manager', dealershipIds: ['dealership-A', 'dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1605521607922-5cc483858744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGVlZG9tZXRlciUyMGljb258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 9000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2021-06-01T09:00:00Z', subscriptionStatus: 'active' },
+  { userId: 'user-16', name: 'Gerry Manager', email: 'gm@autodrive.com', role: 'General Manager', dealershipIds: ['dealership-A', 'dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1605521607922-5cc483858744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGVlZG9tZXRlciUyMGljb258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 9000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2021-06-01T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd5p8fczCiBAl' },
   { userId: 'user-17', name: 'Demo User', email: 'demo@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 3250, phone: '555-0199', address: { street: '1 Demo Drive', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-11-01T09:00:00Z', subscriptionStatus: 'inactive' },
 ];
 
@@ -73,7 +73,7 @@ let lessonLogs: LessonLog[] = [
 ];
 
 let lessonAssignments: LessonAssignment[] = [
-    { assignmentId: 'assign-1', userId: 'user-1', lessonId: 'lesson-3', assignerId: 'user-2', timestamp: new Date(), completed: false }
+    { assignmentId: 'assign-1', userId: 'user-1', lessonId: 'lesson-3', assignerId: 'user-2', timestamp: new Date('2024-07-13T18:00:00Z'), completed: false }
 ];
 
 let earnedBadges: EarnedBadge[] = [
@@ -89,7 +89,7 @@ let messages: Message[] = [
         id: 'msg-1',
         senderId: 'user-10', // Owner
         senderName: 'Jack King',
-        timestamp: new Date(new Date().setDate(new Date().getDate() - 1)),
+        timestamp: new Date('2024-07-12T10:00:00Z'),
         content: 'Big news! We just became the #1 dealer group in the state for Q2. Incredible work by everyone. Let\'s keep the momentum going!',
         scope: 'global',
         targetId: 'all',
@@ -98,7 +98,7 @@ let messages: Message[] = [
         id: 'msg-2',
         senderId: 'user-2', // Manager @ Dealership A
         senderName: 'Bob Williams',
-        timestamp: new Date(),
+        timestamp: new Date('2024-07-13T09:00:00Z'),
         content: 'Team, we have a fresh trade-in on the lot, a 2022 SUV with low miles. First person to sell it gets a $100 bonus. Let\'s move it today!',
         scope: 'department',
         targetId: 'dealership-A',
@@ -262,15 +262,15 @@ export async function deleteUser(userId: string): Promise<void> {
     console.log(`Permanently deleted user ${userId} and their associated data.`);
 }
 
-export async function updateUserSubscriptionStatus(customerId: string, newStatus: 'active' | 'inactive'): Promise<User | null> {
+export async function updateUserSubscriptionStatus(stripeCustomerId: string, newStatus: 'active' | 'inactive'): Promise<User | null> {
     await simulateNetworkDelay();
-    const userIndex = users.findIndex(u => u.stripeCustomerId === customerId);
+    const userIndex = users.findIndex(u => u.stripeCustomerId === stripeCustomerId);
     if (userIndex > -1) {
         users[userIndex].subscriptionStatus = newStatus;
-        console.log(`Updated subscription for Stripe customer ${customerId} to ${newStatus}.`);
+        console.log(`Updated subscription for Stripe customer ${stripeCustomerId} to ${newStatus}.`);
         return users[userIndex];
     }
-    console.log(`Could not find user for Stripe customer ${customerId} to update status.`);
+    console.log(`Could not find user for Stripe customer ${stripeCustomerId} to update status.`);
     return null;
 }
 
@@ -748,3 +748,4 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
 
     return userMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
+
