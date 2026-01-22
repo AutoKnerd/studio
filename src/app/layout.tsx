@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { AuthProvider } from '@/context/auth-provider';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
-import { Footer } from '@/components/layout/footer';
+import { MainLayout } from '@/components/layout/main-layout';
+
 
 export const metadata: Metadata = {
   title: 'AutoDrive powered by AutoKnerd',
@@ -19,10 +20,9 @@ export default function RootLayout({
       <head />
       <body className="antialiased">
           <AuthProvider>
-            <div className="relative flex min-h-screen flex-col">
-                <div className="flex-1">{children}</div>
-                <Footer />
-            </div>
+            <MainLayout>
+                {children}
+            </MainLayout>
             <Toaster />
           </AuthProvider>
       </body>

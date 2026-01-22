@@ -30,7 +30,9 @@ let users: User[] = [
   { userId: 'user-14', name: 'Manager B', email: 'manager.b@autodrive.com', role: 'manager', dealershipIds: ['dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 4585, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-03-01T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd5o7ebzBhA9i' },
   { userId: 'user-15', name: 'Consultant B1', email: 'consultant.b1@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1707035091770-4c548c02e5c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxnZWFyJTIwaWNvbnxlbnwwfHx8fDE3Njg5MTEwMjN8MA&ixlib=rb-4.1.0&q=80&w=1080', xp: 30, isPrivate: false, isPrivateFromOwner: false, memberSince: '2024-06-01T09:00:00Z', subscriptionStatus: 'inactive' },
   { userId: 'user-16', name: 'Gerry Manager', email: 'gm@autodrive.com', role: 'General Manager', dealershipIds: ['dealership-A', 'dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1605521607922-5cc483858744?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGVlZG9tZXRlciUyMGljb258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 9000, isPrivate: false, isPrivateFromOwner: false, memberSince: '2021-06-01T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd5p8fczCiBAl' },
-  { userId: 'user-17', name: 'Demo User', email: 'demo@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 3250, phone: '555-0199', address: { street: '1 Demo Drive', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-11-01T09:00:00Z', subscriptionStatus: 'inactive' },
+  { userId: 'user-17', name: 'Consultant Demo', email: 'consultant.demo@autodrive.com', role: 'Sales Consultant', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 3250, phone: '555-0199', address: { street: '1 Demo Drive', city: 'Sunnyvale', state: 'CA', zip: '94086' }, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-11-01T09:00:00Z', subscriptionStatus: 'inactive' },
+  { userId: 'user-18', name: 'Service Writer Demo', email: 'service.writer.demo@autodrive.com', role: 'Service Writer', dealershipIds: ['dealership-A'], avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080', xp: 950, isPrivate: false, isPrivateFromOwner: false, memberSince: '2023-06-15T09:00:00Z', subscriptionStatus: 'inactive' },
+  { userId: 'user-19', name: 'Owner Demo', email: 'owner.demo@autodrive.com', role: 'Owner', dealershipIds: ['dealership-A', 'dealership-B'], avatarUrl: 'https://images.unsplash.com/photo-1608834951273-eac269926962?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBwaXN0b258ZW58MHx8fHwxNzY4OTExMDIzfDA&ixlib=rb-4.1.0&q=80&w=1080', xp: 12500, isPrivate: false, isPrivateFromOwner: false, memberSince: '2022-01-10T09:00:00Z', subscriptionStatus: 'active', stripeCustomerId: 'cus_QOd3l4bYyZeY6f' },
 ];
 
 let emailInvitations: EmailInvitation[] = [];
@@ -70,6 +72,8 @@ let lessonLogs: LessonLog[] = [
   { logId: 'log-17', timestamp: new Date('2024-07-13T13:00:00Z'), userId: 'user-6', lessonId: 'lesson-6', stepResults: { final: 'pass' }, xpGained: 75, empathy: 90, listening: 80, trust: 85, followUp: 90, closing: 70, relationshipBuilding: 80, isRecommended: false },
   { logId: 'log-18', timestamp: new Date('2024-07-13T14:00:00Z'), userId: 'user-9', lessonId: 'lesson-8', stepResults: { final: 'pass' }, xpGained: 75, empathy: 82, listening: 92, trust: 88, followUp: 75, closing: 72, relationshipBuilding: 78, isRecommended: false },
   { logId: 'log-19', timestamp: new Date('2024-07-13T15:00:00Z'), userId: 'user-14', lessonId: 'lesson-2', stepResults: { final: 'pass' }, xpGained: 70, empathy: 75, listening: 85, trust: 80, followUp: 75, closing: 70, relationshipBuilding: 80, isRecommended: false },
+  { logId: 'log-20', timestamp: new Date('2024-07-14T10:00:00Z'), userId: 'user-18', lessonId: 'lesson-6', stepResults: { final: 'pass' }, xpGained: 85, empathy: 92, listening: 80, trust: 88, followUp: 70, closing: 70, relationshipBuilding: 80, isRecommended: true },
+  { logId: 'log-21', timestamp: new Date('2024-07-13T11:00:00Z'), userId: 'user-18', lessonId: 'lesson-5', stepResults: { final: 'pass' }, xpGained: 78, empathy: 75, listening: 85, trust: 80, followUp: 92, closing: 60, relationshipBuilding: 70, isRecommended: false },
 ];
 
 let lessonAssignments: LessonAssignment[] = [
@@ -334,7 +338,7 @@ export async function assignLesson(userId: string, lessonId: string, assignerId:
         userId,
         lessonId,
         assignerId,
-        timestamp: new Date(),
+        timestamp: new Date('2024-07-15T18:00:00Z'),
         completed: false,
     };
     lessonAssignments.push(newAssignment);
@@ -748,4 +752,5 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
 
     return userMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
+
 

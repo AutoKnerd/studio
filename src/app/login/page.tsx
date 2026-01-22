@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';
+import { UserRole } from '@/lib/definitions';
 
 const quickLoginRoles = [
   { value: 'consultant@autodrive.com', label: 'Sales Consultant' },
@@ -26,9 +27,17 @@ const quickLoginRoles = [
   { value: 'admin@autoknerd.com', label: 'Admin' },
 ];
 
+const tourRoles: { value: string, label: UserRole }[] = [
+  { value: 'consultant.demo@autodrive.com', label: 'Sales Consultant' },
+  { value: 'service.writer.demo@autodrive.com', label: 'Service Writer' },
+  { value: 'owner.demo@autodrive.com', label: 'Owner' },
+];
+
+
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedQuickLogin, setSelectedQuickLogin] = useState<string>('');
+  const [selectedTourRole, setSelectedTourRole] = useState<string>(tourRoles[0].value);
   const router = useRouter();
   const { login, user, loading } = useAuth();
   const { toast } = useToast();
@@ -39,20 +48,21 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
-  async function handleDemoLogin() {
+  async function handleTourLogin() {
     setIsSubmitting(true);
+    const roleInfo = tourRoles.find(r => r.value === selectedTourRole);
     try {
-      await login('demo@autodrive.com', 'password'); // Password can be anything for mock auth
+      await login(selectedTourRole, 'password'); // Password can be anything for mock auth
       toast({
-        title: 'Welcome to the Demo!',
-        description: `You are now exploring as a Sales Consultant.`,
+        title: 'Welcome to the Tour!',
+        description: `You are now exploring as a ${roleInfo?.label}.`,
       });
       router.push('/');
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: `Demo Login Failed`,
-        description: `Could not start the demo tour. Please try again.`,
+        title: `Tour Login Failed`,
+        description: `Could not start the tour. Please try again.`,
       });
       setIsSubmitting(false);
     }
@@ -104,15 +114,26 @@ export default function LoginPage() {
                 OR
             </span>
         </div>
-
-        <div className="mt-6 w-full space-y-2 text-center">
-            <Button type="button" variant="secondary" className="w-full" onClick={handleDemoLogin} disabled={isSubmitting}>
-              {isSubmitting ? <Spinner size="sm" /> : 'Tour the App'}
+        
+        <div className="mt-6 w-full space-y-2">
+            <p className="text-center text-sm text-muted-foreground">Take a tour of the app</p>
+             <Select onValueChange={setSelectedTourRole} defaultValue={selectedTourRole} disabled={isSubmitting}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a role to tour..." />
+                </SelectTrigger>
+                <SelectContent>
+                    {tourRoles.map(role => (
+                        <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Button type="button" variant="secondary" className="w-full" onClick={handleTourLogin} disabled={isSubmitting}>
+              {isSubmitting ? <Spinner size="sm" /> : 'Start Tour'}
             </Button>
-             <p className="text-xs text-muted-foreground">
-                Explore the dashboard with a demo account.
-            </p>
         </div>
+
 
         <div className="relative mt-8 w-full">
             <Separator />
