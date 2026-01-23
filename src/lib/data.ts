@@ -77,7 +77,7 @@ let lessonLogs: LessonLog[] = [
 ];
 
 let lessonAssignments: LessonAssignment[] = [
-    { assignmentId: 'assign-1', userId: 'user-1', lessonId: 'lesson-3', assignerId: 'user-2', timestamp: new Date('2024-07-13T18:00:00Z'), completed: false }
+    { assignmentId: 'assign-1', userId: 'user-1', lessonId: 'lesson-3', assignerId: 'user-2', timestamp: new Date('2024-07-15T18:00:00Z'), completed: false }
 ];
 
 let earnedBadges: EarnedBadge[] = [
@@ -196,7 +196,7 @@ export async function redeemInvitation(token: string, name: string, email: strin
         xp: 0,
         isPrivate: false,
         isPrivateFromOwner: false,
-        memberSince: new Date().toISOString(),
+        memberSince: '2024-07-15T10:00:00Z',
         subscriptionStatus: 'inactive',
     };
 
@@ -378,7 +378,7 @@ export async function logLessonCompletion(data: {
 
     const newLog: LessonLog = {
         logId: `log-${lessonLogs.length + 1}`,
-        timestamp: new Date(),
+        timestamp: new Date('2024-07-15T10:00:00Z'),
         userId: data.userId,
         lessonId: data.lessonId,
         xpGained: data.xpGained,
@@ -394,7 +394,7 @@ export async function logLessonCompletion(data: {
     
     const awardBadge = (badgeId: BadgeId) => {
         if (!userBadgeIds.includes(badgeId)) {
-            earnedBadges.push({ userId: data.userId, badgeId, timestamp: new Date() });
+            earnedBadges.push({ userId: data.userId, badgeId, timestamp: new Date('2024-07-15T10:00:00Z') });
             const badge = allBadges.find(b => b.id === badgeId);
             if (badge) newlyAwardedBadges.push(badge);
         }
@@ -717,7 +717,7 @@ export async function sendMessage(
         id: `msg-${messages.length + 1}`,
         senderId: sender.userId,
         senderName: sender.name,
-        timestamp: new Date(),
+        timestamp: new Date('2024-07-15T10:00:00Z'),
         content: content,
         scope: target.scope,
         targetId: target.targetId,
@@ -736,7 +736,7 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
 
     const userMessages = messages.filter(msg => {
         // Filter out old messages
-        if (msg.timestamp < fourteenDaysAgo) return false;
+        if (new Date(msg.timestamp) < fourteenDaysAgo) return false;
 
         // Global messages for everyone
         if (msg.scope === 'global') return true;
@@ -750,7 +750,8 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
         return false;
     });
 
-    return userMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return userMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
+
 
 

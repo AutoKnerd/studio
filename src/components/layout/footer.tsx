@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,6 +8,7 @@ export function Footer() {
     const [currentYear, setCurrentYear] = useState<number | null>(null);
 
     useEffect(() => {
+        // This effect runs only on the client, after hydration
         setCurrentYear(new Date().getFullYear());
     }, []);
 
@@ -17,7 +19,7 @@ export function Footer() {
             {currentYear ? (
                 <span>© {currentYear} AutoKnerd, Inc. All rights reserved.</span>
             ) : (
-                <span>© AutoKnerd, Inc. All rights reserved.</span>
+                <span className="h-4 inline-block">© AutoKnerd, Inc. All rights reserved.</span>
             )}
         </footer>
     );

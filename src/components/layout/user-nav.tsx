@@ -25,6 +25,7 @@ function MessageItem({ message }: { message: Message }) {
     const [relativeTime, setRelativeTime] = useState('');
 
     useEffect(() => {
+        // This effect runs only on the client, after hydration
         if (message.timestamp) {
             setRelativeTime(formatDistanceToNow(new Date(message.timestamp), { addSuffix: true }));
         }
@@ -79,11 +80,12 @@ export function UserNav({ user, avatarClassName, withBlur = false }: UserNavProp
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        // This ensures the component has mounted on the client
         setIsClient(true);
     }, []);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !isClient) return;
         
         async function fetchMessages() {
             const userMessages = await getMessagesForUser(user);
@@ -98,11 +100,11 @@ export function UserNav({ user, avatarClassName, withBlur = false }: UserNavProp
             }
         }
         fetchMessages();
-    }, [user]);
+    }, [user, isClient]);
 
     const handleMessagesDialogOpen = (open: boolean) => {
         setIsDialogOpen(open);
-        if (open) {
+        if (open && isClient) {
             setUnreadCount(0);
             if (messages.length > 0) {
                  localStorage.setItem('lastMessagesCheckedTimestamp', new Date(messages[0].timestamp).getTime().toString());
