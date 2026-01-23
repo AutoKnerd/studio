@@ -190,7 +190,7 @@ export function LessonView({ lesson, isRecommended }: LessonViewProps) {
                         <div key={index} className={`flex items-start gap-4 ${message.sender === 'user' ? 'justify-end' : ''}`}>
                             {message.sender === 'ai' && (
                                 <Avatar className="h-8 w-8">
-                                    <Image src="/autodrive-ai-icon.png" alt="AutoDrive AI" width={32} height={32} />
+                                    <Image src="/autodrive-ai-icon1.png" alt="AutoDrive AI" width={32} height={32} />
                                 </Avatar>
                             )}
                             <div className={`rounded-lg p-3 text-sm max-w-[80%] ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
@@ -207,7 +207,7 @@ export function LessonView({ lesson, isRecommended }: LessonViewProps) {
                         {isLoading && messages.length > 0 && (
                             <div className="flex items-start gap-4">
                                 <Avatar className="h-8 w-8">
-                                    <Image src="/autodrive-ai-icon.png" alt="AutoDrive AI" width={32} height={32} />
+                                    <Image src="/autodrive-ai-icon1.png" alt="AutoDrive AI" width={32} height={32} />
                                 </Avatar>
                                 <div className="rounded-lg p-3 bg-muted flex items-center">
                                     <Spinner size="sm" />
