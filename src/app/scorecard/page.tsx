@@ -12,7 +12,6 @@ import { getConsultantActivity, getEarnedBadgesByUserId } from '@/lib/data';
 import { ScoreCard } from '@/components/profile/score-card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import * as htmlToImage from 'html-to-image';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ScoreCardPage() {
@@ -51,22 +50,33 @@ export default function ScoreCardPage() {
       return;
     }
 
-    htmlToImage.toPng(scoreCardRef.current, { 
-        cacheBust: true,
-        pixelRatio: 2, // Use higher pixel ratio for better quality on high-res screens
-    })
-    .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = 'autodrive-score-card.png';
-        link.href = dataUrl;
-        link.click();
+    import('html-to-image')
+      .then((htmlToImage) => {
+        htmlToImage.toPng(scoreCardRef.current!, { 
+            cacheBust: true,
+            pixelRatio: 2, // Use higher pixel ratio for better quality on high-res screens
+        })
+        .then((dataUrl) => {
+            const link = document.createElement('a');
+            link.download = 'autodrive-score-card.png';
+            link.href = dataUrl;
+            link.click();
+        })
+        .catch((err) => {
+            console.error('Could not save score card image', err);
+            toast({
+                variant: 'destructive',
+                title: 'Save Failed',
+                description: 'Could not save the Score Card as an image.',
+            });
+        });
     })
     .catch((err) => {
-        console.error('Could not save score card image', err);
+        console.error('Could not load html-to-image library', err);
         toast({
             variant: 'destructive',
-            title: 'Save Failed',
-            description: 'Could not save the Score Card as an image.',
+            title: 'Feature not available',
+            description: 'The image saving feature could not be loaded.',
         });
     });
   };
