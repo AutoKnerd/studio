@@ -1,6 +1,6 @@
 
 
-import { isToday, subDays } from 'date-fns';
+import { isToday, subDays, isSameDay } from 'date-fns';
 import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
@@ -354,7 +354,9 @@ export async function getConsultantActivity(userId: string): Promise<LessonLog[]
 
 export async function getDailyLessonLimits(userId: string): Promise<{ recommendedTaken: boolean, otherTaken: boolean }> {
     await simulateNetworkDelay();
-    const todayLogs = lessonLogs.filter(log => log.userId === userId && isToday(log.timestamp));
+    const todayLogs = lessonLogs.filter(log => {
+      return log.userId === userId && isSameDay(log.timestamp, new Date('2024-07-15T12:00:00Z'));
+    });
     
     const recommendedTaken = todayLogs.some(log => log.isRecommended);
     const otherTaken = todayLogs.some(log => !log.isRecommended);
@@ -732,7 +734,7 @@ export async function sendMessage(
 export async function getMessagesForUser(user: User): Promise<Message[]> {
     await simulateNetworkDelay();
     
-    const fourteenDaysAgo = subDays(new Date('2024-07-15T10:00:00Z'), 14);
+    const fourteenDaysAgo = subDays(new Date('2024-07-15T12:00:00Z'), 14);
 
     const userMessages = messages.filter(msg => {
         // Filter out old messages
