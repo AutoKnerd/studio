@@ -39,7 +39,7 @@ function MessageItem({ message }: { message: Message }) {
             <div className="flex-1">
                 <div className="flex items-baseline justify-between">
                     <p className="font-semibold">{message.senderName}</p>
-                    <p className="text-xs text-muted-foreground h-4">
+                    <p className="text-xs text-muted-foreground h-4" suppressHydrationWarning>
                         {relativeTime}
                     </p>
                 </div>
