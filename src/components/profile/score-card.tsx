@@ -86,12 +86,12 @@ export function ScoreCard({ user, activity, badges }: ScoreCardProps) {
         </div>
 
         {/* Avatar */}
-        <div className="flex-grow flex items-center justify-center my-4">
-          <div className="relative w-36 h-36">
+        <div className="flex-grow flex items-center justify-center my-3">
+          <div className="relative w-28 h-28">
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 blur-xl animate-pulse" />
               <Avatar className="relative w-full h-full border-4 border-slate-700">
                   <AvatarImage src={user.avatarUrl} alt={user.name} />
-                  <AvatarFallback className="text-5xl bg-slate-800 text-white">
+                  <AvatarFallback className="text-4xl bg-slate-800 text-white">
                       {user.name.charAt(0)}
                   </AvatarFallback>
               </Avatar>
@@ -100,22 +100,22 @@ export function ScoreCard({ user, activity, badges }: ScoreCardProps) {
         
         {/* User Info */}
         <div className="text-center text-white">
-          <h1 className="text-3xl font-bold tracking-tight">{user.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{user.name}</h1>
           <p className="text-cyan-400 font-medium">{user.role === 'manager' ? 'Sales Manager' : user.role}</p>
           {user.brand && <p className="text-sm text-muted-foreground">{user.brand}</p>}
         </div>
         
-        <Separator className="my-4 bg-cyan-400/20" />
+        <Separator className="my-3 bg-cyan-400/20" />
         
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-y-3 gap-x-4 text-center">
+        <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-center">
             {Object.entries(averageScores).map(([key, value]) => {
                 const Icon = metricIcons[key as keyof typeof metricIcons];
                 const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
                 return (
                     <div key={key} className="flex flex-col items-center">
-                        <Icon className="h-6 w-6 text-muted-foreground" />
-                        <span className="text-xl font-bold text-white">{hasActivity ? `${value}%` : '--'}</span>
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-lg font-bold text-white">{hasActivity ? `${value}%` : '--'}</span>
                         <span className="text-xs text-muted-foreground">{title}</span>
                     </div>
                 );
@@ -125,7 +125,7 @@ export function ScoreCard({ user, activity, badges }: ScoreCardProps) {
         {/* Badges */}
         {badges.length > 0 && (
           <>
-            <Separator className="my-4 bg-cyan-400/20" />
+            <Separator className="my-3 bg-cyan-400/20" />
             <div className="flex flex-wrap gap-2 justify-center">
               {badges.map((badge) => {
                 const Icon = icons[badge.icon as keyof typeof icons] || icons['Badge'];
