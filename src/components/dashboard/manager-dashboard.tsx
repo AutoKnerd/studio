@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge } from '@/lib/definitions';
-import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId } from '@/lib/data';
+import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId, getDailyLessonLimits } from '@/lib/data';
 import { BarChart, BookOpen, CheckCircle, ShieldOff, Smile, Star, Users, PlusCircle, Store, TrendingUp, TrendingDown, Building, MessageSquare, Ear, Handshake, Repeat, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,7 +15,7 @@ import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
 import { Badge as UiBadge } from '../ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '../ui/button';
+import { Button, buttonVariants } from '../ui/button';
 import { CreateLessonForm } from '../lessons/create-lesson-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TeamMemberCard } from './team-member-card';
@@ -102,6 +102,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [isManageUsersOpen, setManageUsersOpen] = useState(false);
   const [isMessageDialogOpen, setMessageDialogOpen] = useState(false);
   const [memberSince, setMemberSince] = useState<string | null>(null);
+  const [lessonLimits, setLessonLimits] = useState({ recommendedTaken: false, otherTaken: false });
 
 
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
@@ -129,13 +130,14 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
 
       setLoading(true);
 
-      const [managerStats, activity, usersToManage, fetchedLessons, fetchedManagerActivity, fetchedBadges] = await Promise.all([
+      const [managerStats, activity, usersToManage, fetchedLessons, fetchedManagerActivity, fetchedBadges, limits] = await Promise.all([
         getManagerStats(dealershipId, user.role),
         getTeamActivity(dealershipId, user.role),
         getManageableUsers(user.userId),
         getLessons(user.role as LessonRole),
         getConsultantActivity(user.userId),
-        getEarnedBadgesByUserId(user.userId)
+        getEarnedBadgesByUserId(user.userId),
+        getDailyLessonLimits(user.userId),
       ]);
       
       setStats(managerStats);
@@ -144,6 +146,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       setLessons(fetchedLessons);
       setManagerActivity(fetchedManagerActivity);
       setManagerBadges(fetchedBadges);
+      setLessonLimits(limits);
       setLoading(false);
   }, [user.userId, user.role]);
 
@@ -319,6 +322,8 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       }
   }
 
+  const noPersonalDevelopmentRoles: UserRole[] = ['Owner', 'Trainer', 'Admin'];
+  const showPersonalDevelopment = !noPersonalDevelopmentRoles.includes(user.role);
   const isSoloManager = teamActivity.length === 0 && selectedDealershipId !== 'all' && !loading;
   const canManage = ['Admin', 'Trainer', 'Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
   const canMessage = ['Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
@@ -350,6 +355,64 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             <BadgeShowcase badges={managerBadges} />
             )}
         </section>
+
+        {showPersonalDevelopment && managerActivity.length > 0 && (
+            <section className="space-y-4">
+                <h2 className="text-xl font-bold text-white">My Development</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="flex flex-col justify-between p-6 bg-slate-900/50 backdrop-blur-md border border-cyan-400/30 shadow-lg shadow-cyan-500/10">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <BookOpen className="h-8 w-8 text-cyan-400" />
+                                <h3 className="text-2xl font-bold text-white">Recommended Lesson</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-4">A daily lesson focused on your area for greatest improvement as a leader.</p>
+                        </div>
+                        {loading ? (
+                            <Skeleton className="h-10 w-full" />
+                        ) : recommendedLesson && !lessonLimits.recommendedTaken ? (
+                            <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`} className={cn("w-full", buttonVariants({ className: "w-full bg-cyan-500/80 hover:bg-cyan-500 text-slate-900 font-bold" }))}>
+                                Start: {recommendedLesson.title}
+                            </Link>
+                        ) : (
+                            <Button variant="outline" disabled className="w-full bg-slate-800/50 border-slate-700">
+                                {recommendedLesson ? 
+                                    <><CheckCircle className="mr-2 h-4 w-4" /> Completed for today</> :
+                                    "No lesson available"
+                                }
+                            </Button>
+                        )}
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>My Personal CX Scores</CardTitle>
+                            <CardDescription>Your performance across completed lessons.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="grid gap-x-8 gap-y-4">
+                        {loading ? (
+                            Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)
+                        ) : managerAverageScores ? (
+                            Object.entries(managerAverageScores).map(([key, value]) => {
+                                const Icon = metricIcons[key as keyof typeof metricIcons];
+                                const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                return (
+                                    <div key={key} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Icon className="h-5 w-5 text-muted-foreground" />
+                                        <span className="text-sm font-medium text-foreground">{title}</span>
+                                    </div>
+                                    <span className="font-bold text-cyan-400">{value}%</span>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <p className="text-muted-foreground col-span-full text-center">No scores available yet.</p>
+                        )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </section>
+        )}
 
       {(['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role) || (dealerships && dealerships.length > 1)) && (
         <Card>
@@ -443,65 +506,6 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                 </CardContent>
             </Card>
 
-            {managerActivity.length > 0 && (
-              <>
-                <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <BookOpen className="h-5 w-5" />
-                        My Recommended Lesson
-                      </CardTitle>
-                      <CardDescription>A lesson focused on your area for greatest improvement.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {loading ? (
-                        <div className="space-y-4">
-                          <Skeleton className="h-16 w-full" />
-                        </div>
-                      ) : recommendedLesson ? (
-                        <Link key={recommendedLesson.lessonId} href={`/lesson/${recommendedLesson.lessonId}`} className="block rounded-lg border p-3 transition-colors hover:bg-muted/50">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">{recommendedLesson.title}</p>
-                              <p className="text-sm text-muted-foreground">Focus on your weakest skill: <span className="font-semibold capitalize">{recommendedLesson.associatedTrait.replace(/([A-Z])/g, ' $1')}</span></p>
-                            </div>
-                            <UiBadge variant="secondary">{recommendedLesson.category}</UiBadge>
-                          </div>
-                        </Link>
-                      ) : (
-                          <p className="text-sm text-muted-foreground">No lessons available for your role.</p>
-                      )}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                    <CardTitle>My Personal CX Scores</CardTitle>
-                    <CardDescription>Your current performance across all completed lessons. Lead by example!</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                    {loading ? (
-                        Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)
-                    ) : managerAverageScores ? (
-                        Object.entries(managerAverageScores).map(([key, value]) => {
-                            const Icon = metricIcons[key as keyof typeof metricIcons];
-                            const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                            return (
-                                <div key={key} className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Icon className="h-5 w-5 text-muted-foreground" />
-                                    <span className="text-sm font-medium text-foreground">{title}</span>
-                                </div>
-                                <span className="font-bold text-cyan-400">{value}%</span>
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <p className="text-muted-foreground col-span-full text-center">No scores available yet.</p>
-                    )}
-                    </CardContent>
-                </Card>
-              </>
-            )}
         </>
       ) : (
         <>
