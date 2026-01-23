@@ -3,13 +3,17 @@
 
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Header } from '@/components/layout/header';
 import { Spinner } from '@/components/ui/spinner';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { UserRole, LessonLog, Badge as BadgeType } from '@/lib/definitions';
 import { getConsultantActivity, getEarnedBadgesByUserId } from '@/lib/data';
 import { ScoreCard } from '@/components/profile/score-card';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import * as htmlToImage from 'html-to-image';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ScoreCardPage() {
   const { user, loading } = useAuth();
@@ -17,6 +21,8 @@ export default function ScoreCardPage() {
   const [activity, setActivity] = useState<LessonLog[]>([]);
   const [badges, setBadges] = useState<BadgeType[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const scoreCardRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,6 +46,31 @@ export default function ScoreCardPage() {
     }
   }, [user]);
 
+  const handleDownload = () => {
+    if (scoreCardRef.current === null) {
+      return;
+    }
+
+    htmlToImage.toPng(scoreCardRef.current, { 
+        cacheBust: true,
+        pixelRatio: 2, // Use higher pixel ratio for better quality on high-res screens
+    })
+    .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = 'autodrive-score-card.png';
+        link.href = dataUrl;
+        link.click();
+    })
+    .catch((err) => {
+        console.error('Could not save score card image', err);
+        toast({
+            variant: 'destructive',
+            title: 'Save Failed',
+            description: 'Could not save the Score Card as an image.',
+        });
+    });
+  };
+
   if (loading || dataLoading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -55,7 +86,11 @@ export default function ScoreCardPage() {
     <div className="flex min-h-screen w-full flex-col">
       <Header />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8">
-        <ScoreCard user={user} activity={activity} badges={badges} />
+        <ScoreCard ref={scoreCardRef} user={user} activity={activity} badges={badges} />
+        <Button onClick={handleDownload} className="mt-4">
+            <Download className="mr-2 h-4 w-4" />
+            Save as Image
+        </Button>
       </main>
       {!isManager && <BottomNav />}
     </div>
