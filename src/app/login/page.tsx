@@ -53,7 +53,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     const roleInfo = tourRoles.find(r => r.value === selectedTourRole);
     try {
-      await login(selectedTourRole, 'password'); // Password can be anything for mock auth
+      await login(selectedTourRole, 'password');
       toast({
         title: 'Welcome to the Tour!',
         description: `You are now exploring as a ${roleInfo?.label}.`,
@@ -65,7 +65,8 @@ export default function LoginPage() {
         title: `Tour Login Failed`,
         description: `Could not start the tour. Please try again.`,
       });
-      setIsSubmitting(false);
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -93,9 +94,10 @@ export default function LoginPage() {
       toast({
         variant: 'destructive',
         title: `${roleInfo?.label} Login Failed`,
-        description: `Could not log in as ${roleInfo?.label.toLowerCase()} user.`,
+        description: `Could not log in as ${roleInfo?.label.toLowerCase()} user. Check credentials or console for errors.`,
       });
-      setIsSubmitting(false);
+    } finally {
+        setIsSubmitting(false);
     }
   }
   

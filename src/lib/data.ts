@@ -1,5 +1,6 @@
 
 
+
 import { isToday, subDays, isSameDay } from 'date-fns';
 import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
 import { allBadges } from './badges';
@@ -11,8 +12,6 @@ import { db } from './firebase'; // Assuming db is your exported Firestore insta
 // --- MOCK DATABASE (to be replaced) ---
 
 // --- HELPER FUNCTIONS ---
-
-const simulateNetworkDelay = () => new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
 
 const usersCollection = collection(db, 'users');
 const dealershipsCollection = collection(db, 'dealerships');
@@ -32,6 +31,76 @@ const getDataById = async <T>(collectionRef: any, id: string): Promise<T | null>
     return docSnap.exists() ? ({ ...docSnap.data(), id: docSnap.id } as T) : null;
 };
 
+// A list of developer and demo emails that can be auto-created.
+const seedUserEmails: Record<string, UserRole> = {
+    // Quick Login
+    'consultant@autodrive.com': 'Sales Consultant',
+    'manager@autodrive.com': 'manager',
+    'service.writer@autodrive.com': 'Service Writer',
+    'service.manager@autodrive.com': 'Service Manager',
+    'finance.manager@autodrive.com': 'Finance Manager',
+    'parts.consultant@autodrive.com': 'Parts Consultant',
+    'parts.manager@autodrive.com': 'Parts Manager',
+    'gm@autodrive.com': 'General Manager',
+    'owner@autodrive.com': 'Owner',
+    'trainer@autoknerd.com': 'Trainer',
+    'admin@autoknerd.com': 'Admin',
+    // Tour Users
+    'consultant.demo@autodrive.com': 'Sales Consultant',
+    'service.writer.demo@autodrive.com': 'Service Writer',
+    'owner.demo@autodrive.com': 'Owner',
+};
+
+async function createSeedUser(email: string, role: UserRole, password: string): Promise<User> {
+    const auth = getAuth();
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const newUserId = userCredential.user.uid;
+
+    const isHq = email.endsWith('@autoknerd.com');
+    const dealershipQuery = query(dealershipsCollection, where("name", "==", isHq ? "AutoKnerd HQ" : "AutoDrive Demo Dealership"));
+    let dealershipId = '';
+    const dSnapshot = await getDocs(dealershipQuery);
+    if(dSnapshot.empty) {
+        const newDealershipRef = doc(dealershipsCollection);
+        dealershipId = newDealershipRef.id;
+        const newDealership: Dealership = {
+            id: dealershipId,
+            name: isHq ? "AutoKnerd HQ" : "AutoDrive Demo Dealership",
+            status: 'active',
+            address: {
+                street: '123 AI Lane',
+                city: 'Cybertown',
+                state: 'CA',
+                zip: '90210'
+            }
+        };
+        await setDoc(newDealershipRef, newDealership);
+    } else {
+        dealershipId = dSnapshot.docs[0].id;
+    }
+
+
+    const name = role.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+    const newUser: User = {
+        userId: newUserId,
+        name: `${name} User`,
+        email: email,
+        role: role,
+        dealershipIds: [dealershipId],
+        avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080',
+        xp: 0,
+        brand: 'Ford',
+        isPrivate: false,
+        isPrivateFromOwner: false,
+        memberSince: new Date().toISOString(),
+        subscriptionStatus: 'active', // Give seed users active subscription
+    };
+
+    await setDoc(doc(usersCollection, newUserId), newUser);
+    return newUser;
+}
+
 
 // AUTH
 export async function authenticateUser(email: string, pass: string): Promise<User | null> {
@@ -40,9 +109,26 @@ export async function authenticateUser(email: string, pass: string): Promise<Use
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
         const user = await getUserById(userCredential.user.uid);
         return user;
-    } catch (error) {
-        console.error("Authentication failed:", error);
-        return null;
+    } catch (error: any) {
+        const roleForEmail = seedUserEmails[email.toLowerCase()];
+        // If it's a known seed user and they don't exist, create them now.
+        if (error.code === 'auth/user-not-found' && roleForEmail) {
+            try {
+                console.log(`Creating seed user: ${email}`);
+                const newUser = await createSeedUser(email.toLowerCase(), roleForEmail, pass);
+                // Sign in again now that the user is created
+                await signInWithEmailAndPassword(auth, email, pass);
+                return newUser;
+            } catch (creationError) {
+                console.error("Seed user creation failed:", creationError);
+                // Rethrow original error to be handled by UI
+                throw error;
+            }
+        }
+        
+        // For other errors, or if it's not a seed user, re-throw.
+        console.error(`Authentication failed for ${email}:`, error.message);
+        throw error;
     }
 }
 
@@ -52,7 +138,6 @@ export async function getUserById(userId: string): Promise<User | null> {
 
 
 export async function findUserByEmail(email: string, requestingUserId: string): Promise<User | null> {
-    await simulateNetworkDelay();
      const q = query(usersCollection, where("email", "==", email.toLowerCase()));
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
