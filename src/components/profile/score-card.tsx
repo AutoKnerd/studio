@@ -91,7 +91,7 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
             <p className="font-bold text-2xl leading-tight">Level {level}</p>
             <p className="text-xs text-muted-foreground">{user.xp.toLocaleString()} XP</p>
           </div>
-           <Logo variant="full" width={146} height={48} className="h-10 w-auto" />
+           <Logo variant="full" width={183} height={61} className="h-12 w-auto" />
         </header>
 
         {/* XP Progress */}
@@ -104,12 +104,12 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
         </div>
 
         {/* Avatar */}
-        <div className="flex-grow flex items-center justify-center my-1">
-          <div className="relative w-20 h-20">
+        <div className="flex-grow flex items-center justify-center my-2">
+          <div className="relative w-28 h-28">
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 blur-lg" />
               <Avatar className="relative w-full h-full border-4 border-slate-700">
                   <AvatarImage src={user.avatarUrl} alt={user.name} crossOrigin="anonymous" />
-                  <AvatarFallback className="text-3xl bg-slate-800 text-white">
+                  <AvatarFallback className="text-5xl bg-slate-800 text-white">
                       {user.name.charAt(0)}
                   </AvatarFallback>
               </Avatar>
@@ -117,9 +117,9 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
         </div>
         
         {/* User Info */}
-        <div className="flex flex-col items-center -mt-1 gap-1">
-            <h1 className="text-xl font-bold tracking-tight text-white whitespace-nowrap">{user.name}</h1>
-            <div className="w-full grid grid-cols-2 items-start gap-x-2">
+        <div className="flex flex-col items-center -mt-2 gap-1">
+            <h1 className="text-2xl font-bold tracking-tight text-white whitespace-nowrap">{user.name}</h1>
+            <div className="w-full grid grid-cols-2 items-start gap-x-2 pt-1">
                 <div className="flex flex-col items-start gap-0 text-xs">
                     <p className="text-cyan-400 font-medium truncate">{user.role === 'manager' ? 'Sales Manager' : user.role}</p>
                     <p className="text-muted-foreground">{user.phone || ''}</p>
@@ -131,10 +131,10 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
             </div>
         </div>
         
-        <Separator className="my-1.5 bg-cyan-400/20" />
+        <Separator className="my-2 bg-cyan-400/20" />
         
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-y-0.5 gap-x-1 text-center">
+        <div className="grid grid-cols-3 gap-y-1 gap-x-2 text-center">
             {Object.entries(averageScores).map(([key, value]) => {
                 const Icon = metricIcons[key as keyof typeof metricIcons];
                 const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
@@ -151,8 +151,8 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
         {/* Badges */}
         {badges.length > 0 && (
           <>
-            <Separator className="my-1.5 bg-cyan-400/20" />
-            <div className="flex flex-wrap gap-1 justify-center">
+            <Separator className="my-2 bg-cyan-400/20" />
+            <div className="flex flex-wrap gap-2 justify-center">
               {badges.map((badge) => {
                 const Icon = icons[badge.icon as keyof typeof icons] || icons['Badge'];
                 return (
