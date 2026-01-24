@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth as useFirebaseAuth } from '@/firebase'; // Using alias to avoid naming conflict
 import { getUserById, authenticateUser } from '@/lib/data';
 import type { User, UserRole } from '@/lib/definitions';
 import { useRouter } from 'next/navigation';
@@ -31,12 +32,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isTouring, setIsTouring] = useState(false);
   const router = useRouter();
+  const auth = useFirebaseAuth();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        // In a real app, you'd fetch the user profile from your backend
-        // For this demo, we'll use our mock data function
         const userProfile = await getUserById(firebaseUser.uid);
         setUser(userProfile);
         setIsTouring(demoUserEmails.includes(userProfile?.email || ''));
@@ -48,19 +48,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   const login = async (email: string, password: string) => {
     const loggedInUser = await authenticateUser(email, password);
     if (loggedInUser) {
-      setUser(loggedInUser);
-      setIsTouring(demoUserEmails.includes(loggedInUser.email));
+      // The onAuthStateChanged listener will handle setting the user
     } else {
       throw new Error("Invalid credentials");
     }
   };
 
   const logout = async () => {
+    await auth.signOut();
     setUser(null);
     setIsTouring(false);
     router.push('/login');
@@ -81,10 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           default:
               return;
       }
-      const tourUser = await authenticateUser(email, 'password');
-      if (tourUser) {
-          setUser(tourUser);
-      }
+      // Re-authenticate as the demo user. The listener will update the state.
+      await authenticateUser(email, 'password');
   }, []);
 
   const value = { user, loading, isTouring, login, logout, setUser, switchTourRole };

@@ -1,16 +1,39 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "your-api-key",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "your-auth-domain",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "your-project-id",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "your-storage-bucket",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "your-messaging-sender-id",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "your-app-id",
-};
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { firebaseConfig } from '@/firebase/config';
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app: FirebaseApp;
+if (!getApps().length) {
+    try {
+        app = initializeApp();
+    } catch (e) {
+        app = initializeApp(firebaseConfig);
+    }
+} else {
+    app = getApp();
+}
+
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-export { app, auth };
+// In a real app, you would use a condition like `process.env.NODE_ENV === 'development'`
+// to connect to emulators only in dev mode.
+// For this demo, we connect if the hostname is localhost.
+if (typeof window !== 'undefined' && window.location.hostname === "localhost") {
+  console.log("Connecting to Firebase Emulators");
+  // It's important to check if emulators are already running to avoid errors.
+  // The `_isInitialized` property is an internal flag we can check.
+  // @ts-ignore
+  if (!auth.emulatorConfig) {
+    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+  }
+  // @ts-ignore
+  if (!db._settings.host) {
+    connectFirestoreEmulator(db, "localhost", 8080);
+  }
+}
+
+
+export { app, auth, db };
