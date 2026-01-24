@@ -9,6 +9,11 @@ export async function createCheckoutSession(userId: string) {
   if (!userId) {
     throw new Error('User ID is required to create a checkout session.');
   }
+  
+  const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
+  if (!priceId) {
+    throw new Error('The Stripe Price ID is not configured. Please set NEXT_PUBLIC_STRIPE_PRICE_ID in your .env file.');
+  }
 
   const user = await getUserById(userId);
   if (!user) {
@@ -32,17 +37,13 @@ export async function createCheckoutSession(userId: string) {
     await updateUser(userId, { stripeCustomerId });
   }
 
-  // This is a placeholder price ID. In a real application, you would create
-  // products and prices in your Stripe dashboard and use their IDs here.
-  const placeholderPriceId = 'price_1PKOEaRxK1aUuF8P2ZtA2bC1'; // Replace with a real price ID from your Stripe dash
-
   try {
      const checkoutSession = await stripe.checkout.sessions.create({
         customer: stripeCustomerId,
         payment_method_types: ['card'],
         line_items: [
             {
-                price: placeholderPriceId,
+                price: priceId,
                 quantity: 1,
             },
         ],
@@ -61,10 +62,8 @@ export async function createCheckoutSession(userId: string) {
     }
   } catch (error) {
     console.error('Stripe Error:', error);
-    // In a real app, you might want to create a product and price if the placeholder doesn't exist.
-    // For this demo, we'll throw an error and ask the user to create one.
     if ((error as any).code === 'resource_missing' && (error as any).param === 'price') {
-         throw new Error(`The placeholder Price ID "${placeholderPriceId}" does not exist in your Stripe account. Please create a new recurring Product in your Stripe Dashboard, add a Price to it, and replace the placeholderPriceId in src/app/actions/stripe.ts with the new Price ID.`);
+         throw new Error(`The Price ID "${priceId}" set in NEXT_PUBLIC_STRIPE_PRICE_ID does not exist in your Stripe account. Please create a new recurring Product in your Stripe Dashboard, add a Price to it, and set its ID in the .env file.`);
     }
     throw new Error('An unexpected error occurred with Stripe.');
   }
