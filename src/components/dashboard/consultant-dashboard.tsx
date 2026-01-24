@@ -270,7 +270,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                             <p className="text-sm text-muted-foreground mb-4">A daily lesson focused on your area for greatest improvement.</p>
                         </div>
                         {recommendedLesson && !lessonLimits.recommendedTaken ? (
-                            <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`} className={cn("w-full", buttonVariants({ className: "w-full bg-cyan-500/80 hover:bg-cyan-500 text-slate-900 font-bold" }))}>
+                            <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`} className={cn("w-full", buttonVariants({ className: "w-full font-bold" }))}>
                                 Start: {recommendedLesson.title}
                             </Link>
                         ) : (

@@ -366,7 +366,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                         {loading ? (
                             <Skeleton className="h-10 w-full" />
                         ) : recommendedLesson && !lessonLimits.recommendedTaken ? (
-                            <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`} className={cn("w-full", buttonVariants({ className: "w-full bg-cyan-500/80 hover:bg-cyan-500 text-slate-900 font-bold" }))}>
+                            <Link href={`/lesson/${recommendedLesson.lessonId}?recommended=true`} className={cn("w-full", buttonVariants({ className: "w-full font-bold" }))}>
                                 Start: {recommendedLesson.title}
                             </Link>
                         ) : (
