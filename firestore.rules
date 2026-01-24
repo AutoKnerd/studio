@@ -164,6 +164,20 @@ service cloud.firestore {
     }
 
     /**
+     * @description Rules for a user's earned badges.
+     * @path /users/{userId}/earnedBadges/{badgeId}
+     * @allow (read) User 'user_abc' can list their own badges.
+     * @allow (create) The system can award badges to a user upon lesson completion.
+     * @deny (update, delete) Users cannot modify or delete their badges after they are awarded.
+     * @principle Enforces ownership for reading and creating badges, while making them immutable.
+     */
+    match /users/{userId}/earnedBadges/{badgeId} {
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update, delete: if false;
+    }
+
+    /**
      * @description Rules for the global, read-only collection of dealerships.
      * @path /dealerships/{dealershipId}
      * @allow (read) Anyone can read dealership information. This is necessary for the initial user registration flow.
