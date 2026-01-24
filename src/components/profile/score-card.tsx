@@ -117,16 +117,21 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
         </div>
         
         {/* User Info */}
-        <div className="flex flex-col text-white -mt-1 gap-0">
-            <div className="flex justify-between items-center text-xs">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center -mt-1 gap-x-2">
+            {/* Left Column */}
+            <div className="flex flex-col items-start gap-0 text-xs">
                 <p className="text-cyan-400 font-medium truncate">{user.role === 'manager' ? 'Sales Manager' : user.role}</p>
-                <p className="text-muted-foreground truncate">{dealershipName}</p>
-            </div>
-            <div className="text-center my-0.5">
-                <h1 className="text-xl font-bold tracking-tight">{user.name}</h1>
-            </div>
-            <div className="flex justify-between items-center text-xs">
                 <p className="text-muted-foreground">{user.phone || ''}</p>
+            </div>
+
+            {/* Center Name */}
+            <div className="text-center">
+                <h1 className="text-xl font-bold tracking-tight text-white whitespace-nowrap">{user.name}</h1>
+            </div>
+
+            {/* Right Column */}
+            <div className="flex flex-col items-end gap-0 text-xs">
+                <p className="text-muted-foreground truncate">{dealershipName}</p>
                 <p className="text-muted-foreground">{user.brand || ''}</p>
             </div>
         </div>
