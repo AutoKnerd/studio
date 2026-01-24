@@ -94,7 +94,7 @@ function RegisterFormComponent() {
     if (!token || !invitation) return;
     setIsSubmitting(true);
     try {
-      await redeemInvitation(token, data.name, data.email, data.brand);
+      await redeemInvitation(token, data.name, data.email, data.brand, data.password);
       await login(data.email, data.password);
       
       toast({

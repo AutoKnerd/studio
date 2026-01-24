@@ -82,7 +82,7 @@ export async function findUserByEmail(email: string, requestingUserId: string): 
     return null;
 }
 
-export async function redeemInvitation(token: string, name: string, email: string, brand: string): Promise<User> {
+export async function redeemInvitation(token: string, name: string, email: string, brand: string, password: string): Promise<User> {
     const auth = getAuth();
     const invitation = await getDataById<EmailInvitation>(invitationsCollection, token);
     
@@ -96,8 +96,7 @@ export async function redeemInvitation(token: string, name: string, email: strin
         throw new Error("An account with this email already exists.");
     }
     
-    // In a real app, you would use a secure password, but for this demo we use the email
-    const userCredential = await createUserWithEmailAndPassword(auth, email, email);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUserId = userCredential.user.uid;
 
     const newUser: User = {
