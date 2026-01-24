@@ -229,27 +229,22 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   };
 
   const managerAverageScores = useMemo(() => {
-      if (!managerActivity.length) return null;
+      if (!managerActivity.length) {
+        return {
+            empathy: 75, listening: 62, trust: 80, followUp: 70, closing: 68, relationshipBuilding: 85
+        };
+      }
 
       const total = managerActivity.reduce((acc, log) => {
-          acc.empathy += log.empathy;
-          acc.listening += log.listening;
-          acc.trust += log.trust;
-          acc.followUp += log.followUp;
-          acc.closing += log.closing;
-          acc.relationshipBuilding += log.relationshipBuilding;
-          return acc;
+        Object.keys(acc).forEach(key => acc[key as CxTrait] += log[key as CxTrait]);
+        return acc;
       }, { empathy: 0, listening: 0, trust: 0, followUp: 0, closing: 0, relationshipBuilding: 0 });
 
       const count = managerActivity.length;
-      return {
-          empathy: Math.round(total.empathy / count),
-          listening: Math.round(total.listening / count),
-          trust: Math.round(total.trust / count),
-          followUp: Math.round(total.followUp / count),
-          closing: Math.round(total.closing / count),
-          relationshipBuilding: Math.round(total.relationshipBuilding / count),
-      };
+      
+      return Object.fromEntries(
+          Object.entries(total).map(([key, value]) => [key, Math.round(value / count)])
+      ) as typeof total;
   }, [managerActivity]);
 
   const recommendedLesson = useMemo(() => {
@@ -356,7 +351,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             )}
         </section>
 
-        {showPersonalDevelopment && managerActivity.length > 0 && (
+        {showPersonalDevelopment && (
             <section className="space-y-4">
                 <h2 className="text-xl font-bold text-white">My Development</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
