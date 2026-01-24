@@ -1,3 +1,4 @@
+
 /**
  * This ruleset enforces a strict security model based on user ownership and role-based access.
  *
@@ -19,7 +20,7 @@
  * - Read-Only Global Data: The `/lessons` and `/dealerships` collections are configured to be read-only for clients.
  *   This assumes that this data is managed by a trusted backend service or an admin SDK, which is a secure pattern
  *   for foundational application data.
- * - Immutable Fields: Critical relational fields like a user's ID, role, and dealershipId are made immutable after
+ * - Immutable Fields: Critical relational fields like a user's ID and role are made immutable after
  *   creation to maintain system integrity and prevent users from escalating their own privileges.
  *
  * Denormalization for Authorization:
@@ -63,22 +64,21 @@ service cloud.firestore {
     }
 
     /**
-     * Validates that a new User document has an 'id' field matching the document's ID (the user's UID).
+     * Validates that a new User document has a 'userId' field matching the document's ID (the user's UID).
      * This enforces relational integrity from the moment of creation.
      */
     function isCreatingOwnUserDocument(userId) {
-      return request.resource.data.id == userId;
+      return request.resource.data.userId == userId;
     }
 
     /**
      * Validates that critical, identifying fields on a User document cannot be changed after creation.
-     * Prevents users from changing their own ID, role, or assigned dealership.
+     * Prevents users from changing their own ID or role.
      */
     function isUpdatingOwnUserDocument() {
-      let isIdImmutable = request.resource.data.id == resource.data.id;
+      let isUserIdImmutable = request.resource.data.userId == resource.data.userId;
       let isRoleImmutable = request.resource.data.role == resource.data.role;
-      let isDealershipIdImmutable = request.resource.data.dealershipId == resource.data.dealershipId;
-      return isIdImmutable && isRoleImmutable && isDealershipIdImmutable;
+      return isUserIdImmutable && isRoleImmutable;
     }
 
     /**
