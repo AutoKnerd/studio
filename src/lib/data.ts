@@ -5,7 +5,7 @@ import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCate
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
 import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, writeBatch, query, where, Timestamp } from 'firebase/firestore';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { db } from './firebase'; // Assuming db is your exported Firestore instance
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -49,18 +49,6 @@ const getDataById = async <T>(collectionRef: any, id: string): Promise<T | null>
 
 
 // AUTH
-export async function authenticateUser(email: string, pass: string): Promise<User | null> {
-    const auth = getAuth();
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-        const user = await getUserById(userCredential.user.uid);
-        return user;
-    } catch (error: any) {
-        console.error(`Authentication failed for ${email}:`, error.message);
-        throw error;
-    }
-}
-
 export async function getUserById(userId: string): Promise<User | null> {
     return getDataById<User>(usersCollection, userId);
 }
