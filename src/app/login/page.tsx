@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { UserRole } from '@/lib/definitions';
+import Link from 'next/link';
 
 const quickLoginRoles = [
   { value: 'consultant@autodrive.com', label: 'Sales Consultant' },
@@ -154,6 +155,17 @@ export default function LoginPage() {
             </Select>
             <Button type="button" variant="outline" className="w-full" onClick={handleQuickLogin} disabled={isSubmitting || !selectedQuickLogin}>
               {isSubmitting ? <Spinner size="sm" /> : 'Quick Login'}
+            </Button>
+        </div>
+        
+        <div className="relative mt-8 w-full">
+            <Separator />
+        </div>
+        
+        <div className="mt-6 w-full space-y-2">
+            <p className="text-center text-sm text-muted-foreground">Learn more about AutoDrive</p>
+            <Button asChild variant="secondary" className="w-full">
+                <Link href="/about">About The App</Link>
             </Button>
         </div>
       </div>
