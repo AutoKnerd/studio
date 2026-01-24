@@ -157,8 +157,8 @@ service cloud.firestore {
      * @principle Enforces document ownership for all operations within a user-specific subcollection.
      */
     match /users/{userId}/lessonLogs/{lessonLogId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) || isManager();
+      allow list: if isOwner(userId) || isManager();
       allow create: if isOwner(userId) && isCreatingOwnLessonLog(userId);
       allow update: if isExistingOwner(userId) && isUpdatingOwnLessonLog();
       allow delete: if isExistingOwner(userId);
