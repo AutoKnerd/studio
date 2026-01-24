@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,7 +34,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { login, user, loading } = useAuth();
+  const { login } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<LoginFormValues>({
@@ -45,29 +45,22 @@ export function LoginForm() {
     },
   });
 
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/');
-    }
-  }, [user, loading, router]);
-
-
   async function onSubmit(data: LoginFormValues) {
     setIsSubmitting(true);
     try {
       await login(data.email, data.password);
       toast({
         title: 'Login Successful',
-        description: 'Welcome back!',
+        description: 'Welcome back! Redirecting...',
       });
+      router.push('/');
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
         description: (error as Error).message || 'Invalid email or password. Please try again.',
       });
-    } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   }
 
