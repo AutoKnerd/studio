@@ -1,0 +1,165 @@
+/**
+ * This ruleset enforces a strict security model based on user ownership and role-based access.
+ *
+ * Core Philosophy:
+ * The primary security principle is that users have complete control over their own data, but cannot access, list,
+ * or modify the data of other users. Global, application-wide data (like lessons and dealerships) is made available
+ * on a read-only basis to all authenticated users, with write operations restricted to prevent client-side tampering.
+ *
+ * Data Structure:
+ * - /users/{userId}: Each user has a profile document. This path is the root for all user-specific data.
+ * - /users/{userId}/lessonLogs/{lessonLogId}: A user's private lesson history is nested under their document.
+ * - /lessons/{lessonId}: A top-level collection for global lesson content, readable by all.
+ * - /dealerships/{dealershipId}: A top-level collection for dealership information, readable by all.
+ *
+ * Key Security Decisions:
+ * - User Isolation: Listing users is explicitly disallowed to protect user privacy.
+ * - Subcollection Ownership: By nesting `lessonLogs` under `/users/{userId}`, ownership is enforced by the path,
+ *   making rules simple, secure, and performant for list queries.
+ * - Read-Only Global Data: The `/lessons` and `/dealerships` collections are configured to be read-only for clients.
+ *   This assumes that this data is managed by a trusted backend service or admin SDK, which is a secure pattern
+ *   for foundational application data.
+ * - Immutable Fields: Critical relational fields like a user's ID, role, and dealershipId are made immutable after
+ *   creation to maintain system integrity and prevent users from escalating their own privileges.
+ *
+ * Denormalization for Authorization:
+ * The security model relies on path-based authorization for user-owned data. For example, a rule for
+ * `/users/{userId}/lessonLogs/{lessonLogId}` simply checks `isOwner(userId)`, which is fast and efficient.
+ * On creation, a `userId` field is required within the `lessonLog` document itself to ensure the data is consistent
+ * with the path, preventing data misattribution.
+ *
+ * Structural Segregation:
+ * Private, user-specific data (`lessonLogs`) is structurally separated from public, global data (`lessons`).
+ * This segregation is more secure and performant than using a single collection with flags, especially for
+ * list operations, as it prevents accidental data leakage.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper Functions
+    
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the foundation of the user-ownership model.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * For update/delete operations, checks if the document exists AND the user is the owner.
+     * Prevents modifying or deleting non-existent documents.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Validates that a new User document has an 'id' field matching the document's ID (the user's UID).
+     * This enforces relational integrity from the moment of creation.
+     */
+    function isCreatingOwnUserDocument(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * Validates that critical, identifying fields on a User document cannot be changed after creation.
+     * Prevents users from changing their own ID, role, or assigned dealership.
+     */
+    function isUpdatingOwnUserDocument() {
+      let isIdImmutable = request.resource.data.id == resource.data.id;
+      let isRoleImmutable = request.resource.data.role == resource.data.role;
+      let isDealershipIdImmutable = request.resource.data.dealershipId == resource.data.dealershipId;
+      return isIdImmutable && isRoleImmutable && isDealershipIdImmutable;
+    }
+
+    /**
+     * Validates that a new LessonLog document has a 'userId' field matching the user in the path.
+     * Enforces the ownership link between the user and their log entry.
+     */
+    function isCreatingOwnLessonLog(userId) {
+      return request.resource.data.userId == userId;
+    }
+    
+    /**
+     * Validates that the ownership link ('userId') on a LessonLog cannot be changed.
+     */
+    function isUpdatingOwnLessonLog() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    /**
+     * @description Rules for a user's own profile document.
+     * @path /users/{userId}
+     * @allow (get) An authenticated user 'user_abc' can read their own profile at /users/user_abc.
+     * @allow (create) An authenticated user 'user_abc' can create their own profile at /users/user_abc.
+     * @deny (list) An authenticated user 'user_abc' cannot list all documents in the /users collection.
+     * @deny (update) An authenticated user 'user_abc' cannot update the profile of 'user_xyz'.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && isCreatingOwnUserDocument(userId);
+      allow update: if isExistingOwner(userId) && isUpdatingOwnUserDocument();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the global, read-only collection of lessons.
+     * @path /lessons/{lessonId}
+     * @allow (get) Any authenticated user can read a lesson document.
+     * @allow (list) Any authenticated user can list all available lessons.
+     * @deny (create) No client is allowed to create, update, or delete global lessons.
+     * @principle Protects global application data from being modified by clients. Assumes writes are handled by a trusted admin environment.
+     */
+    match /lessons/{lessonId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Rules for a user's private lesson logs.
+     * @path /users/{userId}/lessonLogs/{lessonLogId}
+     * @allow (list) User 'user_abc' can list all documents in their own /users/user_abc/lessonLogs subcollection.
+     * @allow (create) User 'user_abc' can create a new log in /users/user_abc/lessonLogs.
+     * @deny (get) User 'user_abc' cannot read a log from /users/user_xyz/lessonLogs/{logId}.
+     * @deny (list) User 'user_abc' cannot list logs from /users/user_xyz/lessonLogs.
+     * @principle Enforces document ownership for all operations within a user-specific subcollection.
+     */
+    match /users/{userId}/lessonLogs/{lessonLogId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isCreatingOwnLessonLog(userId);
+      allow update: if isExistingOwner(userId) && isUpdatingOwnLessonLog();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the global, read-only collection of dealerships.
+     * @path /dealerships/{dealershipId}
+     * @allow (get) Any authenticated user can read a dealership's information.
+     * @allow (list) Any authenticated user can list all dealerships.
+     * @deny (create) No client is allowed to create, update, or delete dealership data.
+     * @principle Protects global application data from being modified by clients. Assumes writes are handled by a trusted admin environment.
+     */
+    match /dealerships/{dealershipId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
