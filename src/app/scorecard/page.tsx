@@ -24,6 +24,11 @@ export default function ScoreCardPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const scoreCardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -130,13 +135,15 @@ END:VCARD`;
                     Save as Image
                 </Button>
             </div>
-            <div className="hidden lg:flex flex-col items-center gap-4 text-center">
-                <div className="bg-white p-4 rounded-lg border-4 border-cyan-400/50">
-                    <QRCode value={vCardData} size={192} />
-                </div>
-                <h3 className="font-bold text-lg">Scan to Add Contact</h3>
-                <p className="text-sm text-muted-foreground max-w-xs">Open your phone's camera and point it at the QR code to save {user.name}'s contact information.</p>
-            </div>
+            {isClient && (
+              <div className="hidden lg:flex flex-col items-center gap-4 text-center">
+                  <div className="bg-white p-4 rounded-lg border-4 border-cyan-400/50">
+                      <QRCode value={vCardData} size={192} />
+                  </div>
+                  <h3 className="font-bold text-lg">Scan to Add Contact</h3>
+                  <p className="text-sm text-muted-foreground max-w-xs">Open your phone's camera and point it at the QR code to save {user.name}'s contact information.</p>
+              </div>
+            )}
         </div>
       </main>
       {!isManager && <BottomNav />}
