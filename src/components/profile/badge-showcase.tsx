@@ -24,7 +24,7 @@ export function BadgeShowcase({ badges, className }: BadgeShowcaseProps) {
     return (
       <Card className={cn(className)}>
         <CardHeader>
-          <CardTitle>My Badges</CardTitle>
+          <CardTitle>Badges</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">You haven't earned any badges yet. Keep completing lessons to unlock them!</p>
@@ -36,7 +36,7 @@ export function BadgeShowcase({ badges, className }: BadgeShowcaseProps) {
   return (
     <Card className={cn(className)}>
       <CardHeader>
-        <CardTitle>My Badges</CardTitle>
+        <CardTitle>Badges</CardTitle>
         <CardDescription>Your collection of earned achievements. Click a badge to see its details.</CardDescription>
       </CardHeader>
       <CardContent>
