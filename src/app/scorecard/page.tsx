@@ -7,8 +7,8 @@ import { useEffect, useState, useRef } from 'react';
 import { Header } from '@/components/layout/header';
 import { Spinner } from '@/components/ui/spinner';
 import { BottomNav } from '@/components/layout/bottom-nav';
-import { UserRole, LessonLog, Badge as BadgeType } from '@/lib/definitions';
-import { getConsultantActivity, getEarnedBadgesByUserId } from '@/lib/data';
+import { UserRole, LessonLog, Badge as BadgeType, Dealership } from '@/lib/definitions';
+import { getConsultantActivity, getEarnedBadgesByUserId, getDealerships } from '@/lib/data';
 import { ScoreCard } from '@/components/profile/score-card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
@@ -19,6 +19,7 @@ export default function ScoreCardPage() {
   const router = useRouter();
   const [activity, setActivity] = useState<LessonLog[]>([]);
   const [badges, setBadges] = useState<BadgeType[]>([]);
+  const [dealerships, setDealerships] = useState<Dealership[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const scoreCardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -33,12 +34,14 @@ export default function ScoreCardPage() {
     if (user) {
       async function fetchData() {
         setDataLoading(true);
-        const [fetchedActivity, fetchedBadges] = await Promise.all([
+        const [fetchedActivity, fetchedBadges, fetchedDealerships] = await Promise.all([
           getConsultantActivity(user!.userId),
           getEarnedBadgesByUserId(user!.userId),
+          getDealerships(),
         ]);
         setActivity(fetchedActivity);
         setBadges(fetchedBadges);
+        setDealerships(fetchedDealerships);
         setDataLoading(false);
       }
       fetchData();
@@ -96,7 +99,7 @@ export default function ScoreCardPage() {
     <div className="flex min-h-screen w-full flex-col">
       <Header />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8">
-        <ScoreCard ref={scoreCardRef} user={user} activity={activity} badges={badges} />
+        <ScoreCard ref={scoreCardRef} user={user} activity={activity} badges={badges} dealerships={dealerships} />
         <Button onClick={handleDownload} className="mt-4">
             <Download className="mr-2 h-4 w-4" />
             Save as Image

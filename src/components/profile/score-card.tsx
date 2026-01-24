@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useMemo } from 'react';
-import type { User, LessonLog, Badge as BadgeType, CxTrait } from '@/lib/definitions';
+import type { User, LessonLog, Badge as BadgeType, CxTrait, Dealership } from '@/lib/definitions';
 import { calculateLevel } from '@/lib/xp';
 import * as icons from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -18,6 +18,7 @@ interface ScoreCardProps {
   user: User;
   activity: LessonLog[];
   badges: BadgeType[];
+  dealerships: Dealership[];
 }
 
 const metricIcons: Record<CxTrait, icons.LucideIcon> = {
@@ -29,9 +30,22 @@ const metricIcons: Record<CxTrait, icons.LucideIcon> = {
   relationshipBuilding: icons.Users,
 };
 
-export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ user, activity, badges }, ref) => {
+export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ user, activity, badges, dealerships }, ref) => {
   const { level, levelXp, nextLevelXp, progress } = calculateLevel(user.xp);
   const hasActivity = activity.length > 0;
+
+  const dealershipName = useMemo(() => {
+    if (!dealerships || dealerships.length === 0) return '';
+    
+    const userDealershipId = user.dealershipIds?.[0] || user.selfDeclaredDealershipId;
+
+    if (userDealershipId) {
+        const dealership = dealerships.find(d => d.id === userDealershipId);
+        return dealership?.name || '';
+    }
+    
+    return '';
+  }, [user, dealerships]);
 
   const averageScores = useMemo(() => {
     if (!hasActivity) {
@@ -74,10 +88,10 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
         {/* Header */}
         <header className="flex items-center justify-between text-white">
           <div className="text-left">
-            <p className="font-bold text-2xl">Level {level}</p>
+            <p className="font-bold text-2xl leading-tight">Level {level}</p>
             <p className="text-xs text-muted-foreground">{user.xp.toLocaleString()} XP</p>
           </div>
-          <Logo variant="full" width={144} height={48} />
+           <Logo variant="full" width={146} height={48} className="h-10 w-auto" />
         </header>
 
         {/* XP Progress */}
@@ -103,11 +117,18 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
         </div>
         
         {/* User Info */}
-        <div className="text-center text-white -mt-1">
-          <h1 className="text-xl font-bold tracking-tight">{user.name}</h1>
-          <p className="text-sm text-cyan-400 font-medium">{user.role === 'manager' ? 'Sales Manager' : user.role}</p>
-          {user.brand && <p className="text-xs text-muted-foreground">{user.brand}</p>}
-          {user.phone && <p className="text-xs text-muted-foreground">{user.phone}</p>}
+        <div className="flex flex-col text-white -mt-1 gap-0">
+            <div className="flex justify-between items-center text-xs">
+                <p className="text-cyan-400 font-medium truncate">{user.role === 'manager' ? 'Sales Manager' : user.role}</p>
+                <p className="text-muted-foreground truncate">{dealershipName}</p>
+            </div>
+            <div className="text-center my-0.5">
+                <h1 className="text-xl font-bold tracking-tight">{user.name}</h1>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+                <p className="text-muted-foreground">{user.phone || ''}</p>
+                <p className="text-muted-foreground">{user.brand || ''}</p>
+            </div>
         </div>
         
         <Separator className="my-1.5 bg-cyan-400/20" />
