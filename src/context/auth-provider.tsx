@@ -25,6 +25,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const demoUserEmails = [
     'consultant.demo@autodrive.com',
     'service.writer.demo@autodrive.com',
+    'manager.demo@autodrive.com',
     'owner.demo@autodrive.com',
 ];
 
@@ -92,6 +93,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               break;
           case 'Service Writer':
               email = 'service.writer.demo@autodrive.com';
+              break;
+          case 'manager':
+              email = 'manager.demo@autodrive.com';
               break;
           case 'Owner':
               email = 'owner.demo@autodrive.com';

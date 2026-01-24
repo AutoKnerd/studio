@@ -33,6 +33,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTouring, setIsTouring] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
   const { toast } = useToast();
@@ -63,6 +64,25 @@ export function LoginForm() {
       setIsSubmitting(false);
     }
   }
+  
+  const handleStartTour = async () => {
+    setIsTouring(true);
+    try {
+        await login('consultant.demo@autodrive.com', 'readyplayer1');
+        toast({
+            title: 'Tour Started!',
+            description: "You're now viewing as a Sales Consultant.",
+        });
+        router.push('/');
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Tour Failed',
+            description: (error as Error).message || 'Could not start the tour. Please try again.',
+        });
+        setIsTouring(false);
+    }
+  };
 
   return (
     <Card className="bg-card/80 backdrop-blur-sm">
@@ -100,11 +120,26 @@ export function LoginForm() {
             />
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || isTouring}>
               {isSubmitting ? <Spinner size="sm" /> : 'Sign In'}
             </Button>
             
-             <p className="pt-2 text-center text-sm text-muted-foreground">
+            <div className="relative w-full">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                        Or
+                    </span>
+                </div>
+            </div>
+
+            <Button variant="outline" className="w-full" onClick={handleStartTour} disabled={isSubmitting || isTouring}>
+                {isTouring ? <Spinner size="sm" /> : 'Take a Guided Tour'}
+            </Button>
+
+            <p className="pt-2 text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
               <Link
                 href="/register"

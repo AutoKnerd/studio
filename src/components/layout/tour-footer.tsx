@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 const tourRoles: { label: string; value: UserRole }[] = [
   { label: 'Sales Consultant', value: 'Sales Consultant' },
   { label: 'Service Writer', value: 'Service Writer' },
+  { label: 'Sales Manager', value: 'manager' },
   { label: 'Owner', value: 'Owner' },
 ];
 
