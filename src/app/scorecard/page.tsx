@@ -136,7 +136,7 @@ END:VCARD`;
                 </Button>
             </div>
             {isClient && (
-              <div className="hidden lg:flex flex-col items-center gap-4 text-center">
+              <div className="flex flex-col items-center gap-4 text-center">
                   <div className="bg-white p-4 rounded-lg border-4 border-cyan-400/50">
                       <QRCode value={vCardData} size={192} />
                   </div>
