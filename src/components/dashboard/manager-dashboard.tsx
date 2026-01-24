@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge } from '@/lib/definitions';
+import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge, UserRole } from '@/lib/definitions';
 import { getManagerStats, getTeamActivity, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId, getDailyLessonLimits } from '@/lib/data';
 import { BarChart, BookOpen, CheckCircle, ShieldOff, Smile, Star, Users, PlusCircle, Store, TrendingUp, TrendingDown, Building, MessageSquare, Ear, Handshake, Repeat, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,9 @@ import { BadgeShowcase } from '../profile/badge-showcase';
 import { ManageDealershipForm } from '../admin/ManageDealershipForm';
 import { SendMessageForm } from '../messenger/send-message-form';
 import { UserNav } from '../layout/user-nav';
+import { useAuth } from '@/hooks/use-auth';
+import { allRoles } from '@/lib/definitions';
+
 
 interface ManagerDashboardProps {
   user: User;
@@ -83,6 +86,7 @@ function LevelDisplay({ xp }: { xp: number }) {
 }
 
 export function ManagerDashboard({ user }: ManagerDashboardProps) {
+  const { originalUser, setUser } = useAuth();
   const [stats, setStats] = useState<{ totalLessons: number; avgScores: Record<CxTrait, number> | null } | null>(null);
   const [teamActivity, setTeamActivity] = useState<TeamMemberStats[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -102,6 +106,14 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [selectedDealershipId, setSelectedDealershipId] = useState<string | null>(null);
   const [allDealershipStats, setAllDealershipStats] = useState<Record<string, { bestStat: DealershipInsight | null, watchStat: DealershipInsight | null }>>({});
   const router = useRouter();
+
+  const isDeveloper = originalUser?.role === 'Developer';
+
+  const handleSwitchRole = (newRole: UserRole) => {
+    if (originalUser) {
+        setUser({ ...originalUser, role: newRole });
+    }
+  };
 
   const teamContext = useMemo(() => {
     switch (user.role) {
@@ -146,9 +158,9 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
         setLoading(true);
         let initialDealerships: Dealership[];
 
-        if (['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) {
+        if (['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) {
              initialDealerships = await getDealerships(user);
-             if (user.role === 'Admin') {
+             if (user.role === 'Admin' || user.role === 'Developer') {
                 setAllDealershipsForAdmin(initialDealerships);
              }
         } else {
@@ -157,19 +169,19 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             );
             initialDealerships = managedDealerships.filter((d): d is Dealership => d !== null);
         }
-        setDealerships(initialDealerships.filter(d => user.role === 'Admin' ? true : d.status !== 'deactivated'));
+        setDealerships(initialDealerships.filter(d => ['Admin', 'Developer'].includes(user.role) ? true : d.status !== 'deactivated'));
         
         let currentSelectedId = selectedDealershipId;
 
         if (currentSelectedId === null) {
-            if (['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) {
+            if (['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) {
                 currentSelectedId = 'all';
             } else if (initialDealerships.length > 0) {
                 currentSelectedId = initialDealerships[0].id;
             }
         }
        
-        if (currentSelectedId === 'all' && ['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) {
+        if (currentSelectedId === 'all' && ['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) {
             const statsPromises = initialDealerships.map(d => getManagerStats(d.id, user.role));
             const results = await Promise.all(statsPromises);
             
@@ -254,7 +266,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   }, [loading, lessons, managerAverageScores]);
 
   const statDescription = useMemo(() => {
-    if (['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) {
+    if (['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) {
       const dealershipName = dealerships.find(d => d.id === selectedDealershipId)?.name;
       return selectedDealershipId === 'all' ? 'Across all dealerships' : `For ${dealershipName}`;
     }
@@ -284,14 +296,14 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   }, [stats]);
   
   async function handleUserManaged() {
-    if (['Admin', 'Trainer'].includes(user.role)) {
+    if (['Admin', 'Trainer', 'Developer'].includes(user.role)) {
         const fetchedDealerships = await getDealerships(user);
-        if (user.role === 'Admin') {
+        if (['Admin', 'Developer'].includes(user.role)) {
             setAllDealershipsForAdmin(fetchedDealerships);
         }
-        setDealerships(fetchedDealerships.filter(d => user.role === 'Admin' ? true : d.status !== 'deactivated'));
+        setDealerships(fetchedDealerships.filter(d => ['Admin', 'Developer'].includes(user.role) ? true : d.status !== 'deactivated'));
     }
-    if (!['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role)) {
+    if (!['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) {
         setManageUsersOpen(false);
     }
     fetchData(selectedDealershipId);
@@ -309,9 +321,9 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   }
 
   const noPersonalDevelopmentRoles: UserRole[] = ['Owner', 'Trainer', 'Admin'];
-  const showPersonalDevelopment = !noPersonalDevelopmentRoles.includes(user.role);
+  const showPersonalDevelopment = !noPersonalDevelopmentRoles.includes(user.role) && !isDeveloper;
   const isSoloManager = teamActivity.length === 0 && selectedDealershipId !== 'all' && !loading;
-  const canManage = ['Admin', 'Trainer', 'Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
+  const canManage = ['Admin', 'Trainer', 'Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager', 'Developer'].includes(user.role);
   const canMessage = ['Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
 
   return (
@@ -333,6 +345,32 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             </div>
             )}
       </section>
+
+      {isDeveloper && (
+        <Card className="border-cyan-400/50">
+          <CardHeader>
+            <CardTitle>Developer Tools</CardTitle>
+            <CardDescription>
+              As a developer, you can view the application from the perspective of any user role.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center gap-4">
+            <span className="text-sm font-medium">Viewing as:</span>
+            <Select onValueChange={(role) => handleSwitchRole(role as UserRole)} value={user.role}>
+              <SelectTrigger className="w-[240px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {allRoles.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {role === 'manager' ? 'Sales Manager' : role}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
 
         <section>
             {loading ? (
@@ -400,7 +438,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             </section>
         )}
 
-      {(['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role) || (dealerships && dealerships.length > 1)) && (
+      {(['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role) || (dealerships && dealerships.length > 1)) && (
         <Card>
             <CardHeader>
                 <CardTitle>Dealership Overview</CardTitle>
@@ -412,7 +450,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                         <SelectValue placeholder="Select a dealership" />
                     </SelectTrigger>
                     <SelectContent>
-                        {['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role) && <SelectItem value="all">All Dealerships</SelectItem>}
+                        {['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role) && <SelectItem value="all">All Dealerships</SelectItem>}
                         {dealerships.map(d => (
                             <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                         ))}
@@ -452,10 +490,10 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                 </DialogHeader>
                                 <ScrollArea className="max-h-[70vh] p-1">
                                     <Tabs defaultValue="assign" className="pt-4">
-                                        <TabsList className={`grid w-full ${user.role === 'Admin' ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                                        <TabsList className={`grid w-full ${['Admin', 'Developer'].includes(user.role) ? 'grid-cols-3' : 'grid-cols-1'}`}>
                                             <TabsTrigger value="assign">Assign Existing</TabsTrigger>
-                                            {user.role === 'Admin' && <TabsTrigger value="remove" className="text-destructive">Remove User</TabsTrigger>}
-                                            {user.role === 'Admin' && <TabsTrigger value="dealerships">Dealerships</TabsTrigger>}
+                                            {['Admin', 'Developer'].includes(user.role) && <TabsTrigger value="remove" className="text-destructive">Remove User</TabsTrigger>}
+                                            {['Admin', 'Developer'].includes(user.role) && <TabsTrigger value="dealerships">Dealerships</TabsTrigger>}
                                         </TabsList>
                                         <TabsContent value="assign" className="pt-2">
                                             <AssignUserForm 
@@ -464,7 +502,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                                 onUserAssigned={handleUserManaged} 
                                             />
                                         </TabsContent>
-                                        {user.role === 'Admin' && (
+                                        {['Admin', 'Developer'].includes(user.role) && (
                                             <TabsContent value="remove" className="pt-2">
                                                 <RemoveUserForm 
                                                     manageableUsers={manageableUsers}
@@ -472,7 +510,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                                 />
                                             </TabsContent>
                                         )}
-                                        {user.role === 'Admin' && (
+                                        {['Admin', 'Developer'].includes(user.role) && (
                                             <TabsContent value="dealerships" className="pt-2">
                                                 <ManageDealershipForm 
                                                     dealerships={allDealershipsForAdmin}
@@ -571,10 +609,10 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                       </DialogHeader>
                                       <ScrollArea className="max-h-[70vh] p-1">
                                           <Tabs defaultValue="assign" className="pt-4">
-                                              <TabsList className={`grid w-full ${user.role === 'Admin' ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                                              <TabsList className={`grid w-full ${['Admin', 'Developer'].includes(user.role) ? 'grid-cols-3' : 'grid-cols-1'}`}>
                                                   <TabsTrigger value="assign">Assign Existing</TabsTrigger>
-                                                  {user.role === 'Admin' && <TabsTrigger value="remove" className="text-destructive">Remove User</TabsTrigger>}
-                                                  {user.role === 'Admin' && <TabsTrigger value="dealerships">Dealerships</TabsTrigger>}
+                                                  {['Admin', 'Developer'].includes(user.role) && <TabsTrigger value="remove" className="text-destructive">Remove User</TabsTrigger>}
+                                                  {['Admin', 'Developer'].includes(user.role) && <TabsTrigger value="dealerships">Dealerships</TabsTrigger>}
                                               </TabsList>
                                               <TabsContent value="assign" className="pt-2">
                                                   <AssignUserForm 
@@ -583,7 +621,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                                       onUserAssigned={handleUserManaged} 
                                                   />
                                               </TabsContent>
-                                              {user.role === 'Admin' && (
+                                              {['Admin', 'Developer'].includes(user.role) && (
                                                   <TabsContent value="remove" className="pt-2">
                                                       <RemoveUserForm 
                                                           manageableUsers={manageableUsers}
@@ -591,7 +629,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                                       />
                                                   </TabsContent>
                                               )}
-                                              {user.role === 'Admin' && (
+                                              {['Admin', 'Developer'].includes(user.role) && (
                                                   <TabsContent value="dealerships" className="pt-2">
                                                       <ManageDealershipForm 
                                                           dealerships={allDealershipsForAdmin}
