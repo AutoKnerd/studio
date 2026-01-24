@@ -19,7 +19,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, User as UserIcon, MessageSquare, CreditCard } from 'lucide-react';
+import { LogOut, User as UserIcon, MessageSquare, CreditCard, Undo2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 function MessageItem({ message }: { message: Message }) {
@@ -73,7 +73,7 @@ interface UserNavProps {
 }
 
 export function UserNav({ user, avatarClassName, withBlur = false }: UserNavProps) {
-    const { logout } = useAuth();
+    const { logout, originalUser, setUser } = useAuth();
     const router = useRouter();
     const [messages, setMessages] = useState<Message[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -112,6 +112,15 @@ export function UserNav({ user, avatarClassName, withBlur = false }: UserNavProp
             }
         }
     };
+    
+    const handleReturnToDeveloper = () => {
+        if (originalUser) {
+            setUser(originalUser);
+            router.push('/');
+        }
+    };
+
+    const isViewingAsDifferentRole = originalUser && user.role !== originalUser.role;
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleMessagesDialogOpen}>
@@ -135,9 +144,20 @@ export function UserNav({ user, avatarClassName, withBlur = false }: UserNavProp
                 <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                 </p>
+                {isViewingAsDifferentRole && (
+                     <p className="text-xs leading-none text-cyan-400/80 pt-1">
+                        Viewing as: {user.role === 'manager' ? 'Sales Manager' : user.role}
+                    </p>
+                )}
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+             {isViewingAsDifferentRole && (
+                 <DropdownMenuItem onSelect={handleReturnToDeveloper}>
+                    <Undo2 className="mr-2 h-4 w-4" />
+                    <span>Back to Developer</span>
+                </DropdownMenuItem>
+            )}
             <DropdownMenuItem onSelect={() => router.push('/profile')}>
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
@@ -153,6 +173,7 @@ export function UserNav({ user, avatarClassName, withBlur = false }: UserNavProp
                     {isClient && unreadCount > 0 && <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">{unreadCount}</span>}
                 </DropdownMenuItem>
             </DialogTrigger>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => logout()}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
