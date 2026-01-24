@@ -6,7 +6,7 @@
       "type": "object",
       "description": "Represents a user within the AutoDrive system.",
       "properties": {
-        "id": {
+        "userId": {
           "type": "string",
           "description": "Unique identifier for the user."
         },
@@ -18,16 +18,18 @@
           "type": "string",
           "description": "The user's role within the system (consultant or manager)."
         },
-        "dealershipId": {
-          "type": "string",
-          "description": "Reference to the Dealership where the user works. (Relationship: Dealership 1:N User)"
+        "dealershipIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Reference to the Dealerships where the user works."
         }
       },
       "required": [
-        "id",
+        "userId",
         "name",
-        "role",
-        "dealershipId"
+        "role"
       ]
     },
     "Lesson": {
@@ -36,7 +38,7 @@
       "type": "object",
       "description": "Represents a training lesson available within the AutoDrive system.",
       "properties": {
-        "id": {
+        "lessonId": {
           "type": "string",
           "description": "Unique identifier for the lesson."
         },
@@ -54,7 +56,7 @@
         }
       },
       "required": [
-        "id",
+        "lessonId",
         "title",
         "role",
         "category"
@@ -66,7 +68,7 @@
       "type": "object",
       "description": "Represents a record of a user completing a lesson, including performance metrics.",
       "properties": {
-        "id": {
+        "logId": {
           "type": "string",
           "description": "Unique identifier for the lesson log entry."
         },
@@ -117,7 +119,7 @@
         }
       },
       "required": [
-        "id",
+        "logId",
         "timestamp",
         "userId",
         "lessonId",
