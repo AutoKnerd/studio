@@ -66,8 +66,14 @@ export default function ScoreCardPage() {
 
   const vCardData = useMemo(() => {
     if (!user) return '';
+
+    const nameParts = user.name.split(' ');
+    const lastName = nameParts.pop() || '';
+    const firstName = nameParts.join(' ');
+
     return `BEGIN:VCARD
 VERSION:3.0
+N:${lastName};${firstName};;;
 FN:${user.name}
 ORG:${dealershipName}
 TITLE:${user.role}
@@ -128,7 +134,7 @@ END:VCARD`;
       <Header />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-6 lg:p-8 pb-24 md:pb-6 lg:pb-8">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
-            <div>
+            <div className="flex-shrink-0">
                 <ScoreCard ref={scoreCardRef} user={user} activity={activity} badges={badges} dealerships={dealerships} />
                 <Button onClick={handleDownload} className="mt-4 w-full">
                     <Download className="mr-2 h-4 w-4" />
@@ -136,7 +142,7 @@ END:VCARD`;
                 </Button>
             </div>
             {isClient && (
-              <div className="flex flex-col items-center gap-4 text-center">
+              <div className="flex flex-col items-center gap-4 text-center lg:w-48">
                   <div className="bg-white p-4 rounded-lg border-4 border-cyan-400/50">
                       <QRCode value={vCardData} size={192} />
                   </div>
