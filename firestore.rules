@@ -6,6 +6,7 @@
  * The primary security principle is that users have complete control over their own data, but cannot access, list,
  * or modify the data of other users. Global, application-wide data (like lessons and dealerships) is made available
  * on a read-only basis to all authenticated users, with write operations restricted to prevent client-side tampering.
+ * Managerial roles are granted limited list capabilities to view their teams.
  *
  * Data Structure:
  * - /users/{userId}: Each user has a profile document. This path is the root for all user-specific data.
@@ -14,7 +15,8 @@
  * - /dealerships/{dealershipId}: A top-level collection for dealership information, readable by all.
  *
  * Key Security Decisions:
- * - User Isolation: Listing users is explicitly disallowed to protect user privacy.
+ * - User Isolation: Listing users is restricted to managerial roles to support dashboard functionality while still
+ *   preventing general user enumeration. Non-managerial users cannot list the users collection.
  * - Subcollection Ownership: By nesting `lessonLogs` under `/users/{userId}`, ownership is enforced by the path,
  *   making rules simple, secure, and performant for list queries.
  * - Read-Only Global Data: The `/lessons` and `/dealerships` collections are configured to be read-only for clients.
@@ -53,6 +55,25 @@ service cloud.firestore {
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if the authenticated user has a role that permits managing other users.
+     * This is used to grant list permissions on the users collection for dashboards.
+     */
+    function isManager() {
+      // Ensure the user is signed in and their document exists before checking role.
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in [
+               'Admin',
+               'Developer',
+               'Owner',
+               'Trainer',
+               'General Manager',
+               'manager',
+               'Service Manager',
+               'Parts Manager'
+             ];
     }
 
     /**
@@ -100,14 +121,14 @@ service cloud.firestore {
      * @description Rules for a user's own profile document.
      * @path /users/{userId}
      * @allow (get) An authenticated user 'user_abc' can read their own profile at /users/user_abc.
-     * @allow (create) An authenticated user 'user_abc' can create their own profile at /users/user_abc.
-     * @deny (list) An authenticated user 'user_abc' cannot list all documents in the /users collection.
+     * @allow (list) A user with a managerial role can list users to populate their dashboard.
+     * @deny (list) A non-managerial user cannot list all documents in the /users collection.
      * @deny (update) An authenticated user 'user_abc' cannot update the profile of 'user_xyz'.
-     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration by non-managers.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false;
+      allow list: if isManager();
       allow create: if isOwner(userId) && isCreatingOwnUserDocument(userId);
       allow update: if isExistingOwner(userId) && isUpdatingOwnUserDocument();
       allow delete: if isExistingOwner(userId);
