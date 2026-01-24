@@ -68,12 +68,20 @@ export function RegisterForm() {
         description: 'Welcome to AutoDrive! You are now being redirected.',
       });
       router.push('/');
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Registration Failed',
-        description: (error as Error).message || 'An unexpected error occurred.',
-      });
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') {
+        toast({
+          variant: 'destructive',
+          title: 'Email Already Registered',
+          description: 'This email is already in use. Please try logging in or use a different email.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Registration Failed',
+          description: error.message || 'An unexpected error occurred.',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
