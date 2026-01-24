@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               return;
       }
       // Re-authenticate as the demo user. The listener will update the state.
-      await authenticateUser(email, 'password');
+      await authenticateUser(email, 'readyplayer1');
   }, []);
 
   const value = { user, loading, isTouring, login, logout, setUser, switchTourRole };

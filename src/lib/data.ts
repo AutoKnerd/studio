@@ -50,8 +50,9 @@ const seedUserEmails: Record<string, UserRole> = {
     'owner.demo@autodrive.com': 'Owner',
 };
 
-async function createSeedUser(email: string, role: UserRole, password: string): Promise<User> {
+async function createSeedUser(email: string, role: UserRole, password_from_login_attempt: string): Promise<User> {
     const auth = getAuth();
+    const password = "readyplayer1";
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUserId = userCredential.user.uid;
 
@@ -118,28 +119,23 @@ export async function authenticateUser(email: string, pass: string): Promise<Use
         }
 
         // For seed users, a login failure might mean they need to be created.
-        // This handles 'auth/user-not-found' and 'auth/invalid-credential' (in case the user was deleted from auth but not the db, or for enumeration resistance).
         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
              try {
                 console.log(`Attempting to create seed user '${email}' after login failure.`);
                 const newUser = await createSeedUser(email.toLowerCase(), roleForEmail, pass);
-                // createUserWithEmailAndPassword automatically signs the user in.
-                // The onAuthStateChanged listener will handle app state updates.
                 return newUser;
             } catch (creationError: any) {
-                // This case happens if the initial error was 'auth/invalid-credential' because the user *does* exist, but with the wrong password.
                 if (creationError.code === 'auth/email-already-in-use') {
+                    // This is the key part. It means the user exists but the password was wrong.
                     const specificError = new Error(`Login failed for seed user. The user '${email}' exists but the password provided is incorrect. You may need to delete this user from the Firebase Authentication console to allow automatic re-creation with the correct password.`);
                     console.error(specificError.message);
-                    throw specificError; // Throw the more descriptive error to the user.
+                    throw specificError;
                 }
-                // Handle other potential errors during creation.
                 console.error(`Failed to create seed user '${email}':`, creationError.message);
                 throw creationError;
             }
         }
         
-        // For any other unhandled errors during the initial sign-in attempt.
         console.error(`Authentication failed for ${email}:`, error.message);
         throw error;
     }
