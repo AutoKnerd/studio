@@ -21,7 +21,16 @@ const getTourData = () => {
 }
 const isTouringUser = () => {
     const email = getAuth().currentUser?.email;
-    return !!email && email.endsWith('@autodrive-demo.com');
+    if (!email) return false;
+    
+    const demoUserEmails = [
+        'consultant.demo@autodrive.com',
+        'service.writer.demo@autodrive.com',
+        'manager.demo@autodrive.com',
+        'owner.demo@autodrive.com',
+    ];
+    
+    return demoUserEmails.includes(email) || email.endsWith('@autodrive-demo.com');
 };
 
 
