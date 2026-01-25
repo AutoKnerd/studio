@@ -371,11 +371,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         <CheckCircle className="h-5 w-5 text-green-400" />
                         <h4 className="font-semibold text-green-300">AutoDrive Pro is Active</h4>
                     </div>
-                    <form action={handleManageSubscription}>
-                        <Button type="submit" variant="ghost" disabled={isPortalLoading} className="text-sm">
-                            {isPortalLoading ? <Spinner size="sm" /> : <>Manage <ExternalLink className="ml-2 h-4 w-4" /></>}
-                        </Button>
-                    </form>
+                    <Button type="button" onClick={handleManageSubscription} variant="ghost" disabled={isPortalLoading} className="text-sm">
+                        {isPortalLoading ? <Spinner size="sm" /> : <>Manage <ExternalLink className="ml-2 h-4 w-4" /></>}
+                    </Button>
                 </div>
                 <p className="text-sm text-green-200/80">
                   You have full access to all features. You can manage your billing information, invoices, and subscription status through our secure payment portal.
