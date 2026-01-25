@@ -176,12 +176,12 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
     };
 
     const total = activity.reduce((acc, log) => {
-        acc.empathy += log.empathy;
-        acc.listening += log.listening;
-        acc.trust += log.trust;
-        acc.followUp += log.followUp;
-        acc.closing += log.closing;
-        acc.relationshipBuilding += log.relationshipBuilding;
+        acc.empathy += log.empathy || 0;
+        acc.listening += log.listening || 0;
+        acc.trust += log.trust || 0;
+        acc.followUp += log.followUp || 0;
+        acc.closing += log.closing || 0;
+        acc.relationshipBuilding += log.relationshipBuilding || 0;
         return acc;
     }, { empathy: 0, listening: 0, trust: 0, followUp: 0, closing: 0, relationshipBuilding: 0 });
 

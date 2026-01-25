@@ -578,7 +578,7 @@ export async function getManagerStats(dealershipId: string, userRole: UserRole):
     const cxTraits: CxTrait[] = ['empathy', 'listening', 'trust', 'followUp', 'closing', 'relationshipBuilding'];
 
     const avgScores = cxTraits.reduce((acc, trait) => {
-        const totalScore = allLogs.reduce((sum, log) => sum + log[trait], 0);
+        const totalScore = allLogs.reduce((sum, log) => sum + (log[trait] || 0), 0);
         acc[trait] = Math.round(totalScore / totalLessons);
         return acc;
     }, {} as Record<CxTrait, number>);
@@ -621,7 +621,7 @@ export async function getTeamActivity(dealershipId: string, userRole: UserRole):
         const totalXp = member.xp;
         
         const totalScore = memberLogs.reduce((sum, log) => {
-            return sum + (log.empathy + log.listening + log.trust + log.followUp + log.closing + log.relationshipBuilding);
+            return sum + ((log.empathy || 0) + (log.listening || 0) + (log.trust || 0) + (log.followUp || 0) + (log.closing || 0) + (log.relationshipBuilding || 0));
         }, 0);
         
         const avgScore = Math.round(totalScore / (memberLogs.length * 6));
