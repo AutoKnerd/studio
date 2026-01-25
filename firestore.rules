@@ -163,7 +163,7 @@ service cloud.firestore {
      * @principle Restricts access to a user's own data tree and prevents user enumeration by non-managers.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId) || isManager();
+      allow get: if isOwner(userId) || isOwnerRole() || isManager();
       allow list: if isManager();
       allow create: if isOwner(userId) && isCreatingOwnUserDocument(userId);
       allow update: if isExistingOwner(userId) && isUpdatingOwnUserDocument();
