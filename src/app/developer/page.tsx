@@ -11,6 +11,7 @@ import { allRoles, managerialRoles, UserRole } from '@/lib/definitions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Header } from '@/components/layout/header';
+import { SlidersHorizontal } from 'lucide-react';
 
 export default function DeveloperPage() {
   const { user, loading, setUser, originalUser } = useAuth();
@@ -42,15 +43,18 @@ export default function DeveloperPage() {
     <div className="flex min-h-screen w-full flex-col">
        <Header />
       <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-8">
-        <Card className="border-cyan-400/50">
-          <CardHeader>
-            <CardTitle>Developer Dashboard</CardTitle>
-            <CardDescription>
-              Use the tools below to view the application from the perspective of any user role.
-            </CardDescription>
+        <Card className="border-primary/50 bg-primary/5 text-primary-foreground">
+          <CardHeader className="flex-row items-center gap-4">
+            <SlidersHorizontal className="h-10 w-10 text-primary" />
+            <div>
+                <CardTitle className="text-2xl text-primary">God Mode</CardTitle>
+                <CardDescription className="text-primary/80">
+                    View the application from the perspective of any user role to test dashboards and permissions.
+                </CardDescription>
+            </div>
           </CardHeader>
-          <CardContent className="flex items-center gap-4">
-            <span className="text-sm font-medium">Viewing as:</span>
+          <CardContent className="flex items-center gap-4 border-t border-primary/20 pt-6">
+            <span className="text-sm font-medium">Impersonating Role:</span>
             <Select onValueChange={(role) => handleSwitchRole(role as UserRole)} value={user.role}>
               <SelectTrigger className="w-[240px]">
                 <SelectValue />
