@@ -61,9 +61,12 @@ const getDataById = async <T>(collectionRef: any, id: string): Promise<T | null>
 // AUTH
 export async function getUserById(userId: string): Promise<User | null> {
     if (isTouringUser()) {
+        const { users } = getTourData();
+        
+        // This is a special case to handle the currently logged in tour user, 
+        // as their UID from Firebase Auth won't match the one in our generated data.
         const currentUser = getAuth().currentUser;
         if (currentUser?.uid === userId && currentUser.email) {
-            const { users, dealerships } = getTourData();
             const tourUserRoles: Record<string, UserRole> = {
                 'consultant.demo@autodrive.com': 'Sales Consultant',
                 'service.writer.demo@autodrive.com': 'Service Writer',
@@ -71,39 +74,45 @@ export async function getUserById(userId: string): Promise<User | null> {
                 'owner.demo@autodrive.com': 'Owner',
             };
             const role = tourUserRoles[currentUser.email];
-            if (!role) return getDataById<User>(usersCollection, userId); // Fallback for safety
-
-            if (role === 'Owner') {
-                let owner = users.find(u => u.role === 'Owner');
-                if (!owner) {
-                     return {
-                        userId: currentUser.uid,
-                        name: 'Demo Owner',
-                        email: 'owner.demo@autodrive.com',
-                        role: 'Owner',
-                        dealershipIds: getTourData().dealerships.map(d => d.id),
-                        avatarUrl: 'https://i.pravatar.cc/150?u=tour-owner-user',
-                        xp: 12500,
-                        isPrivate: false,
-                        memberSince: new Date(new Date().getTime() - 365 * 2 * 24 * 60 * 60 * 1000).toISOString(),
-                        subscriptionStatus: 'active'
+            if (role) {
+                 if (role === 'Owner') {
+                    let owner = users.find(u => u.role === 'Owner');
+                    if (!owner) {
+                        return {
+                            userId: currentUser.uid,
+                            name: 'Demo Owner',
+                            email: 'owner.demo@autodrive.com',
+                            role: 'Owner',
+                            dealershipIds: getTourData().dealerships.map(d => d.id),
+                            avatarUrl: 'https://i.pravatar.cc/150?u=tour-owner-user',
+                            xp: 12500,
+                            isPrivate: false,
+                            isPrivateFromOwner: false,
+                            memberSince: new Date(new Date().getTime() - 365 * 2 * 24 * 60 * 60 * 1000).toISOString(),
+                            subscriptionStatus: 'active'
+                        };
+                    }
+                    return {...owner, userId: currentUser.uid, email: currentUser.email};
+                }
+                const representativeUser = users.find(u => u.role === role);
+                 if (representativeUser) {
+                    return {
+                        ...representativeUser,
+                        userId: currentUser.uid, // Use real auth UID
+                        email: currentUser.email!,
+                        name: `Demo ${role === 'manager' ? 'Sales Manager' : role}`,
                     };
                 }
-                return {...owner, userId: currentUser.uid, email: currentUser.email};
-            }
-
-            // For other roles, find a representative user from generated data
-            const representativeUser = users.find(u => u.role === role);
-            if (representativeUser) {
-                return {
-                    ...representativeUser,
-                    userId: currentUser.uid, // Use real auth UID
-                    email: currentUser.email!,
-                    name: `Demo ${role === 'manager' ? 'Sales Manager' : role}`,
-                };
             }
         }
+        
+        // If it's another tour user from the generated list, return them.
+        const tourUser = users.find(u => u.userId === userId);
+        if (tourUser) {
+            return tourUser;
+        }
     }
+    // If not in tour mode, or user not found in tour data, fetch from Firestore.
     return getDataById<User>(usersCollection, userId);
 }
 
