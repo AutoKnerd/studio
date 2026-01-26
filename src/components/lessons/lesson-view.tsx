@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
-import { Send, ArrowLeft } from 'lucide-react';
+import { Send, ArrowLeft, ArrowRightToLine } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { conductLesson } from '@/ai/flows/lesson-flow';
 import { Spinner } from '../ui/spinner';
@@ -36,7 +37,7 @@ interface CxScores {
 }
 
 export function LessonView({ lesson, isRecommended }: LessonViewProps) {
-  const { user, setUser } = useAuth();
+  const { user, setUser, isTouring } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -175,6 +176,25 @@ export function LessonView({ lesson, isRecommended }: LessonViewProps) {
     await handleAiResponse(response);
     setIsLoading(false);
   };
+  
+  const handleSkipLesson = async () => {
+    if (isLoading || inputDisabled || !cxScores) return;
+    
+    setIsLoading(true);
+    setInput(''); 
+
+    const response = await conductLesson({
+        lessonId: lesson.lessonId,
+        lessonTitle: lesson.title,
+        customScenario: lesson.customScenario,
+        history: messages,
+        userMessage: '@skip_lesson', // Special keyword for the AI
+        cxScores,
+    });
+    
+    await handleAiResponse(response);
+    setIsLoading(false);
+  };
 
   return (
     <div className="flex-1 flex flex-col items-center p-4 md:p-8">
@@ -242,6 +262,12 @@ export function LessonView({ lesson, isRecommended }: LessonViewProps) {
                             <Send className="h-4 w-4" />
                             <span className="sr-only">Send</span>
                         </Button>
+                         {isTouring && (
+                             <Button type="button" variant="outline" size="icon" onClick={handleSkipLesson} disabled={isLoading || inputDisabled} title="Skip to Results">
+                                <ArrowRightToLine className="h-4 w-4" />
+                                <span className="sr-only">Skip to Results</span>
+                            </Button>
+                        )}
                     </form>
                 )}
             </CardFooter>
