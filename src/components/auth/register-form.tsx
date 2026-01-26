@@ -37,6 +37,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const availableRoles: { label: string, value: UserRole}[] = [
     { label: 'Developer', value: 'Developer'},
+    { label: 'Admin', value: 'Admin' },
     { label: 'Sales Consultant', value: 'Sales Consultant'},
     { label: 'Service Writer', value: 'Service Writer'},
 ];
