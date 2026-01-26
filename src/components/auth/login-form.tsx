@@ -19,9 +19,18 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '../ui/spinner';
 import Link from 'next/link';
+import { ArrowRight, User, Shield } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -65,13 +74,15 @@ export function LoginForm() {
     }
   }
   
-  const handleStartTour = async () => {
+  const handleStartTour = async (role: 'consultant' | 'manager') => {
     setIsTouring(true);
+    const email = role === 'consultant' ? 'consultant.demo@autodrive.com' : 'manager.demo@autodrive.com';
+    const roleName = role === 'consultant' ? 'Sales Consultant' : 'Sales Manager';
     try {
-        await login('consultant.demo@autodrive.com', 'readyplayer1');
+        await login(email, 'readyplayer1');
         toast({
             title: 'Tour Started!',
-            description: "You're now viewing as a Sales Consultant.",
+            description: `You're now viewing as a ${roleName}.`,
         });
         router.push('/');
     } catch (error) {
@@ -135,9 +146,43 @@ export function LoginForm() {
                 </div>
             </div>
 
-            <Button variant="outline" className="w-full" onClick={handleStartTour} disabled={isSubmitting || isTouring}>
-                {isTouring ? <Spinner size="sm" /> : 'Take a Guided Tour'}
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full" disabled={isSubmitting || isTouring}>
+                  {isTouring ? <Spinner size="sm" /> : 'Take a Guided Tour'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Choose Your Tour Perspective</DialogTitle>
+                  <DialogDescription>
+                    Select a role to experience how AutoDrive empowers every member of your team.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                    <Button variant="outline" className="h-auto p-6 flex-col gap-2 items-start" onClick={() => handleStartTour('consultant')} disabled={isTouring}>
+                        <div className="flex items-center gap-2">
+                           <User className="h-5 w-5 text-primary" />
+                           <h3 className="font-semibold">Team Member</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground text-left">Explore as a Sales Consultant or Service Writer. Focus on personal growth and mastering customer interactions.</p>
+                         <div className="flex items-center text-sm text-primary font-semibold mt-2">
+                            Start Tour <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                    </Button>
+                     <Button variant="outline" className="h-auto p-6 flex-col gap-2 items-start" onClick={() => handleStartTour('manager')} disabled={isTouring}>
+                        <div className="flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-primary" />
+                            <h3 className="font-semibold">Leader</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground text-left">View as a Manager or Owner. See how AutoDrive provides high-level insights to coach your team effectively.</p>
+                         <div className="flex items-center text-sm text-primary font-semibold mt-2">
+                            Start Tour <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                    </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <p className="pt-2 text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}

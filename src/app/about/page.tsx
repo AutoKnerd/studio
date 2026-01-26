@@ -1,13 +1,55 @@
 
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, BarChart, Bot, BrainCircuit, Users, Target } from 'lucide-react';
+import { Award, BarChart, Bot, BrainCircuit, Users, Target, ArrowRight, User, Shield } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function AboutPage() {
+  const [isTouring, setIsTouring] = useState(false);
+  const router = useRouter();
+  const { login } = useAuth();
+  const { toast } = useToast();
+
+  const handleStartTour = async (role: 'consultant' | 'manager') => {
+    setIsTouring(true);
+    const email = role === 'consultant' ? 'consultant.demo@autodrive.com' : 'manager.demo@autodrive.com';
+    const roleName = role === 'consultant' ? 'Sales Consultant' : 'Sales Manager';
+    try {
+        await login(email, 'readyplayer1');
+        toast({
+            title: 'Tour Started!',
+            description: `You're now viewing as a ${roleName}.`,
+        });
+        router.push('/');
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Tour Failed',
+            description: (error as Error).message || 'Could not start the tour. Please try again.',
+        });
+        setIsTouring(false);
+    }
+  };
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
@@ -28,9 +70,48 @@ export default function AboutPage() {
             <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
               Stop settling for inconsistent results. AutoDrive uses AI to build elite sales and service teams that consistently delight customers and smash targets.
             </p>
-            <Button asChild size="lg">
-              <Link href="/register">Start Your Free Tour</Link>
-            </Button>
+             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button size="lg" disabled={isTouring}>
+                      {isTouring ? <Spinner /> : 'Take a Guided Tour'}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Choose Your Tour Perspective</DialogTitle>
+                      <DialogDescription>
+                        Select a role to experience how AutoDrive empowers every member of your team.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                        <Button variant="outline" className="h-auto p-6 flex-col gap-2 items-start" onClick={() => handleStartTour('consultant')} disabled={isTouring}>
+                            <div className="flex items-center gap-2">
+                               <User className="h-5 w-5 text-primary" />
+                               <h3 className="font-semibold">Team Member</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground text-left">Explore as a Sales Consultant or Service Writer. Focus on personal growth and mastering customer interactions.</p>
+                             <div className="flex items-center text-sm text-primary font-semibold mt-2">
+                                Start Tour <ArrowRight className="ml-2 h-4 w-4" />
+                            </div>
+                        </Button>
+                         <Button variant="outline" className="h-auto p-6 flex-col gap-2 items-start" onClick={() => handleStartTour('manager')} disabled={isTouring}>
+                            <div className="flex items-center gap-2">
+                                <Shield className="h-5 w-5 text-primary" />
+                                <h3 className="font-semibold">Leader</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground text-left">View as a Manager or Owner. See how AutoDrive provides high-level insights to coach your team effectively.</p>
+                             <div className="flex items-center text-sm text-primary font-semibold mt-2">
+                                Start Tour <ArrowRight className="ml-2 h-4 w-4" />
+                            </div>
+                        </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button asChild size="lg" variant="outline">
+                    <Link href="/register">Sign Up Free</Link>
+                </Button>
+            </div>
           </div>
         </section>
 
