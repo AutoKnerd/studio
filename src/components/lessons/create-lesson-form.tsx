@@ -91,7 +91,7 @@ export function CreateLessonForm({ user, onLessonCreated, assignOnCreateToUserId
   }, [targetRole, getValues, setValue]);
 
 
-  const canCreateGlobal = ['Owner', 'Admin', 'Trainer', 'General Manager'].includes(user.role);
+  const canCreateGlobal = ['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role);
   const teamRoles = getTeamMemberRoles(user.role).filter(role => role !== 'Trainer');
   
   const availableRoles = canCreateGlobal

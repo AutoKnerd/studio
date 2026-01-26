@@ -326,7 +326,7 @@ export async function sendInvitation(
   }
 
   if (dealershipSnapshot.empty) {
-    if (!['Admin', 'Trainer', 'Owner'].includes(inviter.role)) {
+    if (!['Admin', 'Trainer', 'Owner', 'Developer'].includes(inviter.role)) {
       throw new Error("You do not have permission to create a new dealership.");
     }
     const newDealershipRef = doc(dealershipsCollection);
