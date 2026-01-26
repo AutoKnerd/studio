@@ -1,5 +1,5 @@
 
-import { initializeFirebase } from '@/firebase';
+import { initializeFirebase } from '@/firebase/init';
 
 const { firebaseApp: app, auth, firestore: db } = initializeFirebase();
 
