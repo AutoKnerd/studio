@@ -335,8 +335,11 @@ export async function sendInvitation(
       name: dealershipName,
       status: 'active',
       address: address as Address,
-      trainerId: ['Trainer'].includes(inviter.role) ? inviter.userId : undefined,
     };
+    if (['Trainer'].includes(inviter.role)) {
+      newDealershipData.trainerId = inviter.userId;
+    }
+    
     await setDoc(newDealershipRef, newDealershipData);
     dealership = newDealershipData;
   } else {
@@ -1026,3 +1029,4 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
     
     return uniqueMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
+
