@@ -354,6 +354,7 @@ export async function sendInvitation(
     role: role,
     email: email.toLowerCase(),
     claimed: false,
+    inviterId: inviterId,
   };
   
   try {

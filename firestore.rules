@@ -236,7 +236,17 @@ service cloud.firestore {
      * @deny (read, update, delete) Invitations are for system use and cannot be manipulated by clients after creation.
      */
     match /emailInvitations/{invitationId} {
-      allow create: if isManager();
+      allow create: if request.resource.data.inviterId == request.auth.uid &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in [
+                         'Admin',
+                         'Developer',
+                         'Owner',
+                         'Trainer',
+                         'General Manager',
+                         'manager',
+                         'Service Manager',
+                         'Parts Manager'
+                       ];
       allow read, update, delete: if false;
     }
 

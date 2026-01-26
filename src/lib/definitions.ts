@@ -205,6 +205,7 @@ export type EmailInvitation = {
   role: UserRole;
   email: string;
   claimed: boolean;
+  inviterId: string;
 };
 
 export type Dealership = {
