@@ -41,6 +41,7 @@ const dealershipsCollection = collection(db, 'dealerships');
 const lessonsCollection = collection(db, 'lessons');
 const assignmentsCollection = collection(db, 'lessonAssignments');
 const messagesCollection = collection(db, 'messages');
+const invitationsCollection = collection(db, 'emailInvitations');
 
 const getDataById = async <T>(collectionRef: any, id: string): Promise<T | null> => {
     const docRef = doc(collectionRef, id);
@@ -297,6 +298,75 @@ export async function deleteUser(userId: string): Promise<void> {
         errorEmitter.emit('permission-error', contextualError);
         throw contextualError;
     }
+}
+
+export async function sendInvitation(
+  dealershipName: string,
+  email: string,
+  role: UserRole,
+  inviterId: string,
+  address: Partial<Address>
+): Promise<void> {
+  const inviter = await getUserById(inviterId);
+  if (!inviter) throw new Error("Inviter not found.");
+
+  let dealership: Dealership | null = null;
+  const q = query(dealershipsCollection, where("name", "==", dealershipName));
+  
+  let dealershipSnapshot;
+  try {
+    dealershipSnapshot = await getDocs(q);
+  } catch (e: any) {
+    const contextualError = new FirestorePermissionError({
+        path: dealershipsCollection.path,
+        operation: 'list'
+    });
+    errorEmitter.emit('permission-error', contextualError);
+    throw contextualError;
+  }
+
+  if (dealershipSnapshot.empty) {
+    if (!['Admin', 'Trainer', 'Owner'].includes(inviter.role)) {
+      throw new Error("You do not have permission to create a new dealership.");
+    }
+    const newDealershipRef = doc(dealershipsCollection);
+    const newDealershipData: Dealership = {
+      id: newDealershipRef.id,
+      name: dealershipName,
+      status: 'active',
+      address: address as Address,
+      trainerId: ['Trainer'].includes(inviter.role) ? inviter.userId : undefined,
+    };
+    await setDoc(newDealershipRef, newDealershipData);
+    dealership = newDealershipData;
+  } else {
+    dealership = { ...dealershipSnapshot.docs[0].data(), id: dealershipSnapshot.docs[0].id } as Dealership;
+  }
+
+  if (!dealership) throw new Error('Could not find or create dealership.');
+  
+  const invitationRef = doc(invitationsCollection);
+  const token = invitationRef.id;
+
+  const newInvitation: EmailInvitation = {
+    token: token,
+    dealershipId: dealership.id,
+    role: role,
+    email: email.toLowerCase(),
+    claimed: false,
+  };
+  
+  try {
+    await setDoc(invitationRef, newInvitation);
+  } catch(e: any) {
+      const contextualError = new FirestorePermissionError({
+          path: invitationRef.path,
+          operation: 'create',
+          requestResourceData: newInvitation
+      });
+      errorEmitter.emit('permission-error', contextualError);
+      throw contextualError;
+  }
 }
 
 

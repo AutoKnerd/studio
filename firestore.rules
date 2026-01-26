@@ -228,6 +228,17 @@ service cloud.firestore {
       allow update: if isOwner(resource.data.userId) && request.resource.data.completed == true && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed']);
       allow delete: if false;
     }
+    
+    /**
+     * @description Rules for email invitations.
+     * @path /emailInvitations/{invitationId}
+     * @allow (create) A manager can create invitations for new users.
+     * @deny (read, update, delete) Invitations are for system use and cannot be manipulated by clients after creation.
+     */
+    match /emailInvitations/{invitationId} {
+      allow create: if isManager();
+      allow read, update, delete: if false;
+    }
 
     /**
      * @description Rules for the global, read-only collection of dealerships.
@@ -238,7 +249,7 @@ service cloud.firestore {
      */
     match /dealerships/{dealershipId} {
       allow read: if true;
-      allow create: if dealershipId == 'autoknerd-hq';
+      allow create: if dealershipId == 'autoknerd-hq' || isManager();
       allow update, delete: if isManager();
     }
   }
