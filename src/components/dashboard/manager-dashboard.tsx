@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, LessonLog, Lesson, LessonRole, CxTrait, Dealership, Badge, UserRole } from '@/lib/definitions';
-import { managerialRoles } from '@/lib/definitions';
+import { managerialRoles, noPersonalDevelopmentRoles } from '@/lib/definitions';
 import { getCombinedTeamData, getLessons, getConsultantActivity, getDealerships, getDealershipById, getManageableUsers, getEarnedBadgesByUserId, getDailyLessonLimits } from '@/lib/data';
 import { BarChart, BookOpen, CheckCircle, ShieldOff, Smile, Star, Users, PlusCircle, Store, TrendingUp, TrendingDown, Building, MessageSquare, Ear, Handshake, Repeat, Target, Info, Settings } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -343,7 +343,6 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
 
   const isDeveloperViewing = originalUser?.role === 'Developer';
   const showAdminTabs = isDeveloperViewing || user.role === 'Admin';
-  const noPersonalDevelopmentRoles: UserRole[] = ['Owner', 'Trainer', 'Admin'];
   const showPersonalDevelopment = !noPersonalDevelopmentRoles.includes(user.role) && !isDeveloperViewing;
   const isSoloManager = teamActivity.length === 0 && selectedDealershipId !== 'all' && !loading;
   const canManage = ['Admin', 'Trainer', 'Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager', 'Developer'].includes(user.role);

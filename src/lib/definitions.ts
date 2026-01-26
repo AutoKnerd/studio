@@ -57,6 +57,8 @@ export const managerialRoles: UserRole[] = [
   'Developer',
 ];
 
+export const noPersonalDevelopmentRoles: UserRole[] = ['Owner', 'Trainer', 'Admin', 'Developer'];
+
 export type User = {
   userId: string;
   name: string;

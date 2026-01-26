@@ -16,7 +16,21 @@
         },
         "role": {
           "type": "string",
-          "description": "The user's role within the system (consultant or manager)."
+          "description": "The user's role within the system.",
+          "enum": [
+            "Sales Consultant",
+            "manager",
+            "Service Writer",
+            "Service Manager",
+            "Finance Manager",
+            "Parts Consultant",
+            "Parts Manager",
+            "General Manager",
+            "Owner",
+            "Trainer",
+            "Admin",
+            "Developer"
+          ]
         },
         "dealershipIds": {
           "type": "array",

@@ -72,7 +72,8 @@ service cloud.firestore {
                'General Manager',
                'manager',
                'Service Manager',
-               'Parts Manager'
+               'Parts Manager',
+               'Finance Manager'
              ];
     }
     
