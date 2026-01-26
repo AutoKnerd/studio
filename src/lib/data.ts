@@ -336,7 +336,7 @@ export async function sendInvitation(
       status: 'active',
       address: address as Address,
     };
-    if (['Trainer'].includes(inviter.role)) {
+     if (['Trainer'].includes(inviter.role)) {
       newDealershipData.trainerId = inviter.userId;
     } else {
       newDealershipData.trainerId = 'AutoKnerdHQ';
