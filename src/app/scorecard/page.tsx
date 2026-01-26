@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import QRCode from 'react-qr-code';
 
 export default function ScoreCardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, isTouring } = useAuth();
   const router = useRouter();
   const [activity, setActivity] = useState<LessonLog[]>([]);
   const [badges, setBadges] = useState<BadgeType[]>([]);
@@ -151,7 +151,7 @@ END:VCARD`;
             )}
         </div>
       </main>
-      {!isManager && <BottomNav />}
+      {!isManager && !isTouring && <BottomNav />}
     </div>
   );
 }

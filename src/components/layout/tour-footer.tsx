@@ -29,21 +29,24 @@ export function TourFooter() {
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-primary/50 bg-slate-900/90 text-white backdrop-blur-lg">
-      <div className="container mx-auto flex h-24 items-center justify-between px-4">
-        <div className="flex items-center gap-4">
+      <div className="container mx-auto flex h-20 items-center justify-between px-4">
+        <div className="flex items-center gap-2">
            <Info className="h-6 w-6 text-cyan-400 hidden sm:block" />
-           <div>
-               <h3 className="font-bold text-lg hidden sm:block">Tour Control Panel</h3>
-               <p className="text-sm text-muted-foreground">You are currently in a guided tour.</p>
-           </div>
+           <p className="text-sm text-muted-foreground hidden sm:block">You are in a guided tour.</p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" className="bg-slate-800 border-slate-700 hover:bg-slate-700 hidden md:flex">
                   <Bot className="mr-2 h-4 w-4" /> Ask AI Guide
                 </Button>
+              </DialogTrigger>
+              <DialogTrigger asChild>
+                 <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground hover:text-white">
+                    <Bot className="h-5 w-5" />
+                    <span className="sr-only">Ask AI Guide</span>
+                 </Button>
               </DialogTrigger>
               <DialogContent className="p-0 gap-0 sm:max-w-lg">
                 <DialogHeader className="p-4 border-b">
@@ -53,23 +56,21 @@ export function TourFooter() {
               </DialogContent>
             </Dialog>
 
-            <div className="text-right">
-                <label className="text-sm font-medium text-muted-foreground">Viewing as:</label>
-                <Select onValueChange={(role) => switchTourRole(role as UserRole)} value={user.role}>
-                    <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
-                        <SelectValue placeholder="Select a role..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {tourRoles.map((role) => (
-                            <SelectItem key={role.value} value={role.value}>
-                                {role.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-             <Button onClick={handleEndTour} size="lg" className="bg-cyan-400 text-slate-900 hover:bg-cyan-300">
-                End Tour & Sign Up
+            <Select onValueChange={(role) => switchTourRole(role as UserRole)} value={user.role}>
+                <SelectTrigger className="w-[150px] sm:w-[180px] bg-slate-800 border-slate-700">
+                    <SelectValue placeholder="Viewing as..." />
+                </SelectTrigger>
+                <SelectContent>
+                    {tourRoles.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+             <Button onClick={handleEndTour} size="default" className="bg-cyan-400 text-slate-900 hover:bg-cyan-300 px-3 sm:px-4">
+                <span className="hidden sm:inline">End Tour</span>
+                <span className="sm:hidden">End</span>
             </Button>
         </div>
       </div>

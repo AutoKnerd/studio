@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect } from 'react';
@@ -11,7 +10,7 @@ import { managerialRoles } from '@/lib/definitions';
 import { BottomNav } from '@/components/layout/bottom-nav';
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading, isTouring } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -41,7 +40,7 @@ export default function Home() {
           <ConsultantDashboard user={user} />
         )}
       </main>
-      {!isManager && <BottomNav />}
+      {!isManager && !isTouring && <BottomNav />}
     </div>
   );
 }

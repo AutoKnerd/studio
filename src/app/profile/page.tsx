@@ -11,7 +11,7 @@ import { BottomNav } from '@/components/layout/bottom-nav';
 import { managerialRoles } from '@/lib/definitions';
 
 export default function ProfilePage() {
-  const { user, loading } = useAuth();
+  const { user, loading, isTouring } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function ProfilePage() {
           <ProfileForm user={user} />
         </div>
       </main>
-      {!isManager && <BottomNav />}
+      {!isManager && !isTouring && <BottomNav />}
     </div>
   );
 }
