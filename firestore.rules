@@ -83,6 +83,23 @@ service cloud.firestore {
        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Owner';
     }
+    
+    /**
+     * Checks for Admin or Developer roles for highly sensitive operations.
+     */
+    function isAdminOrDeveloper() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'Developer'];
+    }
+
+    /**
+     * Checks if the user is authorized to create a new dealership.
+     */
+    function canCreateDealership() {
+        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'Developer', 'Owner', 'Trainer'];
+    }
+
 
     /**
      * For update/delete operations, checks if the document exists AND the user is the owner.
@@ -167,7 +184,7 @@ service cloud.firestore {
       allow list: if isManager();
       allow create: if isOwner(userId) && isCreatingOwnUserDocument(userId);
       allow update: if isExistingOwner(userId) && isUpdatingOwnUserDocument();
-      allow delete: if isExistingOwner(userId) || isManager();
+      allow delete: if isExistingOwner(userId) || isAdminOrDeveloper();
     }
 
     /**
@@ -260,8 +277,8 @@ service cloud.firestore {
      */
     match /dealerships/{dealershipId} {
       allow read: if true;
-      allow create: if dealershipId == 'autoknerd-hq' || isManager();
-      allow update, delete: if isManager();
+      allow create: if dealershipId == 'autoknerd-hq' || canCreateDealership();
+      allow update, delete: if isAdminOrDeveloper();
     }
   }
 }
