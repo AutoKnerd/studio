@@ -5,7 +5,7 @@ import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCate
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
 import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, writeBatch, query, where, Timestamp } from 'firebase/firestore';
-import { db, auth } from './firebase'; // Assuming db is your exported Firestore instance
+import { auth, db } from './firebase'; // Assuming db is your exported Firestore instance
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { generateTourData } from './tour-data';
@@ -325,7 +325,7 @@ export async function sendInvitation(
   }
 
   if (dealershipSnapshot.empty) {
-    if (!['Admin', 'Trainer', 'Owner', 'Developer'].includes(inviter.role)) {
+    if (!['Admin', 'Trainer', 'Developer'].includes(inviter.role)) {
       throw new Error("You do not have permission to create a new dealership.");
     }
     const newDealershipRef = doc(dealershipsCollection);
@@ -1030,6 +1030,7 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
     
     return uniqueMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
+
 
 
 

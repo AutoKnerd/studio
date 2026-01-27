@@ -43,7 +43,7 @@ export function RegisterDealershipForm({ user, onDealershipRegistered }: Registe
   const [dealerships, setDealerships] = useState<Dealership[]>([]);
   const [isNewDealership, setIsNewDealership] = useState(false);
 
-  const canManageAllDealerships = ['Admin', 'Trainer', 'Developer', 'Owner'].includes(user.role);
+  const canManageAllDealerships = ['Admin', 'Trainer', 'Developer'].includes(user.role);
   const registrationRoles = getTeamMemberRoles(user.role);
 
   const form = useForm<RegisterFormValues>({

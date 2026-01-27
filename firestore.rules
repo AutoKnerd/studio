@@ -98,7 +98,7 @@ service cloud.firestore {
      */
     function canCreateDealership() {
         return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'Developer', 'Owner', 'Trainer'];
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'Developer', 'Trainer'];
     }
 
 
