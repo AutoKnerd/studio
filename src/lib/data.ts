@@ -5,8 +5,7 @@ import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCate
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
 import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, writeBatch, query, where, Timestamp } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { db } from './firebase'; // Assuming db is your exported Firestore instance
+import { db, auth } from './firebase'; // Assuming db is your exported Firestore instance
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { generateTourData } from './tour-data';
@@ -20,7 +19,7 @@ const getTourData = () => {
     return tourData;
 }
 const isTouringUser = () => {
-    const email = getAuth().currentUser?.email;
+    const email = auth.currentUser?.email;
     if (!email) return false;
     
     const demoUserEmails = [
@@ -66,7 +65,7 @@ export async function getUserById(userId: string): Promise<User | null> {
         
         // This is a special case to handle the currently logged in tour user, 
         // as their UID from Firebase Auth won't match the one in our generated data.
-        const currentUser = getAuth().currentUser;
+        const currentUser = auth.currentUser;
         if (currentUser?.uid === userId && currentUser.email) {
             const tourUserRoles: Record<string, UserRole> = {
                 'consultant.demo@autodrive.com': 'Sales Consultant',
@@ -1031,5 +1030,6 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
     
     return uniqueMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
+
 
 
