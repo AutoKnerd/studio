@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { UserRole } from '@/lib/definitions';
 import { useRouter } from 'next/navigation';
-import { Info, Bot } from 'lucide-react';
+import { Bot, SlidersHorizontal } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { TourGuideChat } from '@/components/tour/tour-guide-chat';
 
@@ -30,11 +30,16 @@ export function TourFooter() {
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-primary/50 bg-slate-900/90 text-white backdrop-blur-lg">
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-           <Info className="h-6 w-6 text-cyan-400 hidden sm:block" />
-           <p className="text-sm text-muted-foreground hidden sm:block">You are in a guided tour.</p>
+        {/* Left side: Panel Title */}
+        <div className="flex items-center gap-3">
+           <SlidersHorizontal className="h-6 w-6 text-cyan-400" />
+           <div className="hidden md:block">
+            <p className="font-bold">Tour Control Panel</p>
+            <p className="text-sm text-muted-foreground">You are in a guided tour.</p>
+           </div>
         </div>
 
+        {/* Right side: Controls */}
         <div className="flex items-center gap-2 md:gap-4">
             <Dialog>
               <DialogTrigger asChild>
@@ -55,22 +60,25 @@ export function TourFooter() {
                 <TourGuideChat user={user} />
               </DialogContent>
             </Dialog>
+            
+            <div className="flex items-center gap-2">
+              <p className="hidden sm:block text-sm text-muted-foreground">Viewing as:</p>
+              <Select onValueChange={(role) => switchTourRole(role as UserRole)} value={user.role}>
+                  <SelectTrigger className="w-[140px] sm:w-[150px] bg-slate-800 border-slate-700">
+                      <SelectValue placeholder="Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {tourRoles.map((role) => (
+                          <SelectItem key={role.value} value={role.value}>
+                              {role.label}
+                          </SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+            </div>
 
-            <Select onValueChange={(role) => switchTourRole(role as UserRole)} value={user.role}>
-                <SelectTrigger className="w-[150px] sm:w-[180px] bg-slate-800 border-slate-700">
-                    <SelectValue placeholder="Viewing as..." />
-                </SelectTrigger>
-                <SelectContent>
-                    {tourRoles.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                            {role.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-             <Button onClick={handleEndTour} size="default" className="bg-cyan-400 text-slate-900 hover:bg-cyan-300 px-3 sm:px-4">
-                <span className="hidden sm:inline">End Tour</span>
-                <span className="sm:hidden">End</span>
+             <Button onClick={handleEndTour} variant="destructive">
+                End Tour
             </Button>
         </div>
       </div>
