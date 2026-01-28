@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { User, UserRole } from '@/lib/definitions';
+import { User } from '@/lib/definitions';
 import { askTourGuide } from '@/ai/flows/tour-guide-flow';
-import { Bot, Send, User as UserIcon } from 'lucide-react';
+import { Bot, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,21 +21,37 @@ interface TourGuideChatProps {
 }
 
 export function TourGuideChat({ user }: TourGuideChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', content: `Hello! I'm your AI tour guide. How can I help you explore AutoDrive as a ${user.role === 'manager' ? 'Sales Manager' : user.role}?` }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true); // Start loading to fetch initial message
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to the latest message
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('div');
-       if (scrollContainer) {
-            scrollContainer.scrollTop = scrollContainer.scrollHeight;
-       }
-    }
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
+
+  // Fetch the initial greeting from the AI guide
+  useEffect(() => {
+    const getInitialMessage = async () => {
+      setIsLoading(true);
+      setMessages([]);
+      try {
+        const response = await askTourGuide({
+          question: '__INIT_TOUR_GUIDE__',
+          role: user.role,
+        });
+        setMessages([{ role: 'model', content: response }]);
+      } catch (error) {
+        console.error("AI tour guide error:", error);
+        setMessages([{ role: 'model', content: "Sorry, I'm having trouble connecting right now. Please try again in a moment." }]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getInitialMessage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.role]); // Re-fetch if role changes
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +81,7 @@ export function TourGuideChat({ user }: TourGuideChatProps) {
 
   return (
     <div className="flex flex-col h-[60vh]">
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message, index) => (
             <div key={index} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
@@ -84,18 +100,19 @@ export function TourGuideChat({ user }: TourGuideChatProps) {
               )}
             </div>
           ))}
-          {isLoading && (
+          {isLoading && messages.length > 0 && (
              <div className="flex items-start gap-3">
                 <Avatar className="h-8 w-8 animate-pulse">
                     <Image src="/autodrive-ai-icon1.png" alt="Thinking..." width={32} height={32} />
                 </Avatar>
              </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
       <form onSubmit={handleSendMessage} className="flex w-full items-center space-x-2 border-t p-4">
         <Input
-          placeholder="e.g., 'What is this dashboard for?'"
+          placeholder="e.g., 'What are CX Scores?'"
           className="flex-1"
           autoComplete="off"
           value={input}
@@ -103,7 +120,7 @@ export function TourGuideChat({ user }: TourGuideChatProps) {
           disabled={isLoading}
         />
         <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-          {isLoading ? <Spinner size="sm" /> : <Send />}
+          {isLoading && messages.length > 0 ? <Spinner size="sm" /> : <Send />}
           <span className="sr-only">Send</span>
         </Button>
       </form>

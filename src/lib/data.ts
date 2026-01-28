@@ -1,14 +1,16 @@
 
-
 import { isToday, subDays, isSameDay } from 'date-fns';
 import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
 import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, writeBatch, query, where, Timestamp } from 'firebase/firestore';
-import { auth, db } from './firebase'; // Assuming db is your exported Firestore instance
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { generateTourData } from './tour-data';
+import { initializeFirebase } from '@/firebase/init';
+
+const { firestore: db, auth } = initializeFirebase();
+
 
 // --- FAKE DATA INJECTION FOR TOUR ---
 let tourData: ReturnType<typeof generateTourData> | null = null;
@@ -1030,7 +1032,3 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
     
     return uniqueMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
-
-
-
-
