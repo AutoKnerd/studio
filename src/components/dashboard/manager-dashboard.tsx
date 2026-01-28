@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -655,7 +656,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                               <TabsContent value="invite" className="pt-2">
                                                   <RegisterDealershipForm
                                                       user={user}
-                                                      dealerships={allDealershipsForAdmin}
+                                                      dealerships={dealerships}
                                                       onUserInvited={handleUserManaged}
                                                   />
                                               </TabsContent>

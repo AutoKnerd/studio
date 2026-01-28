@@ -685,7 +685,7 @@ export const getTeamMemberRoles = (managerRole: UserRole): UserRole[] => {
         case 'General Manager':
              return ['Sales Consultant', 'manager', 'Service Writer', 'Service Manager', 'Finance Manager', 'Parts Consultant', 'Parts Manager'];
         case 'Owner':
-             return ['Sales Consultant', 'manager', 'Service Writer', 'Service Manager', 'Finance Manager', 'Parts Consultant', 'Parts Manager'];
+             return ['Sales Consultant', 'manager', 'Service Writer', 'Service Manager', 'Finance Manager', 'Parts Consultant', 'Parts Manager', 'General Manager'];
         case 'Trainer':
             return ['Sales Consultant', 'manager', 'Service Writer', 'Service Manager', 'Finance Manager', 'Parts Consultant', 'Parts Manager', 'General Manager', 'Owner', 'Developer'];
         case 'Admin':
@@ -719,7 +719,7 @@ export async function getDealerships(user?: User): Promise<Dealership[]> {
     
     let relevantDealerships = dealerships.filter(d => d.id !== 'autoknerd-hq');
 
-    if (user && user.role !== 'Admin') {
+    if (user && !['Admin', 'Developer'].includes(user.role)) {
         relevantDealerships = relevantDealerships.filter(d => d.status !== 'deactivated');
     }
 
