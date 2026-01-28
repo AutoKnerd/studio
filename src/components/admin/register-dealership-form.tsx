@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { sendInvitation, getTeamMemberRoles } from '@/lib/data';
-import { User, UserRole, Dealership } from '@/lib/definitions';
+import { User, UserRole, Dealership, allRoles } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,8 +35,9 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [invitationSent, setInvitationSent] = useState(false);
   const { toast } = useToast();
-
-  const registrationRoles = getTeamMemberRoles(user.role);
+  
+  const isAdmin = ['Admin', 'Developer'].includes(user.role);
+  const registrationRoles = isAdmin ? allRoles : getTeamMemberRoles(user.role);
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
@@ -49,10 +50,10 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
   
   useEffect(() => {
     // Pre-select dealership if user only belongs to one
-    if (dealerships.length === 1 && !['Admin', 'Developer', 'Trainer'].includes(user.role)) {
+    if (dealerships.length === 1 && !isAdmin) {
         form.setValue('dealershipId', dealerships[0].id);
     }
-  }, [dealerships, user.role, form]);
+  }, [dealerships, isAdmin, form]);
 
 
   async function onSubmit(data: InviteFormValues) {

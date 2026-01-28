@@ -85,8 +85,8 @@ service cloud.firestore {
     }
     
     match /emailInvitations/{invitationId} {
-      // Allow creation by managers, or the specific admin email to bypass race conditions on initial setup.
-      allow create: if (isManager() && request.resource.data.inviterId == request.auth.uid) || request.auth.token.email == 'andrew@autoknerd.com';
+      // Allow creation by managers, or a known admin email to bypass race conditions on initial setup.
+      allow create: if request.auth.token.email in ['andrew@autoknerd.com', 'btedesign@mac.com'] || (isManager() && request.resource.data.inviterId == request.auth.uid);
       // An invited user needs to be able to read their own invitation document to register.
       allow get: if true;
       // Allow the backend to mark the invitation as claimed after user creation.
@@ -96,9 +96,9 @@ service cloud.firestore {
 
     match /dealerships/{dealershipId} {
       allow read: if true;
-      // Allow creation by specific roles, or the admin email for bootstrapping.
-      allow create: if hasAnyRole(['Admin', 'Developer', 'Trainer']) || request.auth.token.email == 'andrew@autoknerd.com';
-      allow update, delete: if hasAnyRole(['Admin', 'Developer']);
+      // Allow creation by specific roles, or a known admin email for bootstrapping.
+      allow create: if request.auth.token.email in ['andrew@autoknerd.com', 'btedesign@mac.com'] || hasAnyRole(['Admin', 'Developer', 'Trainer']);
+      allow update, delete: if request.auth.token.email in ['andrew@autoknerd.com', 'btedesign@mac.com'] || hasAnyRole(['Admin', 'Developer']);
     }
   }
 }

@@ -81,7 +81,7 @@ function LevelDisplay({ user }: { user: User }) {
                 <Progress value={progress} className="h-4 bg-slate-700/50 border border-slate-600 [&>div]:bg-gradient-to-r [&>div]:from-cyan-400 [&>div]:to-blue-500" />
             </div>
             <div className="flex justify-between text-xs font-semibold">
-                <span className="text-muted-foreground">{levelXp.toLocaleString()} / {nextLevelXp.toLocaleString()} XP</span>
+                <span className="text-muted-foreground">{levelXp.toLocaleString()} / {nextLevelXp.toLocaleString()}</span>
                 <p className="text-muted-foreground">{user.role === 'manager' ? 'Sales Manager' : user.role}</p>
             </div>
              <p className="text-cyan-400 text-right font-semibold">Total: {user.xp.toLocaleString()} XP</p>
@@ -152,26 +152,23 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       setLoading(false);
   }, [user.userId, user.role]);
 
+  const fetchAdminData = useCallback(async () => {
+    const fetchedDealerships = await getDealerships(user);
+    if (['Admin', 'Developer'].includes(user.role)) {
+      setAllDealershipsForAdmin(fetchedDealerships);
+    }
+    setDealerships(fetchedDealerships.filter(d => ['Admin', 'Developer'].includes(user.role) ? true : d.status !== 'deactivated'));
+  }, [user]);
+
   useEffect(() => {
     const fetchInitialData = async () => {
         if (!managerialRoles.includes(user.role)) {
             return;
         }
         setLoading(true);
-        let initialDealerships: Dealership[];
 
-        if (['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) {
-             initialDealerships = await getDealerships(user);
-             if (['Admin', 'Developer'].includes(originalUser?.role || user.role)) {
-                setAllDealershipsForAdmin(initialDealerships);
-             }
-        } else {
-            const managedDealerships = await Promise.all(
-                user.dealershipIds.map(id => getDealershipById(id))
-            );
-            initialDealerships = managedDealerships.filter((d): d is Dealership => d !== null);
-        }
-        setDealerships(initialDealerships.filter(d => ['Admin', 'Developer'].includes(originalUser?.role || user.role) ? true : d.status !== 'deactivated'));
+        await fetchAdminData();
+        let initialDealerships: Dealership[] = await getDealerships(user);
         
         let currentSelectedId = selectedDealershipId;
 
@@ -221,7 +218,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
     };
 
     fetchInitialData();
-  }, [user.role, user.userId, user.dealershipIds, selectedDealershipId, fetchData, originalUser?.role]);
+  }, [user, selectedDealershipId, fetchData, fetchAdminData]);
 
   useEffect(() => {
     if (user.memberSince) {
@@ -319,13 +316,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   }, [stats]);
   
   async function handleUserManaged() {
-    if (['Admin', 'Trainer', 'Developer'].includes(originalUser?.role || user.role)) {
-        const fetchedDealerships = await getDealerships(user);
-        if (['Admin', 'Developer'].includes(originalUser?.role || user.role)) {
-            setAllDealershipsForAdmin(fetchedDealerships);
-        }
-        setDealerships(fetchedDealerships.filter(d => ['Admin', 'Developer'].includes(originalUser?.role || user.role) ? true : d.status !== 'deactivated'));
-    }
+    await fetchAdminData();
     if (!['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) {
         setManageUsersOpen(false);
     }
@@ -344,11 +335,11 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   }
 
   const isDeveloperViewing = originalUser?.role === 'Developer';
+  const canCreateDealerships = ['Admin', 'Developer', 'Trainer'].includes(user.role);
   const showAdminTabs = isDeveloperViewing || user.role === 'Admin';
   const showPersonalDevelopment = !noPersonalDevelopmentRoles.includes(user.role) && !isDeveloperViewing;
   const isSoloManager = teamActivity.length === 0 && selectedDealershipId !== 'all' && !loading;
   const canManage = ['Admin', 'Trainer', 'Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager', 'Developer'].includes(user.role);
-  const canOnboard = ['Admin', 'Trainer', 'Developer'].includes(user.role);
   const canMessage = ['Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
   const showInsufficientDataWarning = stats?.totalLessons === -1;
 
@@ -392,32 +383,30 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             )}
         </section>
 
-        {canOnboard && !isSoloManager && (
+        {canCreateDealerships && (
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <PlusCircle className="h-6 w-6" />
-                        Onboard New Team Member
-                    </CardTitle>
-                     <CardDescription>A two-step process to get a new dealership and its first user set up.</CardDescription>
+                    <CardTitle>Create New Dealership</CardTitle>
+                    <CardDescription>Add a new dealership to the system. This must be done before you can invite users to it.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="create-dealership">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="create-dealership">Step 1: Create Dealership</TabsTrigger>
-                            <TabsTrigger value="invite-user">Step 2: Invite User</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="create-dealership" className="pt-4">
-                            <CreateDealershipForm user={user} onDealershipCreated={handleUserManaged} />
-                        </TabsContent>
-                        <TabsContent value="invite-user" className="pt-4">
-                             <RegisterDealershipForm
-                                user={user}
-                                dealerships={allDealershipsForAdmin}
-                                onUserInvited={handleUserManaged}
-                            />
-                        </TabsContent>
-                    </Tabs>
+                    <CreateDealershipForm user={user} onDealershipCreated={handleUserManaged} />
+                </CardContent>
+            </Card>
+        )}
+
+        {canManage && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Invite New User</CardTitle>
+                    <CardDescription>Send an email invitation for a new user to join a dealership.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RegisterDealershipForm
+                        user={user}
+                        dealerships={['Admin', 'Developer'].includes(user.role) ? allDealershipsForAdmin : dealerships}
+                        onUserInvited={handleUserManaged}
+                    />
                 </CardContent>
             </Card>
         )}
