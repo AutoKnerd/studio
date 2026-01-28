@@ -346,6 +346,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const showPersonalDevelopment = !noPersonalDevelopmentRoles.includes(user.role) && !isDeveloperViewing;
   const isSoloManager = teamActivity.length === 0 && selectedDealershipId !== 'all' && !loading;
   const canManage = ['Admin', 'Trainer', 'Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager', 'Developer'].includes(user.role);
+  const canOnboard = ['Admin', 'Trainer', 'Developer'].includes(user.role);
   const canMessage = ['Owner', 'General Manager', 'manager', 'Service Manager', 'Parts Manager'].includes(user.role);
   const showInsufficientDataWarning = stats?.totalLessons === -1;
 
@@ -388,6 +389,26 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
             <BadgeShowcase badges={managerBadges} />
             )}
         </section>
+
+        {canOnboard && !isSoloManager && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <PlusCircle className="h-6 w-6" />
+                        Onboard New Team Member
+                    </CardTitle>
+                    <CardDescription>
+                        Invite a new user and assign them to a dealership. If their dealership doesn't exist yet, you can create it here.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RegisterDealershipForm
+                        user={user}
+                        onDealershipRegistered={handleUserManaged}
+                    />
+                </CardContent>
+            </Card>
+        )}
 
         {showPersonalDevelopment && (
             <section className="space-y-4">
