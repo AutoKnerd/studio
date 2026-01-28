@@ -341,17 +341,12 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const isSuperAdmin = ['Admin', 'Developer'].includes(user.role);
   const showInsufficientDataWarning = stats?.totalLessons === -1;
 
-  const managerialTitle = useMemo(() => {
-    switch (user.role) {
-      case 'Owner':
-      case 'General Manager':
-        return 'Dealership Leader';
-      case 'manager':
-        return 'Sales Manager';
-      default:
-        return user.role;
-    }
-  }, [user.role]);
+  const managerialTitle =
+    user.role === 'Owner' || user.role === 'General Manager'
+      ? 'Dealership Leader'
+      : user.role === 'manager'
+      ? 'Sales Manager'
+      : user.role;
 
   return (
     <div className="space-y-8 pb-8">
@@ -394,11 +389,22 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
         </section>
 
         {isSuperAdmin && (
-             <Tabs defaultValue="invite" className="w-full">
+             <Tabs defaultValue="dealership" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="invite">Invite User</TabsTrigger>
                     <TabsTrigger value="dealership">Create Dealership</TabsTrigger>
+                    <TabsTrigger value="invite">Invite User</TabsTrigger>
                 </TabsList>
+                <TabsContent value="dealership">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Create New Dealership</CardTitle>
+                            <CardDescription>Add a new dealership to the system. This must be done before you can invite users to it.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <CreateDealershipForm user={user} onDealershipCreated={handleUserManaged} />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
                 <TabsContent value="invite">
                     <Card>
                         <CardHeader>
@@ -411,17 +417,6 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                 dealerships={allDealershipsForAdmin}
                                 onUserInvited={handleUserManaged}
                             />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="dealership">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Create New Dealership</CardTitle>
-                            <CardDescription>Add a new dealership to the system. This must be done before you can invite users to it.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <CreateDealershipForm user={user} onDealershipCreated={handleUserManaged} />
                         </CardContent>
                     </Card>
                 </TabsContent>
