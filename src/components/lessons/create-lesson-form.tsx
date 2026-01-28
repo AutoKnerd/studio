@@ -145,7 +145,7 @@ export function CreateLessonForm({ user, onLessonCreated, assignOnCreateToUserId
         associatedTrait: data.associatedTrait,
         targetRole: data.targetRole as UserRole | 'global',
         scenario: data.scenario,
-      });
+      }, user);
 
       if (assignOnCreateToUserId && assignerId) {
         await assignLesson(assignOnCreateToUserId, newLesson.lessonId, assignerId);

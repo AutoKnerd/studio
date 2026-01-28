@@ -1,4 +1,5 @@
 
+
 export const carBrands = [
   'Acura', 'Alfa Romeo', 'Audi', 'BMW', 'Buick', 'Cadillac', 'Chevrolet', 
   'Chrysler', 'Dodge', 'Fiat', 'Ford', 'Genesis', 'GMC', 'Honda', 'Hyundai', 
@@ -246,7 +247,10 @@ export type BadgeId =
   | 'night-owl'
   | 'early-bird'
   | 'sales-specialist'
-  | 'service-specialist';
+  | 'service-specialist'
+  | 'talent-scout'
+  | 'curriculum-architect'
+  | 'empire-builder';
 
 export type Badge = {
   id: BadgeId;

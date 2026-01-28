@@ -121,4 +121,24 @@ export const allBadges: Badge[] = [
     description: 'Complete all available Service-focused lessons.',
     icon: 'Wrench',
   },
+  
+  // Manager & Owner Badges
+  {
+    id: 'talent-scout',
+    name: 'Talent Scout',
+    description: 'Invite your first team member.',
+    icon: 'UserPlus',
+  },
+  {
+    id: 'curriculum-architect',
+    name: 'Curriculum Architect',
+    description: 'Create your first custom lesson.',
+    icon: 'ClipboardEdit',
+  },
+  {
+    id: 'empire-builder',
+    name: 'Empire Builder',
+    description: 'Expand your influence by managing more than one dealership.',
+    icon: 'Building2',
+  },
 ];
