@@ -2,7 +2,7 @@
 
 'use client';
 
-import { User, Dealership, LessonLog, UserRole, Badge, EarnedBadge, Lesson, LessonAssignment } from './definitions';
+import { User, Dealership, LessonLog, UserRole, Badge, EarnedBadge, Lesson, LessonAssignment, CxTrait } from './definitions';
 import { calculateLevel } from './xp';
 import { allBadges }from './badges';
 
@@ -20,7 +20,30 @@ const generateRandomName = () => `${firstNames[Math.floor(Math.random() * firstN
 
 const generateRandomEmail = (name: string) => `${name.toLowerCase().replace(/ /g, '.').substring(0,15)}${Math.floor(Math.random() * 100)}@autodrive-demo.com`;
 
-const generateRandomScore = (base: number) => Math.min(100, Math.max(40, base + Math.floor(Math.random() * 40) - 20));
+type DealershipPersonality = {
+    strongSuit: CxTrait;
+    weakSuit: CxTrait;
+};
+
+const dealershipPersonalities: Record<string, DealershipPersonality> = {
+    "tour-dealership-1": { strongSuit: 'relationshipBuilding', weakSuit: 'closing' }, // Prestige Auto Group
+    "tour-dealership-2": { strongSuit: 'closing', weakSuit: 'empathy' },             // Velocity Motors
+    "tour-dealership-3": { strongSuit: 'trust', weakSuit: 'followUp' },              // Summit Cars
+    "tour-dealership-4": { strongSuit: 'listening', weakSuit: 'relationshipBuilding' }, // Coastal Drive
+};
+
+const generateRandomScore = (base: number, bias: 'strong' | 'weak' | 'neutral' = 'neutral') => {
+    let score;
+    if (bias === 'strong') {
+        score = base + 15 + Math.floor(Math.random() * 15); // Biased to be higher
+    } else if (bias === 'weak') {
+        score = base - 25 + Math.floor(Math.random() * 15); // Biased to be lower
+    } else { // neutral
+        score = base + Math.floor(Math.random() * 20) - 10;
+    }
+    return Math.min(99, Math.max(40, Math.round(score)));
+};
+
 
 export const generateTourData = () => {
     const dealerships: Dealership[] = [];
@@ -143,6 +166,8 @@ export const generateTourData = () => {
     ]; 
 
     for (const dealership of dealerships) {
+        const personality = dealershipPersonalities[dealership.id];
+
         for (let i = 0; i < 15; i++) { // 15 users per dealership = 60 total
             const role = rolesToGenerate[i % rolesToGenerate.length];
             const name = generateRandomName();
@@ -167,6 +192,27 @@ export const generateTourData = () => {
                 const xpGained = Math.floor(Math.random() * 90) + 10;
                 totalXp += xpGained;
 
+                const scores: Partial<Record<CxTrait, number>> = {};
+                const traits: CxTrait[] = ['empathy', 'listening', 'trust', 'followUp', 'closing', 'relationshipBuilding'];
+                const baseScores: Record<CxTrait, number> = {
+                    empathy: 75,
+                    listening: 70,
+                    trust: 80,
+                    followUp: 65,
+                    closing: 68,
+                    relationshipBuilding: 82,
+                };
+
+                traits.forEach(trait => {
+                    let bias: 'strong' | 'weak' | 'neutral' = 'neutral';
+                    if (personality && personality.strongSuit === trait) {
+                        bias = 'strong';
+                    } else if (personality && personality.weakSuit === trait) {
+                        bias = 'weak';
+                    }
+                    scores[trait] = generateRandomScore(baseScores[trait], bias);
+                });
+
                 const log: LessonLog = {
                     logId: `tour-log-${user.userId}-${j}`,
                     timestamp: new Date(new Date().getTime() - Math.random() * 90 * 24 * 60 * 60 * 1000),
@@ -174,12 +220,12 @@ export const generateTourData = () => {
                     lessonId: `tour-lesson-${(j % 9) + 1}`,
                     stepResults: { final: 'pass' },
                     xpGained: xpGained,
-                    empathy: generateRandomScore(75),
-                    listening: generateRandomScore(70),
-                    trust: generateRandomScore(80),
-                    followUp: generateRandomScore(65),
-                    closing: generateRandomScore(68),
-                    relationshipBuilding: generateRandomScore(82),
+                    empathy: scores.empathy!,
+                    listening: scores.listening!,
+                    trust: scores.trust!,
+                    followUp: scores.followUp!,
+                    closing: scores.closing!,
+                    relationshipBuilding: scores.relationshipBuilding!,
                     isRecommended: Math.random() > 0.7
                 };
                 lessonLogs.push(log);
