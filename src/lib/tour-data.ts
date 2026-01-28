@@ -120,6 +120,21 @@ export const generateTourData = () => {
     ];
 
     // 2. Generate Users
+    // Add a dedicated Owner user first
+    users.push({
+        userId: 'tour-owner-user',
+        name: 'Demo Owner',
+        email: 'owner.demo@autodrive.com',
+        role: 'Owner',
+        dealershipIds: dealerships.map(d => d.id), // Owner has access to all
+        avatarUrl: 'https://i.pravatar.cc/150?u=tour-owner-user',
+        xp: 25000,
+        isPrivate: false,
+        isPrivateFromOwner: false,
+        memberSince: new Date(new Date().getTime() - 365 * 2 * 24 * 60 * 60 * 1000).toISOString(),
+        subscriptionStatus: 'active'
+    });
+    
     const rolesToGenerate: UserRole[] = [
         'manager', 'Service Manager', 'Parts Manager', 'Finance Manager',
         'Sales Consultant', 'Sales Consultant', 'Sales Consultant', 'Sales Consultant', 'Sales Consultant',

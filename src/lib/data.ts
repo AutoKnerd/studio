@@ -75,11 +75,10 @@ export async function getUserById(userId: string): Promise<User | null> {
     const { auth, db } = getFirebase();
 
     if (isTouringUser()) {
-        const { users, dealerships } = getTourData();
-        
+        const { users } = getTourData();
         const currentUser = auth.currentUser;
-        // This block handles the initial fetch when auth state changes.
-        // `userId` here is the firebase auth UID.
+        
+        // This block handles the initial fetch when auth state changes (using Firebase UID).
         if (currentUser?.uid === userId && currentUser.email) {
             const tourUserRoles: Record<string, UserRole> = {
                 'consultant.demo@autodrive.com': 'Sales Consultant',
@@ -89,36 +88,13 @@ export async function getUserById(userId: string): Promise<User | null> {
             };
             const role = tourUserRoles[currentUser.email];
             if (role) {
-                 if (role === 'Owner') {
-                    let owner = users.find(u => u.role === 'Owner');
-                    // If for some reason tour data doesn't have an owner, create a default one.
-                    if (!owner) {
-                        return {
-                            userId: 'tour-owner-user', // Use a static ID
-                            name: 'Demo Owner',
-                            email: 'owner.demo@autodrive.com',
-                            role: 'Owner',
-                            dealershipIds: dealerships.map(d => d.id),
-                            avatarUrl: 'https://i.pravatar.cc/150?u=tour-owner-user',
-                            xp: 12500,
-                            isPrivate: false,
-                            isPrivateFromOwner: false,
-                            memberSince: new Date(new Date().getTime() - 365 * 2 * 24 * 60 * 60 * 1000).toISOString(),
-                            subscriptionStatus: 'active'
-                        };
-                    }
-                    // Return the found owner, updating email but keeping original userId
-                    return {...owner, email: currentUser.email};
-                }
-                // Find a representative user for other roles.
+                // Find the representative user for the role. Now 'Owner' will be found.
                 const representativeUser = users.find(u => u.role === role);
-                 if (representativeUser) {
-                    // Update name and email for the tour UI, but crucially,
-                    // keep the original, stable userId from tourData.
+                if (representativeUser) {
                     return {
                         ...representativeUser,
-                        email: currentUser.email!,
-                        name: `Demo ${role === 'manager' ? 'Sales Manager' : role}`,
+                        email: currentUser.email, // Always use the auth email for the session
+                        name: role === 'Owner' ? 'Demo Owner' : `Demo ${role === 'manager' ? 'Sales Manager' : role}`,
                     };
                 }
             }
@@ -129,7 +105,11 @@ export async function getUserById(userId: string): Promise<User | null> {
         if (tourUser) {
             return tourUser;
         }
+        
+        // If for some reason a user is not found, return null to avoid crashes.
+        return null;
     }
+
     return getDataById<User>(db, 'users', userId);
 }
 
