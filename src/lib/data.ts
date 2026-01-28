@@ -1,16 +1,27 @@
 
-
 import { isToday, subDays, isSameDay } from 'date-fns';
 import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
-import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, writeBatch, query, where, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, writeBatch, query, where, Timestamp, Firestore } from 'firebase/firestore';
+import { Auth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { generateTourData } from './tour-data';
 import { initializeFirebase } from '@/firebase/init';
 
-const { firestore: db, auth } = initializeFirebase();
+
+// --- Singleton instances ---
+let db: Firestore;
+let auth: Auth;
+function getFirebase() {
+    if (!db || !auth) {
+        const services = initializeFirebase();
+        db = services.firestore;
+        auth = services.auth;
+    }
+    return { db, auth };
+}
 
 
 // --- FAKE DATA INJECTION FOR TOUR ---
@@ -22,6 +33,10 @@ const getTourData = () => {
     return tourData;
 }
 const isTouringUser = () => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+    const { auth } = getFirebase();
     const email = auth.currentUser?.email;
     if (!email) return false;
     
@@ -38,15 +53,8 @@ const isTouringUser = () => {
 
 // --- HELPER FUNCTIONS ---
 
-const usersCollection = collection(db, 'users');
-const dealershipsCollection = collection(db, 'dealerships');
-const lessonsCollection = collection(db, 'lessons');
-const assignmentsCollection = collection(db, 'lessonAssignments');
-const messagesCollection = collection(db, 'messages');
-const invitationsCollection = collection(db, 'emailInvitations');
-
-const getDataById = async <T>(collectionRef: any, id: string): Promise<T | null> => {
-    const docRef = doc(collectionRef, id);
+const getDataById = async <T>(db: Firestore, collectionName: string, id: string): Promise<T | null> => {
+    const docRef = doc(db, collectionName, id);
     try {
         const docSnap = await getDoc(docRef);
         return docSnap.exists() ? ({ ...docSnap.data(), id: docSnap.id } as T) : null;
@@ -63,6 +71,8 @@ const getDataById = async <T>(collectionRef: any, id: string): Promise<T | null>
 
 // AUTH
 export async function getUserById(userId: string): Promise<User | null> {
+    const { auth, db } = getFirebase();
+
     if (isTouringUser()) {
         const { users } = getTourData();
         
@@ -116,16 +126,17 @@ export async function getUserById(userId: string): Promise<User | null> {
         }
     }
     // If not in tour mode, or user not found in tour data, fetch from Firestore.
-    return getDataById<User>(usersCollection, userId);
+    return getDataById<User>(db, 'users', userId);
 }
 
 
 export async function createUserProfile(userId: string, name: string, email: string, role: UserRole, brand: string): Promise<User> {
+    const { db } = getFirebase();
     let dealershipId = '';
     const isHqRole = ['Admin', 'Developer', 'Trainer'].includes(role);
     if (isHqRole) {
         const hqDealershipId = 'autoknerd-hq';
-        const dealershipRef = doc(dealershipsCollection, hqDealershipId);
+        const dealershipRef = doc(db, 'dealerships', hqDealershipId);
         try {
             const docSnap = await getDoc(dealershipRef);
             if (!docSnap.exists()) {
@@ -163,7 +174,7 @@ export async function createUserProfile(userId: string, name: string, email: str
         subscriptionStatus: ['Admin', 'Developer', 'Owner', 'Trainer', 'General Manager'].includes(role) ? 'active' : 'inactive',
     };
 
-    const userDocRef = doc(usersCollection, userId);
+    const userDocRef = doc(db, 'users', userId);
     try {
         await setDoc(userDocRef, newUser);
     } catch(e: any) {
@@ -181,18 +192,20 @@ export async function createUserProfile(userId: string, name: string, email: str
 
 
 export async function findUserByEmail(email: string, requestingUserId:string): Promise<User | null> {
-     const q = query(usersCollection, where("email", "==", email.toLowerCase()));
-     let querySnapshot;
-     try {
+    const { db } = getFirebase();
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, where("email", "==", email.toLowerCase()));
+    let querySnapshot;
+    try {
         querySnapshot = await getDocs(q);
-     } catch (e: any) {
+    } catch (e: any) {
         const contextualError = new FirestorePermissionError({
             path: usersCollection.path,
             operation: 'list',
         });
         errorEmitter.emit('permission-error', contextualError);
         throw contextualError;
-     }
+    }
 
     if (querySnapshot.empty) {
         return null;
@@ -222,7 +235,8 @@ export async function findUserByEmail(email: string, requestingUserId:string): P
 }
 
 export async function updateUser(userId: string, data: Partial<Omit<User, 'userId' | 'role' | 'xp' | 'dealershipIds'>>): Promise<User> {
-    const userRef = doc(usersCollection, userId);
+    const { db } = getFirebase();
+    const userRef = doc(db, 'users', userId);
     try {
         await updateDoc(userRef, data);
     } catch (e: any) {
@@ -234,13 +248,14 @@ export async function updateUser(userId: string, data: Partial<Omit<User, 'userI
         errorEmitter.emit('permission-error', contextualError);
         throw contextualError;
     }
-    const updatedUser = await getDataById<User>(usersCollection, userId);
+    const updatedUser = await getDataById<User>(db, 'users', userId);
     if (!updatedUser) throw new Error("User not found after update");
     return updatedUser;
 }
 
 export async function updateUserDealerships(userId: string, newDealershipIds: string[]): Promise<User> {
-    const userRef = doc(usersCollection, userId);
+    const { db } = getFirebase();
+    const userRef = doc(db, 'users', userId);
     const updateData = { dealershipIds: newDealershipIds };
     try {
         await updateDoc(userRef, updateData);
@@ -253,15 +268,16 @@ export async function updateUserDealerships(userId: string, newDealershipIds: st
         errorEmitter.emit('permission-error', contextualError);
         throw contextualError;
     }
-    const updatedUser = await getDataById<User>(usersCollection, userId);
+    const updatedUser = await getDataById<User>(db, 'users', userId);
     if (!updatedUser) throw new Error("User not found after update");
     return updatedUser;
 }
 
 export async function deleteUser(userId: string): Promise<void> {
+    const { db } = getFirebase();
     const batch = writeBatch(db);
     
-    batch.delete(doc(usersCollection, userId));
+    batch.delete(doc(db, 'users', userId));
 
     const logsCollectionRef = collection(db, `users/${userId}/lessonLogs`);
     try {
@@ -273,6 +289,7 @@ export async function deleteUser(userId: string): Promise<void> {
         throw contextualError;
     }
 
+    const assignmentsCollection = collection(db, 'lessonAssignments');
     const assignmentsQuery = query(assignmentsCollection, where("userId", "==", userId));
     try {
         const assignmentsSnapshot = await getDocs(assignmentsQuery);
@@ -307,6 +324,7 @@ export async function createDealership(dealershipData: {
     address: Partial<Address>;
     trainerId?: string;
 }): Promise<Dealership> {
+    const { db } = getFirebase();
     const dealershipRef = doc(collection(db, 'dealerships'));
     const newDealership: Dealership = {
         id: dealershipRef.id,
@@ -336,12 +354,14 @@ export async function sendInvitation(
   role: UserRole,
   inviterId: string,
 ): Promise<void> {
+  const { db } = getFirebase();
   const inviter = await getUserById(inviterId);
   if (!inviter) throw new Error("Inviter not found.");
 
   const dealership = await getDealershipById(dealershipId);
   if (!dealership) throw new Error('Dealership not found.');
   
+  const invitationsCollection = collection(db, 'emailInvitations');
   const invitationRef = doc(invitationsCollection);
   const token = invitationRef.id;
 
@@ -369,6 +389,8 @@ export async function sendInvitation(
 
 
 export async function updateUserSubscriptionStatus(stripeCustomerId: string, newStatus: 'active' | 'inactive'): Promise<User | null> {
+    const { db } = getFirebase();
+    const usersCollection = collection(db, 'users');
     const q = query(usersCollection, where("stripeCustomerId", "==", stripeCustomerId));
     let snapshot;
     try {
@@ -411,6 +433,8 @@ export async function getLessons(role: LessonRole): Promise<Lesson[]> {
         return lessons.filter(lesson => lesson.role === role || lesson.role === 'global');
     }
 
+    const { db } = getFirebase();
+    const lessonsCollection = collection(db, 'lessons');
     const q = query(lessonsCollection, where("role", "in", [role, 'global']));
     try {
         const snapshot = await getDocs(q);
@@ -427,7 +451,8 @@ export async function getLessonById(lessonId: string): Promise<Lesson | null> {
         const { lessons } = getTourData();
         return lessons.find(l => l.lessonId === lessonId) || null;
     }
-    return getDataById<Lesson>(lessonsCollection, lessonId);
+    const { db } = getFirebase();
+    return getDataById<Lesson>(db, 'lessons', lessonId);
 }
 
 export async function getDealershipById(dealershipId: string): Promise<Dealership | null> {
@@ -438,7 +463,8 @@ export async function getDealershipById(dealershipId: string): Promise<Dealershi
         if (dealership) return { ...dealership, status: 'active' };
         return null;
     }
-    return getDataById<Dealership>(dealershipsCollection, dealershipId);
+    const { db } = getFirebase();
+    return getDataById<Dealership>(db, 'dealerships', dealershipId);
 }
 
 export async function createLesson(lessonData: {
@@ -448,6 +474,8 @@ export async function createLesson(lessonData: {
     targetRole: UserRole | 'global';
     scenario: string;
 }): Promise<Lesson> {
+    const { db } = getFirebase();
+    const lessonsCollection = collection(db, 'lessons');
     const newLessonRef = doc(lessonsCollection);
     const newLesson: Lesson = {
         lessonId: newLessonRef.id,
@@ -472,6 +500,8 @@ export async function createLesson(lessonData: {
 }
 
 export async function getAssignedLessons(userId: string): Promise<Lesson[]> {
+    const { db } = getFirebase();
+    const assignmentsCollection = collection(db, 'lessonAssignments');
     const q = query(assignmentsCollection, where("userId", "==", userId), where("completed", "==", false));
     
     let assignments: LessonAssignment[];
@@ -487,6 +517,7 @@ export async function getAssignedLessons(userId: string): Promise<Lesson[]> {
     if (assignments.length === 0) return [];
     
     const lessonIds = assignments.map(a => a.lessonId);
+    const lessonsCollection = collection(db, 'lessons');
     const lessonsQuery = query(lessonsCollection, where("lessonId", "in", lessonIds));
     
     try {
@@ -500,6 +531,8 @@ export async function getAssignedLessons(userId: string): Promise<Lesson[]> {
 }
 
 export async function assignLesson(userId: string, lessonId: string, assignerId: string): Promise<LessonAssignment> {
+    const { db } = getFirebase();
+    const assignmentsCollection = collection(db, 'lessonAssignments');
     const assignmentRef = doc(assignmentsCollection);
     const newAssignment: LessonAssignment = {
         assignmentId: assignmentRef.id,
@@ -539,6 +572,7 @@ export async function getConsultantActivity(userId: string): Promise<LessonLog[]
         return [];
     }
 
+    const { db } = getFirebase();
     const logsCollection = collection(db, `users/${userId}/lessonLogs`);
     try {
         const snapshot = await getDocs(logsCollection);
@@ -552,6 +586,7 @@ export async function getConsultantActivity(userId: string): Promise<LessonLog[]
 }
 
 export async function getDailyLessonLimits(userId: string): Promise<{ recommendedTaken: boolean, otherTaken: boolean }> {
+    const { db } = getFirebase();
     const logsCollection = collection(db, `users/${userId}/lessonLogs`);
     let logs: any[];
     try {
@@ -592,6 +627,7 @@ export async function logLessonCompletion(data: {
         return { updatedUser, newBadges };
     }
 
+    const { db } = getFirebase();
     const user = await getUserById(data.userId);
     if (!user) throw new Error('User not found');
 
@@ -644,6 +680,7 @@ export async function logLessonCompletion(data: {
     if (hour >= 0 && hour < 4) awardBadge('night-owl');
     if (hour >= 4 && hour < 7) awardBadge('early-bird');
     
+    const assignmentsCollection = collection(db, 'lessonAssignments');
     const assignmentQuery = query(assignmentsCollection, where("userId", "==", data.userId), where("lessonId", "==", data.lessonId), where("completed", "==", false));
     const assignmentSnapshot = await getDocs(assignmentQuery);
     if (!assignmentSnapshot.empty) {
@@ -653,7 +690,7 @@ export async function logLessonCompletion(data: {
     }
 
     batch.set(logRef, newLogData);
-    batch.update(doc(usersCollection, data.userId), { xp: newXp });
+    batch.update(doc(db, 'users', data.userId), { xp: newXp });
 
     try {
         await batch.commit();
@@ -666,7 +703,7 @@ export async function logLessonCompletion(data: {
         throw contextualError;
     }
     
-    const updatedUserDoc = await getDoc(doc(usersCollection, data.userId));
+    const updatedUserDoc = await getDoc(doc(db, 'users', data.userId));
     const updatedUser = { ...updatedUserDoc.data(), id: updatedUserDoc.id } as User;
     
     return { updatedUser, newBadges: newlyAwardedBadges };
@@ -702,6 +739,8 @@ export async function getDealerships(user?: User): Promise<Dealership[]> {
         return getTourData().dealerships;
     }
 
+    const { db } = getFirebase();
+    const dealershipsCollection = collection(db, 'dealerships');
     let q = query(dealershipsCollection);
     if (user && user.role === 'Trainer') {
         q = query(dealershipsCollection, where("trainerId", "==", user.userId));
@@ -771,6 +810,8 @@ export async function getCombinedTeamData(dealershipId: string, userRole: UserRo
         return { teamActivity, managerStats: { totalLessons, avgScores } };
     }
 
+    const { db } = getFirebase();
+    const usersCollection = collection(db, 'users');
     const teamRoles = getTeamMemberRoles(userRole);
     let userQuery;
 
@@ -858,6 +899,7 @@ export async function getCombinedTeamData(dealershipId: string, userRole: UserRo
 
 
 export async function getManageableUsers(managerId: string): Promise<User[]> {
+    const { db } = getFirebase();
     const manager = await getUserById(managerId);
     if (!manager) return [];
 
@@ -866,6 +908,7 @@ export async function getManageableUsers(managerId: string): Promise<User[]> {
     }
 
     const manageableRoles = getTeamMemberRoles(manager.role);
+    const usersCollection = collection(db, 'users');
     
     let allUsers: User[];
     try {
@@ -898,6 +941,7 @@ export async function getEarnedBadgesByUserId(userId: string): Promise<Badge[]> 
         return allBadges.filter(b => badgeIds.includes(b.id));
     }
     
+    const { db } = getFirebase();
     const badgesCollection = collection(db, `users/${userId}/earnedBadges`);
     
     let badgeDocs: EarnedBadge[];
@@ -916,6 +960,8 @@ export async function getEarnedBadgesByUserId(userId: string): Promise<Badge[]> 
 
 // DEALERSHIPS
 export async function updateDealershipStatus(dealershipId: string, status: 'active' | 'paused' | 'deactivated'): Promise<Dealership> {
+    const { db } = getFirebase();
+    const dealershipsCollection = collection(db, 'dealerships');
     const dealershipRef = doc(dealershipsCollection, dealershipId);
 
     try {
@@ -932,6 +978,7 @@ export async function updateDealershipStatus(dealershipId: string, status: 'acti
 
 
     if (status === 'deactivated') {
+        const usersCollection = collection(db, 'users');
         const usersToUpdateQuery = query(usersCollection, where("dealershipIds", "array-contains", dealershipId));
         const userSnapshot = await getDocs(usersToUpdateQuery);
         const batch = writeBatch(db);
@@ -962,6 +1009,8 @@ export async function sendMessage(
     content: string, 
     target: { scope: MessageTargetScope; targetId: string; targetRole?: UserRole }
 ): Promise<Message> {
+    const { db } = getFirebase();
+    const messagesCollection = collection(db, 'messages');
     const messageRef = doc(messagesCollection);
     const newMessage: Message = {
         id: messageRef.id,
@@ -988,6 +1037,8 @@ export async function sendMessage(
 }
 
 export async function getMessagesForUser(user: User): Promise<Message[]> {
+    const { db } = getFirebase();
+    const messagesCollection = collection(db, 'messages');
     const fourteenDaysAgo = subDays(new Date(), 14);
     let relevantMessages: Message[] = [];
     
@@ -1023,3 +1074,5 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
     
     return uniqueMessages.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
+
+    
