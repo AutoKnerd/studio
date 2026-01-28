@@ -325,55 +325,34 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
                     <Skeleton className="h-full min-h-[160px] rounded-2xl" />
                 ) : (
                     <Card className={cn(
-                        "flex flex-col justify-between p-6 bg-slate-900/50 backdrop-blur-md border border-cyan-400/30 shadow-lg shadow-cyan-500/10",
+                        "flex flex-col p-6 bg-slate-900/50 backdrop-blur-md border border-cyan-400/30 shadow-lg shadow-cyan-500/10",
                         isPaused && "opacity-50 pointer-events-none"
                     )}>
-                        <div>
+                        <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
                                 <BookOpen className="h-8 w-8 text-cyan-400" />
                                 <h3 className="text-2xl font-bold text-white">Assigned</h3>
                             </div>
                             <p className="text-sm text-muted-foreground mb-4">Lessons assigned to you by your manager.</p>
                         </div>
-                        {assignedLessons.length > 0 ? (
-                            <Link href={`/lesson/${assignedLessons[0].lessonId}`} className={cn("w-full", buttonVariants({className: "w-full"}))}>
-                                Start: {assignedLessons[0].title}
-                            </Link>
-                        ) : (
-                            <Button variant="outline" disabled className="w-full bg-slate-800/50 border-slate-700">
-                                No assigned lessons
-                            </Button>
-                        )}
+                        <div className="space-y-2">
+                            {assignedLessons.length > 0 ? (
+                                assignedLessons.map(lesson => (
+                                    <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`} className={cn("w-full justify-between", buttonVariants({ variant: "outline", className: "w-full font-normal" }))}>
+                                        <span className="truncate">{lesson.title}</span>
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Link>
+                                ))
+                            ) : (
+                                <div className="text-center text-muted-foreground p-4 rounded-md bg-slate-800/50 border border-slate-700">
+                                    No assigned lessons
+                                </div>
+                            )}
+                        </div>
                     </Card>
                 )}
             </div>
         </section>
-
-        {/* Additional Assigned Lessons */}
-        {assignedLessons.length > 1 && (
-            <section className="space-y-4">
-                <h3 className="text-lg font-bold text-white">More Assigned Lessons</h3>
-                <div className="space-y-3">
-                    {assignedLessons.slice(1).map((lesson) => {
-                        const Icon = lessonIcons[lesson.title] || BookOpen;
-                        return (
-                            <Link key={lesson.lessonId} href={`/lesson/${lesson.lessonId}`} className={cn("block group", isPaused && "pointer-events-none opacity-50")}>
-                                <div className="bg-slate-900/50 backdrop-blur-md border border-white/20 rounded-xl p-4 flex items-center gap-4 transition-colors group-hover:bg-slate-800/70">
-                                    <div className="p-2 bg-slate-900/70 rounded-lg border border-white/10">
-                                        <Icon className="h-8 w-8 text-cyan-400" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-semibold text-white">{lesson.title}</h4>
-                                        <p className="text-sm text-muted-foreground">{lesson.category}</p>
-                                    </div>
-                                    <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                                </div>
-                            </Link>
-                        );
-                    })}
-                </div>
-            </section>
-        )}
 
         {/* My Stats */}
         <section id="stats">
