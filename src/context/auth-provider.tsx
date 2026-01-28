@@ -36,6 +36,8 @@ const tourUserRoles: Record<string, UserRole> = {
   'owner.demo@autodrive.com': 'Owner',
 };
 
+const adminEmails = ['andrew@autoknerd.com', 'btedesign@mac.com'];
+
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -52,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         let userProfile = await getUserById(firebaseUser.uid);
 
         if (!userProfile && firebaseUser.email) {
-          console.log(`User document not found for UID ${firebaseUser.uid}. Checking for invitation...`);
+          console.log(`User document not found for UID ${firebaseUser.uid}. Checking for invitation or admin status...`);
           
           const invitation = await getInvitationByEmail(firebaseUser.email);
 
@@ -70,12 +72,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } catch (creationError) {
               console.error("Failed to create user profile from invitation:", creationError);
             }
-          } else if (firebaseUser.email === 'andrew@autoknerd.com') { // Hardcoded admin self-healing
-             console.log(`No invitation found, but user is admin. Creating admin profile.`);
+          } else if (adminEmails.includes(firebaseUser.email)) {
+             console.log(`No invitation found, but user is admin. Creating admin profile for ${firebaseUser.email}.`);
              try {
                 userProfile = await createUserProfile(
                   firebaseUser.uid,
-                  'Andrew (Admin)',
+                  'AutoKnerd Admin',
                   firebaseUser.email,
                   'Admin',
                   []
@@ -130,24 +132,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
         await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
-        if ((error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') && demoUserEmails.includes(email)) {
-             // This logic for demo users is a bit of a special case and doesn't use invitations
-            try {
-                 const role = tourUserRoles[email];
-                 const name = `Demo ${role === 'manager' ? 'Sales Manager' : role}`;
-                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                 await createUserProfile(userCredential.user.uid, name, email, role, ['tour-dealership-1']);
-            } catch (registrationError: any) {
-                if (registrationError.code === 'auth/email-already-in-use') {
-                    // This is expected if the demo user already exists, so just sign in
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    console.error("Failed to auto-register demo user:", registrationError);
+        // Handle auto-registration for admins and demo users
+        const isNotFound = error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential';
+        
+        if (isNotFound) {
+             if (adminEmails.includes(email)) {
+                try {
+                    // Attempt to create the admin user if they don't exist
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    // onAuthStateChanged will handle profile creation, so we just need to wait for it to complete.
+                    // A short delay might be needed if redirection happens too quickly, but usually onAuthStateChanged is fast.
+                    return; 
+                } catch (registrationError: any) {
+                    // This could happen if the user *does* exist but used the wrong password.
+                    // Or if creation fails for another reason (e.g., weak password).
+                    // In either case, we should fail the login attempt.
+                    console.error('Admin auto-registration failed:', registrationError);
                     throw error;
                 }
+            } else if (demoUserEmails.includes(email)) {
+                 // Demo user auto-registration logic (existing)
+                try {
+                    const role = tourUserRoles[email];
+                    const name = `Demo ${role === 'manager' ? 'Sales Manager' : role}`;
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await createUserProfile(userCredential.user.uid, name, email, role, ['tour-dealership-1']);
+                } catch (registrationError: any) {
+                    if (registrationError.code === 'auth/email-already-in-use') {
+                        // This is expected if the demo user already exists but login failed due to wrong password.
+                        // We re-throw the original error in this case.
+                         throw error;
+                    } else {
+                        console.error("Failed to auto-register demo user:", registrationError);
+                        throw error;
+                    }
+                }
+            } else {
+                 throw error; // Re-throw for normal users
             }
         } else {
-            throw error;
+            throw error; // Re-throw for other errors like 'auth/wrong-password'
         }
     }
   }, [auth]);
