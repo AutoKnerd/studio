@@ -56,51 +56,38 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+    
+    /**
+     * Checks if the authenticated user has any of the roles in the provided list.
+     */
+    function hasAnyRole(roles) {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in roles;
+    }
 
     /**
      * Checks if the authenticated user has a role that permits managing other users.
-     * This is used to grant list permissions on the users collection for dashboards.
      */
     function isManager() {
-      // Ensure the user is signed in and their document exists before checking role.
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in [
-               'Admin',
-               'Developer',
-               'Owner',
-               'Trainer',
-               'General Manager',
-               'manager',
-               'Service Manager',
-               'Parts Manager',
-               'Finance Manager'
-             ];
+      return hasAnyRole([
+          'Admin', 'Developer', 'Owner', 'Trainer', 'General Manager', 
+          'manager', 'Service Manager', 'Parts Manager', 'Finance Manager'
+      ]);
     }
     
     /**
      * Checks if the user has a specific 'Owner' role.
      */
     function isOwnerRole() {
-       return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Owner';
+       return hasAnyRole(['Owner']);
     }
     
     /**
      * Checks for Admin or Developer roles for highly sensitive operations.
      */
     function isAdminOrDeveloper() {
-        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'Developer'];
+        return hasAnyRole(['Admin', 'Developer']);
     }
-
-    /**
-     * Checks if the user is authorized to create a new dealership.
-     */
-    function canCreateDealership() {
-        return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'Developer', 'Trainer'];
-    }
-
 
     /**
      * For update/delete operations, checks if the document exists AND the user is the owner.
@@ -268,7 +255,7 @@ service cloud.firestore {
      */
     match /dealerships/{dealershipId} {
       allow read: if true;
-      allow create: if canCreateDealership();
+      allow create: if hasAnyRole(['Admin', 'Developer', 'Trainer']);
       allow update, delete: if isAdminOrDeveloper();
     }
   }
