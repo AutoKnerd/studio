@@ -23,9 +23,6 @@ export default function PrivacyPolicyPage() {
               {isClient ? `Last updated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : ''}
             </p>
           </div>
-          <div className="border-l-4 border-destructive p-4 bg-destructive/10 text-destructive-foreground rounded-r-lg">
-              <p><strong>Disclaimer:</strong> This is a template and not a legally binding privacy policy. You should consult with a legal professional to create a policy that is compliant with all applicable laws and regulations for your business.</p>
-          </div>
           <div className="space-y-8 text-muted-foreground">
             <section id="introduction">
                 <h2 className="text-2xl font-semibold mb-2 text-foreground">1. Introduction</h2>
