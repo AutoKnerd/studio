@@ -1,7 +1,5 @@
 
 
-'use client';
-
 import { User, Dealership, LessonLog, UserRole, Badge, EarnedBadge, Lesson, LessonAssignment, CxTrait } from './definitions';
 import { calculateLevel } from './xp';
 import { allBadges }from './badges';
