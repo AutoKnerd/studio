@@ -1,7 +1,6 @@
 
 
-
-import { isToday, subDays, isSameDay } from 'date-fns';
+import { isToday, subDays } from 'date-fns';
 import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
 import { allBadges } from './badges';
 import { calculateLevel } from './xp';
@@ -35,6 +34,8 @@ const getTourData = () => {
     return tourData;
 }
 
+const isTouringUser = (userId?: string): boolean => !!userId && userId.startsWith('tour-');
+
 
 // --- HELPER FUNCTIONS ---
 
@@ -56,45 +57,36 @@ const getDataById = async <T>(db: Firestore, collectionName: string, id: string)
 
 // AUTH
 export async function getUserById(userId: string): Promise<User | null> {
-    const { auth, db } = getFirebase();
-
-    if (userId?.startsWith('tour-')) {
+    if (isTouringUser(userId)) {
         const { users } = getTourData();
         const tourUser = users.find(u => u.userId === userId);
         if (tourUser) {
             return tourUser;
         }
-    }
-    
-    const currentUser = auth.currentUser;
-    const isTouring = currentUser?.email && [
-        'consultant.demo@autodrive.com',
-        'service.writer.demo@autodrive.com',
-        'manager.demo@autodrive.com',
-        'owner.demo@autodrive.com',
-    ].includes(currentUser.email);
-
-    if (isTouring && currentUser?.uid === userId) {
-        const { users } = getTourData();
+        // Handle special demo users that might not be in the pre-generated list
         const tourUserRoles: Record<string, UserRole> = {
-            'consultant.demo@autodrive.com': 'Sales Consultant',
-            'service.writer.demo@autodrive.com': 'Service Writer',
-            'manager.demo@autodrive.com': 'manager',
-            'owner.demo@autodrive.com': 'Owner',
+            'consultant.demo': 'Sales Consultant',
+            'service.writer.demo': 'Service Writer',
+            'manager.demo': 'manager',
+            'owner.demo': 'Owner',
         };
-        const role = tourUserRoles[currentUser.email!];
-        if (role) {
+        const roleKey = Object.keys(tourUserRoles).find(key => userId.includes(key));
+        if (roleKey) {
+            const role = tourUserRoles[roleKey];
             const representativeUser = users.find(u => u.role === role);
-            if (representativeUser) {
+             if (representativeUser) {
                 return {
                     ...representativeUser,
-                    email: currentUser.email!,
+                    userId: userId,
+                    email: `${roleKey}@autodrive.com`,
                     name: role === 'Owner' ? 'Demo Owner' : `Demo ${role === 'manager' ? 'Sales Manager' : role}`,
                 };
             }
         }
+        return null;
     }
-
+    
+    const { db } = getFirebase();
     return getDataById<User>(db, 'users', userId);
 }
 
@@ -361,7 +353,7 @@ export async function sendInvitation(
   const inviter = await getUserById(inviterId);
   if (!inviter) throw new Error("Inviter not found.");
 
-  const dealership = await getDealershipById(dealershipId);
+  const dealership = await getDealershipById(dealershipId, inviter.userId);
   if (!dealership) throw new Error('Dealership not found.');
   
   const invitationsCollection = collection(db, 'emailInvitations');
@@ -438,15 +430,13 @@ export async function updateUserSubscriptionStatus(stripeCustomerId: string, new
 
 
 // LESSONS
-export async function getLessons(role: LessonRole): Promise<Lesson[]> {
-    const { auth, db } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-
-    if (isTouring) {
+export async function getLessons(role: LessonRole, userId?: string): Promise<Lesson[]> {
+    if (isTouringUser(userId)) {
         const { lessons } = getTourData();
         return lessons.filter(lesson => lesson.role === role || lesson.role === 'global');
     }
 
+    const { db } = getFirebase();
     const lessonsCollection = collection(db, 'lessons');
     const q = query(lessonsCollection, where("role", "in", [role, 'global']));
     try {
@@ -459,25 +449,23 @@ export async function getLessons(role: LessonRole): Promise<Lesson[]> {
     }
 }
 
-export async function getLessonById(lessonId: string): Promise<Lesson | null> {
-    const { auth, db } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-    if (isTouring) {
+export async function getLessonById(lessonId: string, userId?: string): Promise<Lesson | null> {
+    if (isTouringUser(userId)) {
         const { lessons } = getTourData();
         return lessons.find(l => l.lessonId === lessonId) || null;
     }
+    const { db } = getFirebase();
     return getDataById<Lesson>(db, 'lessons', lessonId);
 }
 
-export async function getDealershipById(dealershipId: string): Promise<Dealership | null> {
-    const { auth, db } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-    if (isTouring) {
+export async function getDealershipById(dealershipId: string, userId?: string): Promise<Dealership | null> {
+    if (isTouringUser(userId)) {
         const { dealerships } = getTourData();
         const dealership = dealerships.find(d => d.id === dealershipId);
         if (dealership) return { ...dealership, status: 'active' };
         return null;
     }
+    const { db } = getFirebase();
     return getDataById<Dealership>(db, 'dealerships', dealershipId);
 }
 
@@ -491,9 +479,7 @@ export async function createLesson(
     },
     creator: User
 ): Promise<Lesson> {
-    const { auth, db } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-    if (isTouring) {
+    if (isTouringUser(creator.userId)) {
         const { lessons } = getTourData();
         const newLesson: Lesson = {
             lessonId: `tour-lesson-${Math.random().toString(36).substring(7)}`,
@@ -507,6 +493,7 @@ export async function createLesson(
         return newLesson;
     }
 
+    const { db } = getFirebase();
     const lessonsCollection = collection(db, 'lessons');
     const newLessonRef = doc(lessonsCollection);
     const newLesson: Lesson = {
@@ -539,7 +526,7 @@ export async function createLesson(
 }
 
 export async function getAssignedLessons(userId: string): Promise<Lesson[]> {
-    if (userId.startsWith('tour-')) {
+    if (isTouringUser(userId)) {
         const { lessonAssignments, lessons } = getTourData();
         const userAssignments = lessonAssignments.filter(a => a.userId === userId && !a.completed);
         if (userAssignments.length === 0) {
@@ -612,10 +599,7 @@ export async function getAssignedLessons(userId: string): Promise<Lesson[]> {
 }
 
 export async function assignLesson(userId: string, lessonId: string, assignerId: string): Promise<LessonAssignment> {
-    const { auth, db } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-
-    if (isTouring) {
+    if (isTouringUser(userId) || isTouringUser(assignerId)) {
         const { lessonAssignments } = getTourData();
         const newAssignment: LessonAssignment = {
             assignmentId: `tour-assignment-${Math.random().toString(36).substring(7)}`,
@@ -629,6 +613,7 @@ export async function assignLesson(userId: string, lessonId: string, assignerId:
         return newAssignment;
     }
 
+    const { db } = getFirebase();
     const assignmentsCollection = collection(db, 'lessonAssignments');
     const assignmentRef = doc(assignmentsCollection);
     const newAssignment: LessonAssignment = {
@@ -655,7 +640,7 @@ export async function assignLesson(userId: string, lessonId: string, assignerId:
 
 
 export async function getConsultantActivity(userId: string): Promise<LessonLog[]> {
-    if (userId.startsWith('tour-')) {
+    if (isTouringUser(userId)) {
         const { lessonLogs } = getTourData();
         const userLogs = lessonLogs.filter(log => log.userId === userId);
         return userLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -675,7 +660,7 @@ export async function getConsultantActivity(userId: string): Promise<LessonLog[]
 }
 
 export async function getDailyLessonLimits(userId: string): Promise<{ recommendedTaken: boolean, otherTaken: boolean }> {
-    if (userId.startsWith('tour-')) {
+    if (isTouringUser(userId)) {
         const { lessonLogs } = getTourData();
         const todayLogs = lessonLogs.filter(log => log.userId === userId && isToday(log.timestamp));
 
@@ -713,10 +698,7 @@ export async function logLessonCompletion(data: {
     isRecommended: boolean;
     scores: Omit<LessonLog, 'logId' | 'timestamp' | 'userId' | 'lessonId' | 'stepResults' | 'xpGained' | 'isRecommended'>;
 }): Promise<{ updatedUser: User, newBadges: Badge[] }> {
-    const { auth } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-
-    if (isTouring) {
+    if (isTouringUser(data.userId)) {
         const user = await getUserById(data.userId);
         if (!user) throw new Error('Tour user not found');
         const updatedUser = { ...user, xp: user.xp + data.xpGained };
@@ -840,13 +822,11 @@ export const getTeamMemberRoles = (managerRole: UserRole): UserRole[] => {
 };
 
 export async function getDealerships(user?: User): Promise<Dealership[]> {
-    const { auth, db } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-
-    if (isTouring) {
+    if (isTouringUser(user?.userId)) {
         return getTourData().dealerships;
     }
-
+    
+    const { db } = getFirebase();
     const dealershipsCollection = collection(db, 'dealerships');
     let q = query(dealershipsCollection);
     if (user && user.role === 'Trainer') {
@@ -873,15 +853,13 @@ export async function getDealerships(user?: User): Promise<Dealership[]> {
 }
 
 
-export async function getCombinedTeamData(dealershipId: string, userRole: UserRole): Promise<{
+export async function getCombinedTeamData(dealershipId: string, user: User): Promise<{
     teamActivity: { consultant: User; lessonsCompleted: number; totalXp: number; avgScore: number; }[],
     managerStats: { totalLessons: number; avgScores: Record<CxTrait, number> | null }
 }> {
-    const { auth } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-    if (isTouring) {
+    if (isTouringUser(user.userId)) {
         const { users, lessonLogs } = getTourData();
-        const teamRoles = getTeamMemberRoles(userRole);
+        const teamRoles = getTeamMemberRoles(user.role);
         
         let teamMembers: User[];
         if (dealershipId === 'all') {
@@ -921,13 +899,13 @@ export async function getCombinedTeamData(dealershipId: string, userRole: UserRo
 
     const { db } = getFirebase();
     const usersCollection = collection(db, 'users');
-    const teamRoles = getTeamMemberRoles(userRole);
+    const teamRoles = getTeamMemberRoles(user.role);
     let userQuery;
 
-    if ((['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(userRole)) && dealershipId === 'all') {
+    if ((['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) && dealershipId === 'all') {
         userQuery = query(usersCollection, where("role", "in", teamRoles));
     } else {
-        const selectedDealership = await getDealershipById(dealershipId);
+        const selectedDealership = await getDealershipById(dealershipId, user.userId);
         if (selectedDealership?.status === 'paused') {
             return { teamActivity: [], managerStats: { totalLessons: 0, avgScores: null } };
         }
@@ -1005,12 +983,11 @@ export async function getCombinedTeamData(dealershipId: string, userRole: UserRo
 
 
 export async function getManageableUsers(managerId: string): Promise<User[]> {
-    const { db, auth } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-    if (isTouring) {
+    if (isTouringUser(managerId)) {
         return getTourData().users.filter(u => u.email !== 'owner.demo@autodrive.com');
     }
     
+    const { db } = getFirebase();
     const manager = await getUserById(managerId);
     if (!manager) return [];
 
@@ -1041,10 +1018,7 @@ export async function getManageableUsers(managerId: string): Promise<User[]> {
 
 // BADGES
 export async function getEarnedBadgesByUserId(userId: string): Promise<Badge[]> {
-    const { auth } = getFirebase();
-    const isTouring = auth.currentUser?.email?.includes('.demo@autodrive.com');
-
-    if (isTouring || userId.startsWith('tour-')) {
+    if (isTouringUser(userId)) {
         const { earnedBadges } = getTourData();
         const userEarnedBadges = earnedBadges[userId] || [];
         const badgeIds = userEarnedBadges.map(b => b.badgeId);

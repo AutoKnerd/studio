@@ -128,7 +128,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     async function fetchData() {
       setLoading(true);
       const [fetchedLessons, fetchedActivity, limits, fetchedAssignedLessons, fetchedBadges] = await Promise.all([
-        getLessons(user.role),
+        getLessons(user.role, user.userId),
         getConsultantActivity(user.userId),
         getDailyLessonLimits(user.userId),
         getAssignedLessons(user.userId),
@@ -141,7 +141,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
       setBadges(fetchedBadges);
       
       if (user.dealershipIds.length > 0 && !isTouring) {
-          const dealershipData = await Promise.all(user.dealershipIds.map(id => getDealershipById(id)));
+          const dealershipData = await Promise.all(user.dealershipIds.map(id => getDealershipById(id, user.userId)));
           const activeDealerships = dealershipData.filter(d => d && d.status === 'active');
           if (activeDealerships.length === 0) {
               setIsPaused(true);
@@ -421,7 +421,3 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
     </div>
   );
 }
-
-    
-
-    

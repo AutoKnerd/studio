@@ -74,7 +74,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
         return;
       }
       const [fetchedLessons, fetchedActivity, fetchedBadges] = await Promise.all([
-        getLessons(user.role as LessonRole),
+        getLessons(user.role as LessonRole, user.userId),
         getConsultantActivity(user.userId),
         getEarnedBadgesByUserId(user.userId),
       ]);

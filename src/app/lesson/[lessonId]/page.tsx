@@ -25,11 +25,11 @@ export default function LessonPage() {
     const [lesson, setLesson] = useState<Lesson | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Effect for fetching the lesson data, depends only on lessonId
+    // Effect for fetching the lesson data, depends on lessonId and user for tour mode context
     useEffect(() => {
         async function fetchLesson() {
             setLoading(true);
-            const currentLesson = await getLessonById(params.lessonId);
+            const currentLesson = await getLessonById(params.lessonId, user?.userId);
             if (currentLesson) {
                 setLesson(currentLesson);
             } else {
@@ -37,14 +37,16 @@ export default function LessonPage() {
             }
             setLoading(false);
         }
-        fetchLesson();
-    }, [params.lessonId]);
+        if (user) {
+            fetchLesson();
+        }
+    }, [params.lessonId, user]);
 
     // Effect for checking user's paused status, depends on user
     useEffect(() => {
         async function checkStatus() {
             if (user && user.dealershipIds.length > 0 && !isTouring) {
-                const dealershipData = await Promise.all(user.dealershipIds.map(id => getDealershipById(id)));
+                const dealershipData = await Promise.all(user.dealershipIds.map(id => getDealershipById(id, user.userId)));
                 const activeDealerships = dealershipData.filter(d => d && d.status === 'active');
                 if (activeDealerships.length === 0) {
                     setIsPaused(true);

@@ -130,12 +130,12 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
 
       setLoading(true);
       
-      const combinedDataPromise = getCombinedTeamData(dealershipId, user.role);
+      const combinedDataPromise = getCombinedTeamData(dealershipId, user);
 
       const [combinedData, usersToManage, fetchedLessons, fetchedManagerActivity, fetchedBadges, limits] = await Promise.all([
         combinedDataPromise,
         getManageableUsers(user.userId),
-        getLessons(user.role as LessonRole),
+        getLessons(user.role as LessonRole, user.userId),
         getConsultantActivity(user.userId),
         getEarnedBadgesByUserId(user.userId),
         getDailyLessonLimits(user.userId),
@@ -149,7 +149,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       setManagerBadges(fetchedBadges);
       setLessonLimits(limits);
       setLoading(false);
-  }, [user.userId, user.role]);
+  }, [user]);
 
   const fetchAdminData = useCallback(async () => {
     const fetchedDealerships = await getDealerships(user);
@@ -180,7 +180,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
         }
        
         if (currentSelectedId === 'all' && ['Owner', 'Admin', 'Trainer', 'General Manager', 'Developer'].includes(user.role)) {
-            const statsPromises = initialDealerships.map(d => getCombinedTeamData(d.id, user.role).then(data => data.managerStats));
+            const statsPromises = initialDealerships.map(d => getCombinedTeamData(d.id, user).then(data => data.managerStats));
             const results = await Promise.all(statsPromises);
             
             const newAllDealershipStats: Record<string, { bestStat: DealershipInsight | null, watchStat: DealershipInsight | null }> = {};
