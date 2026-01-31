@@ -231,7 +231,7 @@ export default function AboutPage() {
                 </p>
                  <div className="flex justify-center gap-4">
                     <Button asChild size="lg">
-                        <Link href="/login">Get Started</Link>
+                        <Link href="/signup">Get Started</Link>
                     </Button>
                 </div>
             </div>

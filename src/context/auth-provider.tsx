@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (name: string, password: string, invitation: EmailInvitation) => Promise<void>;
+  publicSignup: (name: string, email: string, password: string) => Promise<void>;
   setUser: (user: User | null) => void;
   switchTourRole: (role: UserRole) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
@@ -119,12 +120,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, invitation.email, password);
       await sendEmailVerification(userCredential.user);
+
+      await createUserProfile(
+        userCredential.user.uid,
+        name,
+        invitation.email,
+        invitation.role,
+        [invitation.dealershipId],
+      );
+      await claimInvitation(invitation.token);
       
-      // The onAuthStateChanged listener will handle creating the user profile and claiming the invitation.
-      // This makes the registration flow consistent with the login flow.
-      
-    } catch(error) {
+    } catch(error: any) {
         console.error("Registration error:", error);
+        if (error.code === 'auth/email-already-in-use') {
+            throw new Error('This email address is already associated with an account. Please sign in.');
+        }
+        throw error;
+    }
+  }, [auth]);
+
+  const publicSignup = useCallback(async (name: string, email: string, password: string) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      
+      await createUserProfile(
+        userCredential.user.uid,
+        name,
+        email,
+        'Sales Consultant', // Default role for public signups
+        [], // No dealership association initially
+      );
+      
+    } catch(error: any) {
+        console.error("Public signup error:", error);
+        if (error.code === 'auth/email-already-in-use') {
+            throw new Error('This email address is already in use. Please sign in or use a different email.');
+        }
         throw error;
     }
   }, [auth]);
@@ -200,7 +232,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [firebaseUser]);
 
-  const value = { user, firebaseUser, originalUser, loading, isTouring, login, logout, register, setUser, switchTourRole, resendVerificationEmail };
+  const value = { user, firebaseUser, originalUser, loading, isTouring, login, logout, register, publicSignup, setUser, switchTourRole, resendVerificationEmail };
 
   return (
     <AuthContext.Provider value={value}>

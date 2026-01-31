@@ -41,7 +41,12 @@ export default function LoginPage() {
                 <Link href="/about">Learn more about AutoDrive</Link>
             </Button>
              <p className="mt-2 px-8 text-center text-sm text-muted-foreground">
-                Need an account? Please contact your administrator for an invitation.
+                Don't have an account?{' '}
+                <Link href="/signup" className="underline underline-offset-4 hover:text-primary">
+                    Sign up
+                </Link>
+                <br/>
+                Or contact your administrator for an invitation.
             </p>
         </div>
       </div>
