@@ -76,27 +76,11 @@ export async function getUserById(userId: string): Promise<User | null> {
 
 export async function createUserProfile(userId: string, name: string, email: string, role: UserRole, dealershipIds: string[]): Promise<User> {
     
-    // If the role is Admin/Dev/Trainer and they are not being assigned to a dealership, create/assign them to HQ.
+    // If the role is Admin/Dev/Trainer and they are not being assigned to a dealership, assign them to HQ.
+    // This no longer creates the dealership document, it just assumes it exists.
     if (['Admin', 'Developer', 'Trainer'].includes(role) && dealershipIds.length === 0) {
         const hqDealershipId = 'autoknerd-hq';
-        const dealershipRef = doc(db, 'dealerships', hqDealershipId);
-        try {
-            const docSnap = await getDoc(dealershipRef);
-            if (!docSnap.exists()) {
-                const newDealership: Dealership = {
-                    id: hqDealershipId,
-                    name: "AutoKnerd HQ",
-                    status: 'active',
-                    address: { street: '123 AI Lane', city: 'Cybertown', state: 'CA', zip: '90210' }
-                };
-                await setDoc(dealershipRef, newDealership);
-            }
-            dealershipIds.push(hqDealershipId);
-        } catch(e: any) {
-             const contextualError = new FirestorePermissionError({ path: dealershipRef.path, operation: 'write' });
-             errorEmitter.emit('permission-error', contextualError);
-             throw contextualError;
-        }
+        dealershipIds.push(hqDealershipId);
     }
 
     const newUser: User = {
@@ -281,8 +265,9 @@ export async function createDealership(dealershipData: {
     address: Partial<Address>;
     trainerId?: string;
 }): Promise<Dealership> {
-    // This is an admin function, less likely to be used in tour, but good to guard.
-    if (dealershipData.trainerId && isTouringUser(dealershipData.trainerId)) {
+    // This function is now only used for tour mode.
+    // Real dealership creation must go through the /api/admin/createDealership endpoint.
+    if (isTouringUser(dealershipData.trainerId)) {
         const newDealership: Dealership = {
             id: `tour-dealership-${Math.random()}`,
             name: dealershipData.name,
@@ -293,6 +278,8 @@ export async function createDealership(dealershipData: {
         return newDealership;
     }
 
+    // This will now fail due to security rules, which is the intended behavior.
+    // The admin form now uses the API route.
     const dealershipRef = doc(collection(db, 'dealerships'));
     const newDealership: Dealership = {
         id: dealershipRef.id,

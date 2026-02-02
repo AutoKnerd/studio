@@ -94,9 +94,9 @@ service cloud.firestore {
 
     match /dealerships/{dealershipId} {
       allow read: if true;
-      // Allow creation by any signed-in user. This avoids issues with unverified emails
-      // or race conditions during initial setup. The UI restricts this action to admins/developers.
-      allow create: if request.auth != null;
+      // Creation is now handled by a secure server endpoint.
+      // Client-side creation is disallowed for security.
+      allow create: if false;
       // Only Admins or Developers can modify dealerships after creation.
       allow update, delete: if hasAnyRole(['Admin', 'Developer']);
     }
