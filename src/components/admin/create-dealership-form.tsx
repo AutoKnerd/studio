@@ -62,7 +62,7 @@ export function CreateDealershipForm({ user, onDealershipCreated }: CreateDealer
     }
 
     try {
-      const token = await firebaseUser.getIdToken();
+      const token = await firebaseUser.getIdToken(true);
       const address: Partial<Address> = {
         street: data.street,
         city: data.city,

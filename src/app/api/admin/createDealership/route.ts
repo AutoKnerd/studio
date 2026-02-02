@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { adminDb, adminAuth } from '@/firebase/admin';
 import { Dealership, Address } from '@/lib/definitions';
 
 export async function POST(req: Request) {
-  const authorization = headers().get('Authorization');
+  const authorization = req.headers.get('authorization') ?? req.headers.get('Authorization');
   
-  if (!authorization || !authorization.startsWith('Bearer ')) {
+  if (!authorization) {
     return NextResponse.json({ message: 'Unauthorized: Missing token.' }, { status: 401 });
   }
 
-  const token = authorization.split('Bearer ')[1];
+  const match = /^Bearer\s+(.+)$/i.exec(authorization);
+  if (!match) {
+      return NextResponse.json({ message: 'Unauthorized: Invalid token format.' }, { status: 401 });
+  }
+  const token = match[1];
 
   try {
     const decodedToken = await adminAuth.verifyIdToken(token);
