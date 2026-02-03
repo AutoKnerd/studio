@@ -10,10 +10,10 @@ export async function POST(req: Request) {
   }
 
   const match = /^Bearer\s+(.+)$/i.exec(authorization);
-  if (!match) {
+  if (!match || !match[1]) {
       return NextResponse.json({ message: 'Unauthorized: Invalid token format.' }, { status: 401 });
   }
-  const token = match[1];
+  const token = match[1].trim();
 
   try {
     const decodedToken = await adminAuth.verifyIdToken(token);
@@ -54,8 +54,11 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error('[API CreateDealership] Error:', error);
-    if (error.code === 'auth/id-token-expired' || error.code === 'auth/argument-error' || error.code === 'auth/id-token-revoked') {
-        return NextResponse.json({ message: 'Unauthorized: Invalid token.' }, { status: 401 });
+    if (error.code && error.code.startsWith('auth/')) {
+        return NextResponse.json({
+            code: error.code,
+            message: `Unauthorized: ${error.message}`
+        }, { status: 401 });
     }
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
