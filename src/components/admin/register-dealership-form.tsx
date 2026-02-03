@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { MailCheck } from 'lucide-react';
+import { Copy, MailCheck } from 'lucide-react';
 import { Input } from '../ui/input';
 
 interface InviteUserFormProps {
@@ -34,6 +34,8 @@ type InviteFormValues = z.infer<typeof inviteSchema>;
 export function RegisterDealershipForm({ user, dealerships, onUserInvited }: InviteUserFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [invitationSent, setInvitationSent] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState('');
+  const [showLink, setShowLink] = useState(false);
   const { toast } = useToast();
   
   const isAdmin = ['Admin', 'Developer'].includes(user.role);
@@ -59,9 +61,11 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
   async function onSubmit(data: InviteFormValues) {
     setIsSubmitting(true);
     setInvitationSent(false);
+    setInviteUrl('');
+    setShowLink(false);
     try {
-      await sendInvitation(data.dealershipId, data.userEmail, data.role as UserRole, user.userId);
-      
+      const url = await sendInvitation(data.dealershipId, data.userEmail, data.role as UserRole, user.userId);
+      setInviteUrl(url);
       setInvitationSent(true);
       toast({
         title: 'Invitation Sent!',
@@ -85,20 +89,42 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
       setIsSubmitting(false);
     }
   }
+
+  const handleCopyLink = async () => {
+    if (!inviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      toast({ title: 'Link Copied!', description: 'The invitation link has been copied to your clipboard.' });
+    } catch (err) {
+      console.error('Failed to copy link: ', err);
+      setShowLink(true);
+      toast({
+        variant: 'destructive',
+        title: 'Copy Failed',
+        description: 'Could not copy link automatically. Please copy it manually below.',
+      });
+    }
+  };
   
   if (invitationSent) {
     return (
-      <div className="text-center">
+      <div className="text-center space-y-4">
         <Alert>
           <MailCheck className="h-4 w-4" />
           <AlertTitle>Invitation Sent Successfully!</AlertTitle>
           <AlertDescription>
-            <p className="mb-4">
-              An invitation email has been sent to <span className="font-semibold">{form.getValues('userEmail')}</span>. They can use the link in the email to create their account.
-            </p>
+            An invitation email has been sent. You can also share the link below directly.
           </AlertDescription>
         </Alert>
-        <Button onClick={() => setInvitationSent(false)} className="mt-4">
+        {showLink ? (
+          <Input value={inviteUrl} readOnly />
+        ) : (
+          <Button onClick={handleCopyLink} variant="outline" className="w-full">
+            <Copy className="mr-2 h-4 w-4" />
+            Copy Invitation Link
+          </Button>
+        )}
+        <Button onClick={() => setInvitationSent(false)} className="w-full">
             Send Another Invitation
         </Button>
       </div>

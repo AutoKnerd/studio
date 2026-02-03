@@ -1,4 +1,5 @@
 
+
 'use client';
 import { isToday, subDays } from 'date-fns';
 import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
@@ -346,9 +347,9 @@ export async function sendInvitation(
   email: string,
   role: UserRole,
   inviterId: string,
-): Promise<void> {
+): Promise<string> {
     if (isTouringUser(inviterId)) {
-        return; // No-op
+        return '';
     }
 
     const inviter = await getUserById(inviterId);
@@ -380,6 +381,8 @@ export async function sendInvitation(
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to send invitation.');
     }
+    
+    const { inviteUrl } = await response.json();
   
      if (['Owner', 'General Manager', 'manager'].includes(inviter.role)) {
         const inviterBadges = await getEarnedBadgesByUserId(inviter.userId);
@@ -392,6 +395,7 @@ export async function sendInvitation(
             }
         }
     }
+    return inviteUrl;
 }
 
 

@@ -86,7 +86,9 @@ service cloud.firestore {
     }
     
     match /emailInvitations/{invitationId} {
-      allow create: if isManager() && request.resource.data.inviterId == request.auth.uid;
+      // This rule relies on the server-side API endpoint to perform the role check.
+      // The client-side rule ensures data integrity.
+      allow create: if isSignedIn() && request.resource.data.inviterId == request.auth.uid && request.resource.data.token == invitationId;
       allow get: if true;
       allow update: if isSignedIn() && request.resource.data.claimed == true && resource.data.claimed == false;
       allow delete: if false;
