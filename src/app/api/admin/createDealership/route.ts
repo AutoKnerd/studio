@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/firebase/admin';
 import { Dealership, Address } from '@/lib/definitions';
@@ -60,6 +61,16 @@ export async function POST(req: Request) {
             message: `Unauthorized: ${error.message}`
         }, { status: 401 });
     }
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    
+    const errorResponse: { message: string, code?: string, stack?: string } = {
+        message: error.message || 'Internal Server Error',
+        code: error.code || 'INTERNAL_SERVER_ERROR',
+    };
+
+    if (process.env.NODE_ENV === 'development') {
+        errorResponse.stack = error.stack;
+    }
+
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
