@@ -41,17 +41,24 @@ export async function POST(req: Request) {
     }
 
     const dealershipRef = adminDb.collection('dealerships').doc();
-    const newDealership: Dealership = {
+    
+    const newDealershipData: any = {
         id: dealershipRef.id,
         name: dealershipName,
         status: 'active',
-        address: address as Address | undefined, // Can be optional
-        trainerId: trainerId, // Can be optional
     };
 
-    await dealershipRef.set(newDealership);
+    if (trainerId) {
+        newDealershipData.trainerId = trainerId;
+    }
 
-    return NextResponse.json(newDealership, { status: 201 });
+    if (address && Object.values(address).some(val => !!val)) {
+        newDealershipData.address = address as Address;
+    }
+
+    await dealershipRef.set(newDealershipData);
+
+    return NextResponse.json(newDealershipData, { status: 201 });
 
   } catch (error: any) {
     console.error('[API CreateDealership] Error:', error);
