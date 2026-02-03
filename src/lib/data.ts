@@ -115,51 +115,6 @@ export async function createUserProfile(userId: string, name: string, email: str
 }
 
 
-export async function findUserByEmail(email: string, requestingUserId:string): Promise<User | null> {
-     if (isTouringUser(requestingUserId)) {
-        return getTourData().users.find(u => u.email === email) || null;
-    }
-    const usersCollection = collection(db, 'users');
-    const q = query(usersCollection, where("email", "==", email.toLowerCase()));
-    let querySnapshot;
-    try {
-        querySnapshot = await getDocs(q);
-    } catch (e: any) {
-        const contextualError = new FirestorePermissionError({
-            path: usersCollection.path,
-            operation: 'list',
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        throw contextualError;
-    }
-
-    if (querySnapshot.empty) {
-        return null;
-    }
-
-    const foundUser = { ...querySnapshot.docs[0].data(), id: querySnapshot.docs[0].id } as User;
-
-    const requestingUser = await getUserById(requestingUserId);
-    if (!requestingUser) {
-        return null; 
-    }
-
-    if (['Admin', 'Trainer'].includes(requestingUser.role)) {
-        return foundUser;
-    }
-
-    if (foundUser.dealershipIds.length === 0) {
-        return foundUser;
-    }
-
-    const inManagedDealership = foundUser.dealershipIds.some(id => requestingUser.dealershipIds.includes(id));
-    if (inManagedDealership) {
-        return foundUser;
-    }
-
-    return null;
-}
-
 export async function updateUser(userId: string, data: Partial<Omit<User, 'userId' | 'role' | 'xp' | 'dealershipIds'>>): Promise<User> {
     if (isTouringUser(userId)) {
         const user = getTourData().users.find(u => u.userId === userId);

@@ -58,47 +58,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (fbUser) {
         let userProfile = await getUserById(fbUser.uid);
 
-        // Self-healing logic: If a Firebase Auth user exists but their Firestore document does not, create it for admin users.
-        // The primary registration flow is through a token-based invitation link.
         if (!userProfile && fbUser.email) {
-          console.log(`User document not found for UID ${fbUser.uid}. Attempting to create for admin user.`);
+          console.log(`User document not found for UID ${fbUser.uid}. Attempting to self-heal.`);
           
-          if (adminEmails.includes(fbUser.email)) {
-             console.log(`User is admin/dev. Creating profile for ${fbUser.email}.`);
-             const role = fbUser.email === 'btedesign@mac.com' ? 'Developer' : 'Admin';
-             const name = role === 'Developer' ? 'AutoKnerd Developer' : 'AutoKnerd Admin';
-             try {
+          try {
+            const idToken = await fbUser.getIdToken();
+            const response = await fetch('/api/auth/resolve-invitation', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${idToken}` }
+            });
+
+            if (response.ok) {
+                const invitation: EmailInvitation = await response.json();
+                console.log(`Found pending invitation for ${fbUser.email}. Creating profile.`);
                 userProfile = await createUserProfile(
                   fbUser.uid,
-                  name,
-                  fbUser.email,
-                  role,
-                  []
+                  // Use a placeholder name that can be updated in their profile later
+                  invitation.role, 
+                  invitation.email,
+                  invitation.role,
+                  [invitation.dealershipId],
                 );
-             } catch (e) {
-                 console.error("Failed to create admin/dev user profile:", e);
-             }
+                await claimInvitation(invitation.token);
+            } else if (adminEmails.includes(fbUser.email)) {
+                 console.log(`User is admin/dev. Creating profile for ${fbUser.email}.`);
+                 const role = fbUser.email === 'btedesign@mac.com' ? 'Developer' : 'Admin';
+                 const name = role === 'Developer' ? 'AutoKnerd Developer' : 'AutoKnerd Admin';
+                 userProfile = await createUserProfile(fbUser.uid, name, fbUser.email, role, []);
+            }
+
+          } catch(e) {
+             console.error("Error during self-heal process:", e);
           }
         }
         
-        // --- Validation and Fail-Fast Guard ---
-        // 1. Check if a profile exists at all (either fetched or created). If not, sign out.
-        if (!userProfile) {
-          console.error(`Signing out user ${fbUser.uid} due to missing or failed-to-create Firestore profile.`);
-          await auth.signOut();
-          setLoading(false);
-          return;
-        }
-        
-        // 2. Validate that the user ID and role are consistent. If not, sign out.
-        if (userProfile.userId !== fbUser.uid || !userProfile.role) {
-            console.error(`CRITICAL: User profile validation failed for UID ${fbUser.uid}. Profile data is inconsistent. UID Match: ${userProfile.userId === fbUser.uid}, Role Exists: ${!!userProfile.role}. Signing out.`);
+        if (!userProfile || userProfile.userId !== fbUser.uid || !userProfile.role) {
+            console.error(`CRITICAL: User profile validation failed for UID ${fbUser.uid}. Profile exists: ${!!userProfile}, UID Match: ${userProfile?.userId === fbUser.uid}, Role Exists: ${!!userProfile?.role}. Signing out.`);
             await auth.signOut();
             setLoading(false);
             return;
         }
         
-        // --- If all checks pass, set user state ---
         setUser(userProfile);
         if (userProfile?.role === 'Developer' || userProfile?.role === 'Admin') {
           setOriginalUser(userProfile);
@@ -168,31 +168,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
         await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
-        // If sign-in fails, check if it's a special user (admin/demo) that should be auto-registered.
         const isNotFound = error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential';
         const canAutoRegister = adminEmails.includes(email) || demoUserEmails.includes(email);
 
         if (isNotFound && canAutoRegister) {
             try {
-                // Attempt to create the user. If it succeeds, onAuthStateChanged will handle the rest.
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 if (adminEmails.includes(email)) {
                   await sendEmailVerification(userCredential.user);
                 }
-                // The onAuthStateChanged listener will now fire and create the appropriate profile.
                 return;
             } catch (registrationError: any) {
-                // If creating the user fails because they already exist, it means the password was wrong for the initial login attempt.
-                // We re-throw the original login error.
                 if (registrationError.code === 'auth/email-already-in-use') {
                     throw error;
                 }
-                // For other registration errors (like a weak password), throw the new error.
                 console.error("Auto-registration for special user failed:", registrationError);
                 throw registrationError;
             }
         } else {
-             // For normal users or other types of login errors, re-throw the original error.
              throw error;
         }
     }
