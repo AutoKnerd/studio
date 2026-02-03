@@ -6,7 +6,8 @@ if (!getApps().length) {
   admin.initializeApp({
     // When deployed to Google Cloud environments (like Cloud Run, where App Hosting runs),
     // the SDK will automatically discover service account credentials.
-    // No need to manually configure `credential`.
+    // However, we explicitly set the projectId to ensure consistency with the client.
+    projectId: 'studio-8028797920-12261',
   });
 }
 
