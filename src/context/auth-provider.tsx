@@ -7,6 +7,10 @@ import { useAuth as useFirebaseAuth } from '@/firebase'; // Using alias to avoid
 import { getUserById, createUserProfile, getInvitationByEmail, claimInvitation } from '@/lib/data';
 import type { User, UserRole, EmailInvitation } from '@/lib/definitions';
 import { useRouter } from 'next/navigation';
+import { initializeFirebase } from '@/firebase/init';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
+const { firestore: db } = initializeFirebase();
 
 interface AuthContextType {
   user: User | null;
@@ -60,8 +64,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Self-healing logic: If a Firebase Auth user exists but their Firestore document does not, create it.
         if (!userProfile && fbUser.email) {
-          console.log(`User document not found for UID ${fbUser.uid}. Checking for invitation or admin status...`);
+          console.log(`User document not found for UID ${fbUser.uid}. Checking for email collision and invitation...`);
           
+          // 1. Collision Check before creating a new profile
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where("email", "==", fbUser.email.toLowerCase()));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const existingUser = querySnapshot.docs[0].data() as User;
+            // A user document exists for this email, but with a DIFFERENT userId. This is a collision.
+            if (existingUser.userId !== fbUser.uid) {
+                console.error(`CRITICAL: Duplicate identity detected for email ${fbUser.email}. User with UID ${fbUser.uid} tried to log in, but an account already exists with UID ${existingUser.userId}. Signing out to prevent data corruption.`);
+                await auth.signOut();
+                setLoading(false);
+                return; // Stop execution
+            }
+            // If userIds match, it means the profile was created but getUserById failed, which is unlikely but we let it proceed.
+          }
+          
+          // 2. No collision found, proceed with creation logic
           const invitation = await getInvitationByEmail(fbUser.email);
 
           if (invitation && !invitation.claimed) {
@@ -96,18 +118,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
         
-        // If a user is authenticated but no Firestore profile exists after the self-heal attempt,
-        // it indicates an inconsistent state. We sign them out to prevent permission errors
-        // that rely on data from the /users/{uid} document.
+        // --- Validation and Fail-Fast Guard ---
+        // 1. Check if a profile exists at all (either fetched or created). If not, sign out.
         if (!userProfile) {
-          console.error(`Signing out user ${fbUser.uid} due to missing Firestore profile.`);
+          console.error(`Signing out user ${fbUser.uid} due to missing or failed-to-create Firestore profile.`);
           await auth.signOut();
-          // The onAuthStateChanged listener will re-run with a null user, which correctly clears all app state.
-          // We can stop processing here for this run.
           setLoading(false);
           return;
         }
         
+        // 2. Validate that the user ID and role are consistent. If not, sign out.
+        if (userProfile.userId !== fbUser.uid || !userProfile.role) {
+            console.error(`CRITICAL: User profile validation failed for UID ${fbUser.uid}. Profile data is inconsistent. UID Match: ${userProfile.userId === fbUser.uid}, Role Exists: ${!!userProfile.role}. Signing out.`);
+            await auth.signOut();
+            setLoading(false);
+            return;
+        }
+        
+        // --- If all checks pass, set user state ---
         setUser(userProfile);
         if (userProfile?.role === 'Developer' || userProfile?.role === 'Admin') {
           setOriginalUser(userProfile);
