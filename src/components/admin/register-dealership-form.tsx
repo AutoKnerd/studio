@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -37,6 +37,7 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
   const [inviteUrl, setInviteUrl] = useState('');
   const [showLink, setShowLink] = useState(false);
   const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const isAdmin = ['Admin', 'Developer'].includes(user.role);
   const registrationRoles = isAdmin ? allRoles : getTeamMemberRoles(user.role);
@@ -56,6 +57,12 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
         form.setValue('dealershipId', dealerships[0].id);
     }
   }, [dealerships, isAdmin, form]);
+
+  useEffect(() => {
+    if (showLink && inputRef.current) {
+      inputRef.current.select();
+    }
+  }, [showLink]);
 
 
   async function onSubmit(data: InviteFormValues) {
@@ -117,7 +124,7 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
           </AlertDescription>
         </Alert>
         {showLink ? (
-          <Input value={inviteUrl} readOnly />
+          <Input ref={inputRef} value={inviteUrl} readOnly />
         ) : (
           <Button onClick={handleCopyLink} variant="outline" className="w-full">
             <Copy className="mr-2 h-4 w-4" />
