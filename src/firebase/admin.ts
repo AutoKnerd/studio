@@ -1,3 +1,4 @@
+
 import admin from 'firebase-admin';
 import { getApps } from 'firebase-admin/app';
 
@@ -7,6 +8,7 @@ if (!getApps().length) {
     // When deployed to Google Cloud environments (like Cloud Run, where App Hosting runs),
     // the SDK will automatically discover service account credentials.
     // However, we explicitly set the projectId to ensure consistency with the client.
+    credential: admin.credential.applicationDefault(),
     projectId: 'studio-8028797920-12261',
   });
 }
