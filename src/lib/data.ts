@@ -12,7 +12,7 @@ import { generateTourData } from './tour-data';
 import { initializeFirebase } from '@/firebase/init';
 
 // Establish a single, shared database connection for this module.
-const { firestore: db } = initializeFirebase();
+const { firestore: db, auth } = initializeFirebase();
 
 // --- FAKE DATA INJECTION FOR TOUR ---
 let tourData: ReturnType<typeof generateTourData> | null = null;
@@ -351,44 +351,47 @@ export async function sendInvitation(
         return; // No-op
     }
 
-  const inviter = await getUserById(inviterId);
-  if (!inviter) throw new Error("Inviter not found.");
+    const inviter = await getUserById(inviterId);
+    if (!inviter) throw new Error("Inviter not found.");
 
-  const dealership = await getDealershipById(dealershipId, inviter.userId);
-  if (!dealership) throw new Error('Dealership not found.');
-  
-  const invitationsCollection = collection(db, 'emailInvitations');
-  const invitationRef = doc(invitationsCollection);
-  const token = invitationRef.id;
+    const dealership = await getDealershipById(dealershipId, inviter.userId);
+    if (!dealership) throw new Error('Dealership not found.');
+    
+    if (!auth.currentUser || auth.currentUser.uid !== inviterId) {
+      throw new Error('User not authenticated or mismatch.');
+    }
+    const idToken = await auth.currentUser.getIdToken(true);
 
-  const newInvitation: EmailInvitation = {
-    token: token,
-    dealershipId: dealership.id,
-    dealershipName: dealership.name,
-    role: role,
-    email: email.toLowerCase(),
-    claimed: false,
-    inviterId: inviterId,
-  };
+    const response = await fetch('/api/admin/createEmailInvitation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+            dealershipId: dealership.id,
+            dealershipName: dealership.name,
+            email: email,
+            role: role,
+        }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send invitation.');
+    }
   
-  try {
-    await setDoc(invitationRef, newInvitation);
      if (['Owner', 'General Manager', 'manager'].includes(inviter.role)) {
         const inviterBadges = await getEarnedBadgesByUserId(inviter.userId);
         if (!inviterBadges.some(b => b.id === 'talent-scout')) {
             const badgeRef = doc(db, `users/${inviter.userId}/earnedBadges`, 'talent-scout');
-            await setDoc(badgeRef, { badgeId: 'talent-scout', timestamp: Timestamp.fromDate(new Date()) });
+            try {
+                 await setDoc(badgeRef, { badgeId: 'talent-scout', timestamp: Timestamp.fromDate(new Date()) });
+            } catch (e) {
+                console.warn("Could not award 'talent-scout' badge:", e);
+            }
         }
     }
-  } catch(e: any) {
-      const contextualError = new FirestorePermissionError({
-          path: invitationRef.path,
-          operation: 'create',
-          requestResourceData: newInvitation
-      });
-      errorEmitter.emit('permission-error', contextualError);
-      throw contextualError;
-  }
 }
 
 
