@@ -8,7 +8,7 @@ import { Header } from '@/components/layout/header';
 import { Spinner } from '@/components/ui/spinner';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { UserRole, LessonLog, Badge as BadgeType, Dealership, managerialRoles } from '@/lib/definitions';
-import { getConsultantActivity, getEarnedBadgesByUserId, getDealerships } from '@/lib/data';
+import { getConsultantActivity, getEarnedBadgesByUserId, getDealerships } from '@/lib/data.client';
 import { ScoreCard } from '@/components/profile/score-card';
 import { Button } from '@/components/ui/button';
 import { Download, ArrowLeft } from 'lucide-react';

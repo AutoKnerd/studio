@@ -4,7 +4,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User as FirebaseUser, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { useAuth as useFirebaseAuth } from '@/firebase'; // Using alias to avoid naming conflict
-import { getUserById, createUserProfile, claimInvitation } from '@/lib/data';
+import { getUserById, createUserProfile, claimInvitation } from '@/lib/data.client';
 import type { User, UserRole, EmailInvitation } from '@/lib/definitions';
 import { useRouter } from 'next/navigation';
 

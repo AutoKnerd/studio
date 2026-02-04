@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { stripe } from '@/lib/stripe';
-import { getUserById, updateUser } from '@/lib/data';
+import { getUserById, updateUser } from '@/lib/data.server';
 
 export async function createCheckoutSession(userId: string) {
   if (!userId) {

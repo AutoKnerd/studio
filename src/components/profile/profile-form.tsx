@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { User, Dealership, carBrands } from '@/lib/definitions';
-import { updateUser, getDealerships, updateUserDealerships } from '@/lib/data';
+import { updateUser, getDealerships, updateUserDealerships } from '@/lib/data.client';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Button, buttonVariants } from '@/components/ui/button';

@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 import type {Stripe} from 'stripe';
 
 import {stripe} from '@/lib/stripe';
-import {updateUserSubscriptionStatus} from '@/lib/data';
+import {updateUserSubscriptionStatus} from '@/lib/data.server';
 
 export async function POST(req: Request) {
   let event: Stripe.Event;

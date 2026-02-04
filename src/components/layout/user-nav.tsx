@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Message } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
-import { getMessagesForUser } from '@/lib/data';
+import { getMessagesForUser } from '@/lib/data.client';
 import { formatDistanceToNow } from 'date-fns';
 import {
   DropdownMenu,

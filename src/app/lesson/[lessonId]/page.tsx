@@ -3,7 +3,7 @@
 
 import { Header } from '@/components/layout/header';
 import { LessonView } from '@/components/lessons/lesson-view';
-import { getDealershipById, getLessonById } from '@/lib/data';
+import { getDealershipById, getLessonById } from '@/lib/data.client';
 import { Lesson, managerialRoles } from '@/lib/definitions';
 import { useEffect, useState } from 'react';
 import { Spinner } from '@/components/ui/spinner';

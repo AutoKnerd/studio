@@ -5,7 +5,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RegisterForm } from '@/components/auth/register-form';
 import { Logo } from '@/components/layout/logo';
-import { getInvitationByToken } from '@/lib/data';
+import { getInvitationByToken } from '@/lib/data.client';
 import { EmailInvitation } from '@/lib/definitions';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

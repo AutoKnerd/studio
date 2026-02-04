@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { User, UserRole, CxTrait, LessonCategory, lessonCategories, lessonCategoriesByRole, LessonRole, Lesson } from '@/lib/definitions';
-import { getTeamMemberRoles, createLesson, assignLesson } from '@/lib/data';
+import { getTeamMemberRoles, createLesson, assignLesson } from '@/lib/data.client';
 import { suggestScenario } from '@/ai/flows/suggest-scenario-flow';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

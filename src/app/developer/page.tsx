@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Header } from '@/components/layout/header';
 import { SlidersHorizontal } from 'lucide-react';
-import { getManageableUsers, getDealerships } from '@/lib/data';
+import { getManageableUsers, getDealerships } from '@/lib/data.client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RegisterDealershipForm } from '@/components/admin/register-dealership-form';
 import { AssignUserForm } from '@/components/admin/assign-user-form';

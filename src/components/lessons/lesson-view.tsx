@@ -14,7 +14,7 @@ import { Send, ArrowLeft, ArrowRightToLine } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { conductLesson } from '@/ai/flows/lesson-flow';
 import { Spinner } from '../ui/spinner';
-import { getConsultantActivity, logLessonCompletion } from '@/lib/data';
+import { getConsultantActivity, logLessonCompletion } from '@/lib/data.client';
 import { useToast } from '@/hooks/use-toast';
 
 interface Message {

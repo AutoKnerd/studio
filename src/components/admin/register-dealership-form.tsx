@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { sendInvitation, getTeamMemberRoles } from '@/lib/data';
+import { sendInvitation, getTeamMemberRoles } from '@/lib/data.client';
 import { User, UserRole, Dealership, allRoles } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';

@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { User } from '@/lib/definitions';
-import { deleteUser } from '@/lib/data';
+import { deleteUser } from '@/lib/data.client';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';

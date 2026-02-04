@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { User, Lesson, LessonLog, CxTrait, LessonRole, Dealership, Badge } from '@/lib/definitions';
-import { getLessons, getConsultantActivity, updateUserDealerships, assignLesson, getTeamMemberRoles, getEarnedBadgesByUserId } from '@/lib/data';
+import { getLessons, getConsultantActivity, updateUserDealerships, assignLesson, getTeamMemberRoles, getEarnedBadgesByUserId } from '@/lib/data.client';
 import { calculateLevel } from '@/lib/xp';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Smile, Ear, Handshake, Repeat, Target, Users, LucideIcon, Pencil, PlusCircle, ShieldOff } from 'lucide-react';

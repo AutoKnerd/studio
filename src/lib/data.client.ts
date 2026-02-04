@@ -361,45 +361,6 @@ export async function sendInvitation(
     return inviteUrl;
 }
 
-
-export async function updateUserSubscriptionStatus(stripeCustomerId: string, newStatus: 'active' | 'inactive'): Promise<User | null> {
-    // This function is for real users, tour users don't have stripe IDs.
-    const usersCollection = collection(db, 'users');
-    const q = query(usersCollection, where("stripeCustomerId", "==", stripeCustomerId));
-    let snapshot;
-    try {
-        snapshot = await getDocs(q);
-    } catch(e: any) {
-        const contextualError = new FirestorePermissionError({
-            path: usersCollection.path,
-            operation: 'list'
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        throw contextualError;
-    }
-
-    if (snapshot.empty) return null;
-
-    const userDoc = snapshot.docs[0];
-    const userDocRef = userDoc.ref;
-    const updateData = { subscriptionStatus: newStatus };
-    try {
-        await updateDoc(userDocRef, updateData);
-    } catch(e: any) {
-        const contextualError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'update',
-            requestResourceData: updateData
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        throw contextualError;
-    }
-    
-    const updatedUser = await getDoc(userDocRef);
-    return { ...updatedUser.data(), id: updatedUser.id } as User;
-}
-
-
 // LESSONS
 export async function getLessons(role: LessonRole, userId?: string): Promise<Lesson[]> {
     if (isTouringUser(userId)) {

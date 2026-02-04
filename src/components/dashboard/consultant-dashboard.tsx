@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { User, Lesson, LessonLog, CxTrait, Badge, Dealership } from '@/lib/definitions';
-import { getLessons, getConsultantActivity, getDailyLessonLimits, getAssignedLessons, getEarnedBadgesByUserId, getDealershipById } from '@/lib/data';
+import { getLessons, getConsultantActivity, getDailyLessonLimits, getAssignedLessons, getEarnedBadgesByUserId, getDealershipById } from '@/lib/data.client';
 import { calculateLevel } from '@/lib/xp';
 import { BookOpen, TrendingUp, Check, ArrowUp, Trophy, Spline, Gauge, LucideIcon, CheckCircle, Lock, ChevronRight, Users, Ear, Handshake, Repeat, Target, Smile, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';

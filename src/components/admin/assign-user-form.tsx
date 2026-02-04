@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { User, Dealership } from '@/lib/definitions';
-import { updateUserDealerships } from '@/lib/data';
+import { updateUserDealerships } from '@/lib/data.client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';
