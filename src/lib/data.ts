@@ -287,7 +287,7 @@ export async function sendInvitation(
   inviterId: string,
 ): Promise<string> {
     if (isTouringUser(inviterId)) {
-        return '';
+        return `http://localhost:9002/register?token=tour-fake-token-${Math.random()}`;
     }
 
     const inviter = await getUserById(inviterId);
@@ -315,12 +315,38 @@ export async function sendInvitation(
         }),
     });
 
+    const rawResponseText = await response.text();
+
     if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send invitation.');
+        let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+        if (rawResponseText) {
+            try {
+                const errorJson = JSON.parse(rawResponseText);
+                errorMessage = errorJson.message || errorMessage;
+            } catch {
+                // Not JSON, use a snippet of the raw text
+                errorMessage += ` - Response: ${rawResponseText.substring(0, 100)}`;
+            }
+        }
+        throw new Error(errorMessage);
     }
     
-    const { inviteUrl } = await response.json();
+    if (!rawResponseText) {
+        throw new Error('API returned an empty response on success.');
+    }
+
+    let responseData;
+    try {
+        responseData = JSON.parse(rawResponseText);
+    } catch (e) {
+        throw new Error(`Failed to parse successful API response as JSON. Response: ${rawResponseText.substring(0, 100)}`);
+    }
+
+    if (!responseData.inviteUrl) {
+        throw new Error('API response successful but did not include an inviteUrl.');
+    }
+    
+    const { inviteUrl } = responseData;
   
      if (['Owner', 'General Manager', 'manager'].includes(inviter.role)) {
         const inviterBadges = await getEarnedBadgesByUserId(inviter.userId);
