@@ -1,42 +1,47 @@
 
-import admin from 'firebase-admin';
-import { getApps } from 'firebase-admin/app';
+import { getApps, initializeApp, cert, App, applicationDefault } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
-// Ensure Firebase Admin is initialized only once.
-if (!getApps().length) {
+let app: App;
+
+if (getApps().length === 0) {
+  if (process.env.NODE_ENV === 'production') {
+    // In production, we require service account credentials to be set.
     const projectId = process.env.FIREBASE_PROJECT_ID;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    // Normalize the private key, removing quotes and replacing escaped newlines.
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n').replace(/"/g, '');
 
-    // The persistent ID token audience mismatch indicates that the runtime environment's
-    // ambient credentials (e.g., from a GCLOUD_PROJECT env var) point to the wrong project.
-    // To fix this, we MUST use explicit service account credentials via `admin.credential.cert()`
-    // to override the environment and force the Admin SDK to use the correct project.
-    if (projectId && clientEmail && privateKey) {
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                projectId,
-                clientEmail,
-                privateKey: privateKey.replace(/\\n/g, '\n'),
-            }),
-            projectId: projectId,
-        });
-    } else {
-        // This case should not happen in a correctly configured Studio/App Hosting environment.
-        // We log a clear warning because without these env vars, authentication will fail.
-        console.warn(
-          'One or more Firebase Admin environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) are not set. ' +
-          'Admin SDK initialization will likely fail.'
-        );
-        // Fallback to the previous attempt which was being overridden.
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-            projectId: 'studio-8028797920-12261', // Hardcoded as last resort
-        });
+    if (!projectId || !clientEmail || !privateKey) {
+      throw new Error(
+        'Missing required Firebase Admin SDK environment variables for production (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY).'
+      );
     }
+    
+    app = initializeApp({
+      credential: cert({ projectId, clientEmail, privateKey }),
+      projectId: projectId,
+    });
+  } else {
+    // In development, allow fallback to application default credentials,
+    // which is useful for local testing with `gcloud auth application-default login`.
+    const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT;
+    if (!projectId) {
+         console.warn(
+           'FIREBASE_PROJECT_ID or GCLOUD_PROJECT env var not set. Firebase Admin SDK may not connect to the correct project.'
+         );
+    }
+    app = initializeApp({
+      credential: applicationDefault(),
+      projectId: projectId,
+    });
+  }
+} else {
+  app = getApps()[0];
 }
 
-const adminDb = admin.firestore();
-const adminAuth = admin.auth();
+const adminDb = getFirestore(app);
+const adminAuth = getAuth(app);
 
 export { adminDb, adminAuth };

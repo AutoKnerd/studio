@@ -14,7 +14,8 @@ export async function getUserById(userId: string): Promise<User | null> {
   if (!docSnap.exists) {
     return null;
   }
-  return { ...docSnap.data(), id: docSnap.id } as User;
+  // The 'User' type expects 'userId', not 'id'. This maps the document ID to the correct property.
+  return { ...docSnap.data(), userId: docSnap.id } as User;
 }
 
 /**
@@ -52,5 +53,6 @@ export async function updateUserSubscriptionStatus(stripeCustomerId: string, new
     await userDocRef.update({ subscriptionStatus: newStatus });
     
     const updatedUserSnap = await userDocRef.get();
-    return { ...updatedUserSnap.data(), id: updatedUserSnap.id } as User;
+    // The 'User' type expects 'userId', not 'id'. This maps the document ID to the correct property.
+    return { ...updatedUserSnap.data(), userId: updatedUserSnap.id } as User;
 }
