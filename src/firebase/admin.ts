@@ -23,19 +23,21 @@ if (getApps().length === 0) {
       credential: cert({ projectId, clientEmail, privateKey }),
       projectId: projectId,
     });
+    console.log(`[Firebase Admin] Initialized in PRODUCTION for project: ${app.options.projectId}`);
   } else {
     // In development, allow fallback to application default credentials,
     // which is useful for local testing with `gcloud auth application-default login`.
     const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GCLOUD_PROJECT;
     if (!projectId) {
          console.warn(
-           'FIREBASE_PROJECT_ID or GCLOUD_PROJECT env var not set. Firebase Admin SDK may not connect to the correct project.'
+           '[Firebase Admin] FIREBASE_PROJECT_ID or GCLOUD_PROJECT env var not set. Firebase Admin SDK may not connect to the correct project.'
          );
     }
     app = initializeApp({
       credential: applicationDefault(),
       projectId: projectId,
     });
+    console.log(`[Firebase Admin] Initialized in DEVELOPMENT for project: ${app.options.projectId}`);
   }
 } else {
   app = getApps()[0];
