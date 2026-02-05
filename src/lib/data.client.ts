@@ -291,9 +291,6 @@ export async function sendInvitation(
 
     const inviter = await getUserById(inviterId);
     if (!inviter) throw new Error("Inviter not found.");
-
-    const dealership = await getDealershipById(dealershipId, inviter.userId);
-    if (!dealership) throw new Error('Dealership not found.');
     
     if (!auth.currentUser || auth.currentUser.uid !== inviterId) {
       throw new Error('User not authenticated or mismatch.');
@@ -307,8 +304,7 @@ export async function sendInvitation(
             'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-            dealershipId: dealership.id,
-            dealershipName: dealership.name,
+            dealershipId: dealershipId,
             email: email,
             role: role,
         }),
@@ -323,7 +319,6 @@ export async function sendInvitation(
                 const errorJson = JSON.parse(rawResponseText);
                 errorMessage = errorJson.message || errorMessage;
             } catch {
-                // Not JSON, use a snippet of the raw text
                 errorMessage += ` - Response: ${rawResponseText.substring(0, 100)}`;
             }
         }

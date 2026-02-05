@@ -35,6 +35,7 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [invitationSent, setInvitationSent] = useState(false);
   const [inviteUrl, setInviteUrl] = useState('');
+  const [sentToEmail, setSentToEmail] = useState('');
   const [showLink, setShowLink] = useState(false);
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,11 +73,12 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
     setShowLink(false);
     try {
       const url = await sendInvitation(data.dealershipId, data.userEmail, data.role as UserRole, user.userId);
+      setSentToEmail(data.userEmail);
       setInviteUrl(url);
       setInvitationSent(true);
       toast({
-        title: 'Invitation Created!',
-        description: `An invitation link has been generated for ${data.userEmail}.`,
+        title: 'Invitation Sent!',
+        description: `An email has been sent to ${data.userEmail}.`,
       });
       
       onUserInvited?.();
@@ -118,9 +120,9 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
       <div className="text-center space-y-4">
         <Alert>
           <MailCheck className="h-4 w-4" />
-          <AlertTitle>Invitation Created Successfully!</AlertTitle>
+          <AlertTitle>Invitation Sent!</AlertTitle>
           <AlertDescription>
-            An invitation has been created. Share the link below directly with the user.
+            An email has been sent to <strong>{sentToEmail}</strong>. If they don&apos;t receive it, you can share the link below.
           </AlertDescription>
         </Alert>
         {showLink ? (
@@ -128,7 +130,7 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
         ) : (
           <Button onClick={handleCopyLink} variant="outline" className="w-full">
             <Copy className="mr-2 h-4 w-4" />
-            Copy Invitation Link
+            Copy Fallback Link
           </Button>
         )}
         <Button onClick={() => setInvitationSent(false)} className="w-full">

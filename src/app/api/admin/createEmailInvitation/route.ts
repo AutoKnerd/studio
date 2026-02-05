@@ -1,8 +1,9 @@
 
 import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/firebase/admin';
-import { UserRole } from '@/lib/definitions';
+import { UserRole, Dealership, User } from '@/lib/definitions';
 import { Timestamp } from 'firebase-admin/firestore';
+import { sendInvitationEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   const authorization = req.headers.get('authorization') ?? req.headers.get('Authorization');
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Forbidden: User profile not found.' }, { status: 403 });
     }
     
-    const user = userDoc.data();
+    const user = userDoc.data() as User;
     const userRole = user?.role;
 
     const allowedRoles = ['Admin', 'Developer', 'Owner', 'Trainer', 'General Manager', 'manager', 'Service Manager', 'Parts Manager', 'Finance Manager'];
@@ -35,11 +36,18 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: 'Forbidden: Insufficient permissions to send invitations.' }, { status: 403 });
     }
 
-    const { dealershipId, dealershipName, email, role } = await req.json();
+    const { dealershipId, email, role } = await req.json();
 
-    if (!dealershipId || !dealershipName || !email || !role) {
+    if (!dealershipId || !email || !role) {
         return NextResponse.json({ message: 'Bad Request: Missing required invitation details.' }, { status: 400 });
     }
+
+    const dealershipDoc = await adminDb.collection('dealerships').doc(dealershipId).get();
+    if (!dealershipDoc.exists) {
+        return NextResponse.json({ message: 'Bad Request: Dealership not found.' }, { status: 400 });
+    }
+    const dealership = dealershipDoc.data() as Dealership;
+
 
     const invitationRef = adminDb.collection('emailInvitations').doc();
     const invitationToken = invitationRef.id;
@@ -50,7 +58,7 @@ export async function POST(req: Request) {
     const newInvitationData = {
         token: invitationToken,
         dealershipId: dealershipId,
-        dealershipName: dealershipName,
+        dealershipName: dealership.name,
         role: role as UserRole,
         email: email.toLowerCase(),
         claimed: false,
@@ -63,6 +71,20 @@ export async function POST(req: Request) {
     
     const origin = req.headers.get('origin') || 'http://localhost:9002';
     const inviteUrl = `${origin}/register?token=${invitationToken}`;
+
+    // Send the invitation email
+    const emailResult = await sendInvitationEmail({
+      toEmail: email,
+      inviteUrl,
+      inviter: user,
+      dealership: dealership,
+    });
+
+    if (!emailResult.success) {
+      // Log the email failure but don't fail the API request,
+      // as the invite link is still valid and can be copied manually.
+      console.error(`Failed to send invitation email to ${email}: ${emailResult.error}`);
+    }
 
     return NextResponse.json({ token: invitationToken, inviteUrl }, { status: 201 });
 
