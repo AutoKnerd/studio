@@ -75,8 +75,8 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
       setInviteUrl(url);
       setInvitationSent(true);
       toast({
-        title: 'Invitation Sent!',
-        description: `An invitation has been sent to ${data.userEmail}.`,
+        title: 'Invitation Created!',
+        description: `An invitation link has been generated for ${data.userEmail}.`,
       });
       
       onUserInvited?.();
@@ -90,7 +90,7 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
       toast({
         variant: 'destructive',
         title: 'Invitation Failed',
-        description: (error as Error).message || 'An error occurred while sending the invitation.',
+        description: (error as Error).message || 'An error occurred while creating the invitation.',
       });
     } finally {
       setIsSubmitting(false);
@@ -118,9 +118,9 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
       <div className="text-center space-y-4">
         <Alert>
           <MailCheck className="h-4 w-4" />
-          <AlertTitle>Invitation Sent Successfully!</AlertTitle>
+          <AlertTitle>Invitation Created Successfully!</AlertTitle>
           <AlertDescription>
-            An invitation email has been sent. You can also share the link below directly.
+            An invitation has been created. Share the link below directly with the user.
           </AlertDescription>
         </Alert>
         {showLink ? (

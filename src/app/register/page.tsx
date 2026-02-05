@@ -5,7 +5,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RegisterForm } from '@/components/auth/register-form';
 import { Logo } from '@/components/layout/logo';
-import { getInvitationByToken } from '@/lib/data.client';
 import { EmailInvitation } from '@/lib/definitions';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,14 +28,16 @@ function RegisterPageContent() {
 
     async function validateToken() {
       try {
-        const inv = await getInvitationByToken(token);
-        if (!inv) {
-          setError('This invitation is invalid or has expired.');
-        } else if (inv.claimed) {
-          setError('This invitation has already been claimed.');
+        const response = await fetch(`/api/invitations/${token}`, { cache: 'no-store' });
+        
+        if (response.status === 200) {
+            const inv = await response.json();
+            setInvitation(inv);
         } else {
-          setInvitation(inv);
+            const errorData = await response.json();
+            setError(errorData.message || 'This invitation is invalid or has expired.');
         }
+
       } catch (e) {
         setError('Could not validate your invitation. Please try again later.');
       } finally {

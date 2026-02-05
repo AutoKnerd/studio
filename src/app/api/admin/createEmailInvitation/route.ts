@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/firebase/admin';
 import { UserRole } from '@/lib/definitions';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export async function POST(req: Request) {
   const authorization = req.headers.get('authorization') ?? req.headers.get('Authorization');
@@ -42,6 +43,9 @@ export async function POST(req: Request) {
 
     const invitationRef = adminDb.collection('emailInvitations').doc();
     const invitationToken = invitationRef.id;
+
+    const now = Timestamp.now();
+    const expiresAt = new Date(now.toMillis() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
     
     const newInvitationData = {
         token: invitationToken,
@@ -51,6 +55,8 @@ export async function POST(req: Request) {
         email: email.toLowerCase(),
         claimed: false,
         inviterId: userId,
+        createdAt: now,
+        expiresAt: Timestamp.fromDate(expiresAt),
     };
 
     await invitationRef.set(newInvitationData);
