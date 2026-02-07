@@ -3,8 +3,11 @@ import { NextResponse } from 'next/server';
 import { adminDb, adminAuth } from '@/firebase/admin';
 import { Dealership, Address } from '@/lib/definitions';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
-  const authorization = req.headers.get('authorization') ?? req.headers.get('Authorization');
+  const authorization = req.headers.get('authorization');
   
   if (!authorization) {
     return NextResponse.json({ message: 'Unauthorized: Missing token.' }, { status: 401 });

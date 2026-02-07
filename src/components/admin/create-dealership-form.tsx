@@ -84,14 +84,25 @@ export function CreateDealershipForm({ user, onDealershipCreated }: CreateDealer
       });
 
       if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to create dealership.');
+          const errorText = await response.text();
+          let errorMessage = 'Failed to create dealership.';
+          try {
+              if (errorText) {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorMessage;
+              }
+          } catch (e) {
+              console.error("Non-JSON error response from API:", errorText);
+          }
+          throw new Error(errorMessage);
       }
+      
+      const newDealership = await response.json();
       
       setDealershipCreated(true);
       toast({
         title: 'Dealership Created!',
-        description: `${data.dealershipName} has been added to the system.`,
+        description: `${newDealership.name} has been added to the system.`,
       });
       
       onDealershipCreated?.();
