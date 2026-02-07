@@ -2,6 +2,45 @@ import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/firebase/admin";
 import { Timestamp } from "firebase-admin/firestore";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function GET(
+  req: Request,
+  { params }: { params: { token: string } }
+) {
+    const { token } = params;
+    if (!token) {
+        return NextResponse.json({ message: 'Invitation token is missing.' }, { status: 400 });
+    }
+
+    try {
+        const inviteRef = adminDb.collection('emailInvitations').doc(token);
+        const inviteSnap = await inviteRef.get();
+
+        if (!inviteSnap.exists) {
+            return NextResponse.json({ message: 'This invitation is not valid.' }, { status: 404 });
+        }
+
+        const invitation = inviteSnap.data() as any;
+
+        if (invitation.claimed) {
+            return NextResponse.json({ message: 'This invitation has already been claimed.' }, { status: 410 });
+        }
+        
+        if (invitation.expiresAt?.toDate && invitation.expiresAt.toDate() < new Date()) {
+            return NextResponse.json({ message: 'This invitation has expired.' }, { status: 410 });
+        }
+        
+        // Return the full invitation object if it's valid
+        return NextResponse.json({ ...invitation, token: inviteSnap.id });
+
+    } catch (e: any) {
+        console.error(`[API ValidateInvitation] Error for token ${token}:`, e);
+        return NextResponse.json({ message: 'Internal Server Error while validating invitation.' }, { status: 500 });
+    }
+}
+
 export async function POST(req: Request) {
   const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization");
   if (!authHeader) return NextResponse.json({ message: "Missing Authorization header" }, { status: 401 });

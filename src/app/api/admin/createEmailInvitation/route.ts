@@ -5,6 +5,9 @@ import { UserRole, Dealership, User } from '@/lib/definitions';
 import { Timestamp } from 'firebase-admin/firestore';
 import { sendInvitationEmail } from '@/lib/email';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   const authorization = req.headers.get('authorization') ?? req.headers.get('Authorization');
   
