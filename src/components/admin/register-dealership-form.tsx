@@ -41,7 +41,14 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
   const inputRef = useRef<HTMLInputElement>(null);
   
   const isAdmin = ['Admin', 'Developer'].includes(user.role);
+  const isOwner = user.role === 'Owner';
   const registrationRoles = isAdmin ? allRoles : getTeamMemberRoles(user.role);
+  
+  // For Owners: only show their assigned dealerships
+  // For others: show all managed dealerships
+  const managedDealerships = isOwner 
+    ? dealerships.filter(d => user.dealershipIds?.includes(d.id))
+    : dealerships;
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
@@ -54,10 +61,10 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
   
   useEffect(() => {
     // Pre-select dealership if user only belongs to one
-    if (dealerships.length === 1 && !isAdmin) {
-        form.setValue('dealershipId', dealerships[0].id);
+    if (managedDealerships.length === 1 && !isAdmin) {
+        form.setValue('dealershipId', managedDealerships[0].id);
     }
-  }, [dealerships, isAdmin, form]);
+  }, [managedDealerships, isAdmin, form]);
 
   useEffect(() => {
     if (showLink && inputRef.current) {
@@ -172,7 +179,7 @@ export function RegisterDealershipForm({ user, dealerships, onUserInvited }: Inv
                     </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                    {dealerships.map(d => (
+                    {managedDealerships.map(d => (
                         <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                     ))}
                     {dealerships.length === 0 && <SelectItem value="none" disabled>No dealerships available to invite to.</SelectItem>}

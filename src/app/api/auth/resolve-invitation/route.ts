@@ -1,9 +1,15 @@
 
 import { NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/firebase/admin';
+import { getAdminDb, getAdminAuth } from '@/firebase/admin';
 import { EmailInvitation } from '@/lib/definitions';
 
-export async function POST(req: Request) {
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ token?: string }> }
+) {
   const authorization = req.headers.get('authorization');
   
   if (!authorization) {
@@ -13,6 +19,8 @@ export async function POST(req: Request) {
   const token = authorization.replace('Bearer ', '');
 
   try {
+    const adminDb = getAdminDb();
+    const adminAuth = getAdminAuth();
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userEmail = decodedToken.email;
 
@@ -37,7 +45,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ ...invitationData, token: invitationDoc.id });
 
   } catch (error: any) {
-    console.error('[API ResolveInvitation] Error:', error);
+    console.error('[API ResolveInvitation] Error:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    });
+
+    if (error && error.code === 'admin/not-initialized') {
+      return NextResponse.json({ message: error.message }, { status: 503 });
+    }
+
+    if (error.message && error.message.includes('Firebase Admin not initialized')) {
+      return NextResponse.json({ message: error.message }, { status: 503 });
+    }
+
     if (error.code && error.code.startsWith('auth/')) {
         return NextResponse.json({
             code: error.code,

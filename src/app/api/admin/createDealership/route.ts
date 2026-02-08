@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/firebase/admin';
+import { getAdminDb, getAdminAuth } from '@/firebase/admin';
 import { Address } from '@/lib/definitions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ [key: string]: string }> }
+) {
   const authorization =
     req.headers.get('authorization') ?? req.headers.get('Authorization');
 
@@ -21,6 +24,8 @@ export async function POST(req: Request) {
   const token = match[1].trim();
 
   try {
+    const adminDb = getAdminDb();
+    const adminAuth = getAdminAuth();
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userId = decodedToken.uid;
 
@@ -63,7 +68,12 @@ export async function POST(req: Request) {
         code: error.code,
         stack: error.stack,
     });
-    
+
+    // If Admin SDK is not initialized, return 503 so callers can retry later
+    if (error && error.code === 'admin/not-initialized') {
+      return NextResponse.json({ message: error.message }, { status: 503 });
+    }
+
     // Create a structured JSON error response
     const errorResponse: { message: string, code?: string } = {
         message: error.message || 'Internal Server Error',
@@ -74,7 +84,7 @@ export async function POST(req: Request) {
         errorResponse.message = `Unauthorized: ${error.message}`;
         return NextResponse.json(errorResponse, { status: 401 });
     }
-    
+
     return NextResponse.json(
       errorResponse,
       { status: 500 }

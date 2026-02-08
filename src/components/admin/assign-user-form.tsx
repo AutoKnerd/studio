@@ -16,14 +16,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface AssignUserFormProps {
   manageableUsers: User[];
   dealerships: Dealership[];
+  currentUser?: User;
   onUserAssigned?: () => void;
 }
 
-export function AssignUserForm({ manageableUsers, dealerships, onUserAssigned }: AssignUserFormProps) {
+export function AssignUserForm({ manageableUsers, dealerships, currentUser, onUserAssigned }: AssignUserFormProps) {
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedDealerships, setSelectedDealerships] = useState<string[]>([]);
   const { toast } = useToast();
+
+  // For Owners: only show their assigned dealerships
+  // For others: show all managed dealerships
+  const isOwner = currentUser?.role === 'Owner';
+  const managedDealerships = isOwner 
+    ? dealerships.filter(d => currentUser?.dealershipIds?.includes(d.id))
+    : dealerships;
 
   const handleUserSelect = (userId: string) => {
     const user = manageableUsers.find(u => u.userId === userId);
@@ -118,7 +126,7 @@ export function AssignUserForm({ manageableUsers, dealerships, onUserAssigned }:
                     <DropdownMenuContent className="w-64" align="start">
                         <DropdownMenuLabel>Managed Dealerships</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {dealerships.map(dealership => (
+                        {managedDealerships.map(dealership => (
                             <DropdownMenuCheckboxItem
                                 key={dealership.id}
                                 checked={selectedDealerships.includes(dealership.id)}
