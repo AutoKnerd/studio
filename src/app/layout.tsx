@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   title: 'AutoDrive powered by AutoKnerd',
   description: 'AI-powered training and performance for automotive professionals.',
   icons: {
-    icon: '/logo-icon1.png',
-    apple: '/logo-icon1.png',
+    icon: '/autodrive-ai-icon1.png',
+    apple: '/autodrive-ai-icon1.png',
   },
 };
 

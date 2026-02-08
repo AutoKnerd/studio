@@ -1,14 +1,25 @@
 
 // This file is for server-side data fetching and mutations.
 // It uses the Firebase Admin SDK, which has privileged access.
-import { adminDb } from '@/firebase/admin';
+import { getAdminDb, isAdminInitialized, adminInitErrorMessage } from '@/firebase/admin';
 import type { User } from './definitions';
+
+function makeAdminError() {
+  const err: any = new Error(
+    `Firebase Admin not initialized: ${adminInitErrorMessage || 'unknown reason'}`
+  );
+  err.code = 'admin/not-initialized';
+  return err;
+}
 
 /**
  * Fetches a user document by ID from the server.
  * Uses the Admin SDK.
  */
 export async function getUserById(userId: string): Promise<User | null> {
+  if (!isAdminInitialized) throw makeAdminError();
+
+  const adminDb = getAdminDb();
   const docRef = adminDb.collection('users').doc(userId);
   const docSnap = await docRef.get();
   if (!docSnap.exists) {
@@ -23,6 +34,9 @@ export async function getUserById(userId: string): Promise<User | null> {
  * Uses the Admin SDK.
  */
 export async function updateUser(userId: string, data: Partial<User>): Promise<User> {
+  if (!isAdminInitialized) throw makeAdminError();
+
+  const adminDb = getAdminDb();
   const userRef = adminDb.collection('users').doc(userId);
   await userRef.update(data);
   const updatedUser = await getUserById(userId);
@@ -38,9 +52,10 @@ export async function updateUser(userId: string, data: Partial<User>): Promise<U
  * Uses the Admin SDK.
  */
 export async function updateUserSubscriptionStatus(stripeCustomerId: string, newStatus: 'active' | 'inactive'): Promise<User | null> {
-    const usersCollection = adminDb.collection('users');
-    const q = usersCollection.where("stripeCustomerId", "==", stripeCustomerId);
-    const snapshot = await q.get();
+  if (!isAdminInitialized) throw makeAdminError();
+    const adminDb = getAdminDb();  const usersCollection = adminDb.collection('users');
+  const q = usersCollection.where("stripeCustomerId", "==", stripeCustomerId);
+  const snapshot = await q.get();
 
     if (snapshot.empty) {
         console.warn(`Webhook Error: No user found with Stripe Customer ID: ${stripeCustomerId}`);

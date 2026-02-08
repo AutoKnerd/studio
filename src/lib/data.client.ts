@@ -148,19 +148,27 @@ export async function updateUserDealerships(userId: string, newDealershipIds: st
         user.dealershipIds = newDealershipIds; // In-memory update
         return user;
     }
-    const userRef = doc(db, 'users', userId);
-    const updateData = { dealershipIds: newDealershipIds };
-    try {
-        await updateDoc(userRef, updateData);
-    } catch (e: any) {
-        const contextualError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'update',
-            requestResourceData: updateData,
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        throw contextualError;
+    
+    // Call the API endpoint with permission checks
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) {
+        throw new Error("Authentication required");
     }
+
+    const response = await fetch('/api/admin/updateUserDealerships', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ targetUserId: userId, dealershipIds: newDealershipIds }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update user dealerships');
+    }
+
     const updatedUser = await getDataById<User>(db, 'users', userId);
     if (!updatedUser) throw new Error("User not found after update");
     return updatedUser;

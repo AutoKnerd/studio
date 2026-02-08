@@ -148,7 +148,7 @@ export default function DeveloperPage() {
                                     <RegisterDealershipForm user={originalUser} dealerships={allDealerships} onUserInvited={refreshData} />
                                 </TabsContent>
                                 <TabsContent value="assign" className="pt-4">
-                                    <AssignUserForm manageableUsers={manageableUsers} dealerships={allDealerships} onUserAssigned={refreshData} />
+                                    <AssignUserForm manageableUsers={manageableUsers} dealerships={allDealerships} currentUser={originalUser} onUserAssigned={refreshData} />
                                 </TabsContent>
                                 <TabsContent value="remove" className="pt-4">
                                     <RemoveUserForm manageableUsers={manageableUsers} onUserRemoved={refreshData} />

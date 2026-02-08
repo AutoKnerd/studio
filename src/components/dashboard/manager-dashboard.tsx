@@ -548,6 +548,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                             <AssignUserForm 
                                                 manageableUsers={manageableUsers}
                                                 dealerships={dealerships}
+                                                currentUser={user}
                                                 onUserAssigned={handleUserManaged} 
                                             />
                                         </TabsContent>
@@ -665,6 +666,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                                                   <AssignUserForm 
                                                       manageableUsers={manageableUsers}
                                                       dealerships={dealerships}
+                                                      currentUser={user}
                                                       onUserAssigned={handleUserManaged} 
                                                   />
                                               </TabsContent>

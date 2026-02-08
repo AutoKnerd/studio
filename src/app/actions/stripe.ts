@@ -21,7 +21,7 @@ export async function createCheckoutSession(userId: string) {
     throw new Error('User not found.');
   }
 
-  const origin = headers().get('origin') || 'http://localhost:9002';
+  const origin = (await headers()).get('origin') || 'http://localhost:9002';
 
   let stripeCustomerId = user.stripeCustomerId;
 
@@ -74,7 +74,7 @@ export async function createCustomerPortalSession(stripeCustomerId: string) {
     if (!stripeCustomerId) {
         throw new Error("Stripe customer ID is required.");
     }
-    const origin = headers().get('origin') || 'http://localhost:9002';
+    const origin = (await headers()).get('origin') || 'http://localhost:9002';
 
     const portalSession = await stripe.billingPortal.sessions.create({
         customer: stripeCustomerId,
