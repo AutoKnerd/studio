@@ -15,9 +15,10 @@ import { SlidersHorizontal } from 'lucide-react';
 import { getManageableUsers, getDealerships } from '@/lib/data.client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RegisterDealershipForm } from '@/components/admin/register-dealership-form';
-import { AssignUserForm } from '@/components/admin/assign-user-form';
 import { RemoveUserForm } from '@/components/admin/remove-user-form';
 import { CreateDealershipForm } from '@/components/admin/create-dealership-form';
+import { CreateUserForm } from '@/components/admin/create-user-form';
+import { AssignDealershipsForm } from '@/components/admin/assign-dealerships-form';
 import { ManageDealershipForm } from '@/components/admin/ManageDealershipForm';
 
 
@@ -136,19 +137,23 @@ export default function DeveloperPage() {
                         {dataLoading ? (
                             <Spinner />
                         ) : (
-                            <Tabs defaultValue="invite" className="w-full">
-                                <TabsList className="grid w-full grid-cols-5">
-                                    <TabsTrigger value="invite">Invite User</TabsTrigger>
-                                    <TabsTrigger value="assign">Assign User</TabsTrigger>
+                            <Tabs defaultValue="create_user" className="w-full">
+                                <TabsList className="grid w-full grid-cols-6">
+                                    <TabsTrigger value="create_user">Create User</TabsTrigger>
+                                    <TabsTrigger value="assign_dealerships">Assign Dealerships</TabsTrigger>
+                                    <TabsTrigger value="invite">Invite to Store</TabsTrigger>
                                     <TabsTrigger value="remove">Remove User</TabsTrigger>
                                     <TabsTrigger value="create_dealership">Create Dealership</TabsTrigger>
                                     <TabsTrigger value="manage_dealerships">Manage Dealerships</TabsTrigger>
                                 </TabsList>
+                                <TabsContent value="create_user" className="pt-4">
+                                    <CreateUserForm onUserCreated={refreshData} />
+                                </TabsContent>
+                                <TabsContent value="assign_dealerships" className="pt-4">
+                                    <AssignDealershipsForm manageableUsers={manageableUsers} dealerships={allDealerships} currentUser={originalUser} onDealershipsAssigned={refreshData} />
+                                </TabsContent>
                                 <TabsContent value="invite" className="pt-4">
                                     <RegisterDealershipForm user={originalUser} dealerships={allDealerships} onUserInvited={refreshData} />
-                                </TabsContent>
-                                <TabsContent value="assign" className="pt-4">
-                                    <AssignUserForm manageableUsers={manageableUsers} dealerships={allDealerships} currentUser={originalUser} onUserAssigned={refreshData} />
                                 </TabsContent>
                                 <TabsContent value="remove" className="pt-4">
                                     <RemoveUserForm manageableUsers={manageableUsers} onUserRemoved={refreshData} />
