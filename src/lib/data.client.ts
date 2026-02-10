@@ -1,5 +1,4 @@
 
-
 'use client';
 import { isToday, subDays } from 'date-fns';
 import type { User, Lesson, LessonLog, UserRole, LessonRole, CxTrait, LessonCategory, EmailInvitation, Dealership, LessonAssignment, Badge, BadgeId, EarnedBadge, Address, Message, MessageTargetScope } from './definitions';
@@ -11,9 +10,6 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { generateTourData } from './tour-data';
 import { initializeFirebase } from '@/firebase/init';
-
-// Establish a single, shared database connection for this module.
-const { firestore: db, auth } = initializeFirebase();
 
 // --- FAKE DATA INJECTION FOR TOUR ---
 let tourData: Awaited<ReturnType<typeof generateTourData>> | null = null;
@@ -28,7 +24,8 @@ const isTouringUser = (userId?: string): boolean => !!userId && userId.startsWit
 
 
 // --- HELPER FUNCTIONS ---
-const getDataById = async <T>(db: Firestore, collectionName: string, id: string): Promise<T | null> => {
+const getDataById = async <T>(collectionName: string, id: string): Promise<T | null> => {
+    const { firestore: db } = initializeFirebase();
     const docRef = doc(db, collectionName, id);
     try {
         const docSnap = await getDoc(docRef);
@@ -46,6 +43,7 @@ const getDataById = async <T>(db: Firestore, collectionName: string, id: string)
 
 // AUTH
 export async function getUserById(userId: string): Promise<User | null> {
+    const { firestore: db } = initializeFirebase();
     const tourUserEmails: Record<string, string> = {
         'consultant.demo@autodrive.com': 'tour-consultant',
         'service.writer.demo@autodrive.com': 'tour-service-writer',
@@ -71,11 +69,12 @@ export async function getUserById(userId: string): Promise<User | null> {
         return users.find(u => u.userId === userId) || null;
     }
     
-    return getDataById<User>(db, 'users', userId);
+    return getDataById<User>('users', userId);
 }
 
 
 export async function createUserProfile(userId: string, name: string, email: string, role: UserRole, dealershipIds: string[]): Promise<User> {
+    const { firestore: db } = initializeFirebase();
     
     // If the role is Admin/Dev/Trainer and they are not being assigned to a dealership, assign them to HQ.
     // This no longer creates the dealership document, it just assumes it exists.
@@ -124,6 +123,7 @@ export async function updateUser(userId: string, data: Partial<Omit<User, 'userI
         return updatedUser;
     }
 
+    const { firestore: db } = initializeFirebase();
     const userRef = doc(db, 'users', userId);
     try {
         await updateDoc(userRef, data);
@@ -136,7 +136,7 @@ export async function updateUser(userId: string, data: Partial<Omit<User, 'userI
         errorEmitter.emit('permission-error', contextualError);
         throw contextualError;
     }
-    const updatedUser = await getDataById<User>(db, 'users', userId);
+    const updatedUser = await getDataById<User>('users', userId);
     if (!updatedUser) throw new Error("User not found after update");
     return updatedUser;
 }
@@ -148,6 +148,7 @@ export async function updateUserDealerships(userId: string, newDealershipIds: st
         user.dealershipIds = newDealershipIds; // In-memory update
         return user;
     }
+    const { firestore: db } = initializeFirebase();
     const userRef = doc(db, 'users', userId);
     const updateData = { dealershipIds: newDealershipIds };
     try {
@@ -161,7 +162,7 @@ export async function updateUserDealerships(userId: string, newDealershipIds: st
         errorEmitter.emit('permission-error', contextualError);
         throw contextualError;
     }
-    const updatedUser = await getDataById<User>(db, 'users', userId);
+    const updatedUser = await getDataById<User>('users', userId);
     if (!updatedUser) throw new Error("User not found after update");
     return updatedUser;
 }
@@ -172,6 +173,7 @@ export async function deleteUser(userId: string): Promise<void> {
         return;
     }
 
+    const { firestore: db } = initializeFirebase();
     const batch = writeBatch(db);
     
     batch.delete(doc(db, 'users', userId));
@@ -236,6 +238,7 @@ export async function createDealership(dealershipData: {
 
     // This will now fail due to security rules, which is the intended behavior.
     // The admin form now uses the API route.
+    const { firestore: db } = initializeFirebase();
     const dealershipRef = doc(collection(db, 'dealerships'));
     const newDealership: Dealership = {
         id: dealershipRef.id,
@@ -260,10 +263,11 @@ export async function createDealership(dealershipData: {
 
 export async function getInvitationByToken(token: string): Promise<EmailInvitation | null> {
     // Invitations are not part of tour mode
-    return getDataById<EmailInvitation>(db, 'emailInvitations', token);
+    return getDataById<EmailInvitation>('emailInvitations', token);
 }
 
 export async function claimInvitation(token: string): Promise<void> {
+    const { auth } = initializeFirebase();
     if (isTouringUser(auth.currentUser?.uid)) {
         return; // No-op for tour mode
     }
@@ -303,6 +307,7 @@ export async function sendInvitation(
     const inviter = await getUserById(inviterId);
     if (!inviter) throw new Error("Inviter not found.");
     
+    const { auth } = initializeFirebase();
     if (!auth.currentUser || auth.currentUser.uid !== inviterId) {
       throw new Error('User not authenticated or mismatch.');
     }
@@ -351,6 +356,7 @@ export async function sendInvitation(
         throw new Error('API response successful but did not include an inviteUrl.');
     }
     
+    const { firestore: db } = initializeFirebase();
     if (['Owner', 'General Manager', 'manager'].includes(inviter.role)) {
         const inviterBadges = await getEarnedBadgesByUserId(inviter.userId);
         if (!inviterBadges.some(b => b.id === 'talent-scout')) {
@@ -372,6 +378,7 @@ export async function getLessons(role: LessonRole, userId?: string): Promise<Les
         return lessons.filter(lesson => lesson.role === role || lesson.role === 'global');
     }
 
+    const { firestore: db } = initializeFirebase();
     const lessonsCollection = collection(db, 'lessons');
     const q = query(lessonsCollection, where("role", "in", [role, 'global']));
     try {
@@ -389,7 +396,7 @@ export async function getLessonById(lessonId: string, userId?: string): Promise<
         const { lessons } = await getTourData();
         return lessons.find(l => l.lessonId === lessonId) || null;
     }
-    return getDataById<Lesson>(db, 'lessons', lessonId);
+    return getDataById<Lesson>('lessons', lessonId);
 }
 
 export async function getDealershipById(dealershipId: string, userId?: string): Promise<Dealership | null> {
@@ -399,7 +406,7 @@ export async function getDealershipById(dealershipId: string, userId?: string): 
         if (dealership) return { ...dealership, status: 'active' };
         return null;
     }
-    return getDataById<Dealership>(db, 'dealerships', dealershipId);
+    return getDataById<Dealership>('dealerships', dealershipId);
 }
 
 export async function createLesson(
@@ -426,6 +433,7 @@ export async function createLesson(
         return newLesson;
     }
 
+    const { firestore: db } = initializeFirebase();
     const lessonsCollection = collection(db, 'lessons');
     const newLessonRef = doc(lessonsCollection);
     const newLesson: Lesson = {
@@ -469,6 +477,7 @@ export async function getAssignedLessons(userId: string): Promise<Lesson[]> {
         return lessons.filter(l => lessonIds.includes(l.lessonId));
     }
 
+    const { firestore: db } = initializeFirebase();
     const assignmentsCollection = collection(db, 'lessonAssignments');
     const q = query(assignmentsCollection, where("userId", "==", userId), where("completed", "==", false));
     
@@ -544,6 +553,7 @@ export async function assignLesson(userId: string, lessonId: string, assignerId:
         return newAssignment;
     }
 
+    const { firestore: db } = initializeFirebase();
     const assignmentsCollection = collection(db, 'lessonAssignments');
     const assignmentRef = doc(assignmentsCollection);
     const newAssignment: LessonAssignment = {
@@ -576,6 +586,7 @@ export async function getConsultantActivity(userId: string): Promise<LessonLog[]
         return userLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     }
 
+    const { firestore: db } = initializeFirebase();
     const logsCollection = collection(db, `users/${userId}/lessonLogs`);
     try {
         const snapshot = await getDocs(logsCollection);
@@ -598,6 +609,7 @@ export async function getDailyLessonLimits(userId: string): Promise<{ recommende
         return { recommendedTaken, otherTaken };
     }
 
+    const { firestore: db } = initializeFirebase();
     const logsCollection = collection(db, `users/${userId}/lessonLogs`);
     let logs: any[];
     try {
@@ -646,6 +658,7 @@ export async function logLessonCompletion(data: {
     const user = await getUserById(data.userId);
     if (!user) throw new Error('User not found');
 
+    const { firestore: db } = initializeFirebase();
     const logRef = doc(collection(db, `users/${data.userId}/lessonLogs`));
     
     const newLogData = {
@@ -758,6 +771,7 @@ export async function getDealerships(user?: User): Promise<Dealership[]> {
         return (await getTourData()).dealerships;
     }
     
+    const { firestore: db } = initializeFirebase();
     const dealershipsCollection = collection(db, 'dealerships');
     let q = query(dealershipsCollection);
     if (user && user.role === 'Trainer') {
@@ -828,6 +842,7 @@ export async function getCombinedTeamData(dealershipId: string, user: User): Pro
         return { teamActivity, managerStats: { totalLessons, avgScores } };
     }
 
+    const { firestore: db } = initializeFirebase();
     const usersCollection = collection(db, 'users');
     const teamRoles = getTeamMemberRoles(user.role);
     let userQuery;
@@ -932,6 +947,7 @@ export async function getManageableUsers(managerId: string): Promise<User[]> {
     if (!manager) return [];
 
     const manageableRoles = getTeamMemberRoles(manager.role);
+    const { firestore: db } = initializeFirebase();
     const usersCollection = collection(db, 'users');
     
     let allUsers: User[];
@@ -965,6 +981,7 @@ export async function getEarnedBadgesByUserId(userId: string): Promise<Badge[]> 
         return allBadges.filter(b => badgeIds.includes(b.id));
     }
     
+    const { firestore: db } = initializeFirebase();
     const badgesCollection = collection(db, `users/${userId}/earnedBadges`);
     
     let badgeDocs: EarnedBadge[];
@@ -992,6 +1009,7 @@ export async function updateDealershipStatus(dealershipId: string, status: 'acti
         throw new Error('Tour dealership not found');
     }
 
+    const { firestore: db } = initializeFirebase();
     const dealershipsCollection = collection(db, 'dealerships');
     const dealershipRef = doc(dealershipsCollection, dealershipId);
 
@@ -1051,6 +1069,7 @@ export async function sendMessage(
             ...target,
         };
     }
+    const { firestore: db } = initializeFirebase();
     const messagesCollection = collection(db, 'messages');
     const messageRef = doc(messagesCollection);
     const newMessage: Message = {
@@ -1092,6 +1111,7 @@ export async function getMessagesForUser(user: User): Promise<Message[]> {
             }
         ]
     }
+    const { firestore: db } = initializeFirebase();
     const messagesCollection = collection(db, 'messages');
     const fourteenDaysAgo = subDays(new Date(), 14);
     let relevantMessages: Message[] = [];
