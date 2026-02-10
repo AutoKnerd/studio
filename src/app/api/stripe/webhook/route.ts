@@ -1,18 +1,23 @@
 import {NextResponse} from 'next/server';
 import type {Stripe} from 'stripe';
 
-import {stripe} from '@/lib/stripe';
+import {getStripe} from '@/lib/stripe';
 import {updateUserSubscriptionStatus} from '@/lib/data.server';
 
 export async function POST(req: Request) {
+  const stripe = getStripe();
   let event: Stripe.Event;
 
   const signature = req.headers.get('stripe-signature');
-  const secret = process.env.STRIPE_WEBHOOK_SECRET!;
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!signature || !secret) {
+    return new NextResponse('Webhook Error: Missing Stripe signature or webhook secret.', {status: 400});
+  }
 
   try {
     const body = await req.text();
-    event = stripe.webhooks.constructEvent(body, signature!, secret);
+    event = stripe.webhooks.constructEvent(body, signature, secret);
   } catch (err: any) {
     console.log(`❌ Error message: ${err.message}`);
     return new NextResponse(`Webhook Error: ${err.message}`, {status: 400});

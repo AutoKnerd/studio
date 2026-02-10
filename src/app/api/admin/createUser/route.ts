@@ -130,7 +130,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create the new user
+    // Create the new user in Firestore (not Firebase Auth - they'll sign up separately)
     const newUserRef = adminDb.collection('users').doc();
     const newUserId = newUserRef.id;
 
@@ -149,13 +149,8 @@ export async function POST(req: Request) {
       phone: phone || undefined,
     };
 
-    // Set custom claims for Firebase Auth
-    await adminAuth.setCustomUserClaims(newUserId, {
-      role,
-      initialized: false,
-    });
-
-    // Save the user document
+    // Save the user document to Firestore
+    // Note: This creates a Firestore record. The user will sign up in Firebase Auth separately.
     await newUserRef.set(newUserData);
 
     console.log(`[API CreateUser] User created successfully: ${newUserId} (${email}, role: ${role})`);
@@ -163,7 +158,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         ...newUserData,
-        message: 'User created successfully.',
+        message: 'User created successfully. They can now sign up to access the system.',
       },
       { status: 201 }
     );

@@ -3,10 +3,11 @@
 
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { getUserById, updateUser } from '@/lib/data.server';
 
 export async function createCheckoutSession(userId: string) {
+  const stripe = getStripe();
   if (!userId) {
     throw new Error('User ID is required to create a checkout session.');
   }
@@ -71,6 +72,7 @@ export async function createCheckoutSession(userId: string) {
 }
 
 export async function createCustomerPortalSession(stripeCustomerId: string) {
+    const stripe = getStripe();
     if (!stripeCustomerId) {
         throw new Error("Stripe customer ID is required.");
     }
