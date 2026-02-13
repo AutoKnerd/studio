@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb, getAdminAuth } from '@/firebase/admin';
 
+type Decoded = { uid: string; email?: string | null };
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +26,7 @@ async function systemHasUsers(adminDb: any): Promise<boolean> {
 
 export async function POST(req: Request) {
   const authorization = req.headers.get('authorization') ?? req.headers.get('Authorization');
+  let decoded: Decoded | null = null;
 
   try {
     const adminDb = getAdminDb();
@@ -51,9 +54,9 @@ export async function POST(req: Request) {
 
       const token = match[1].trim();
 
-      let decodedToken;
       try {
-        decodedToken = await adminAuth.verifyIdToken(token);
+        const decodedToken = await adminAuth.verifyIdToken(token);
+        decoded = { uid: decodedToken.uid, email: (decodedToken as any).email ?? null };
       } catch (authError: any) {
         return NextResponse.json(
           { message: `Unauthorized: ${authError.message || 'Invalid authentication token.'}` },
@@ -61,7 +64,7 @@ export async function POST(req: Request) {
         );
       }
 
-      const userId = decodedToken.uid;
+      const userId = decoded.uid;
       const userDoc = await adminDb.collection('users').doc(userId).get();
 
       if (!userDoc.exists) {
@@ -80,10 +83,18 @@ export async function POST(req: Request) {
         }
       }
     } else {
-      // Bootstrap mode: System is empty, allow creation without auth
-      // If a token was provided but can't be verified, that's ok - we skip validation
+      // Bootstrap mode: system has no users yet. Auth is not required, but if provided we will verify it.
       if (authorization) {
-        console.log('[API CreateUser] Bootstrap mode: Authorization header provided but not required.');
+        console.log('[API CreateUser] Bootstrap mode: Authorization header provided. Attempting to verify.');
+        const match = /^Bearer\s+(.+)$/i.exec(authorization);
+        if (match?.[1]) {
+          try {
+            const decodedToken = await adminAuth.verifyIdToken(match[1].trim());
+            decoded = { uid: decodedToken.uid, email: (decodedToken as any).email ?? null };
+          } catch (e) {
+            console.warn('[API CreateUser] Bootstrap mode: token verification failed; continuing without decoded user.');
+          }
+        }
       } else {
         console.log('[API CreateUser] Bootstrap mode enabled - system has no users yet, no auth required.');
       }
@@ -91,8 +102,11 @@ export async function POST(req: Request) {
 
     const { name, email, phone, role } = await req.json();
 
+    const normalizedEmail = String(email || '').toLowerCase().trim();
+    const requestedRole = role;
+
     // Validate required fields
-    if (!name || !email || !role) {
+    if (!name || !normalizedEmail || !requestedRole) {
       return NextResponse.json(
         {
           message: 'Bad Request: name, email, and role are required.',
@@ -102,22 +116,43 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate role is one of the allowed bootstrap roles
+    // Role rules:
+    // - If the request is authenticated (decoded != null), allow self-signup roles (defaulting to Sales Consultant)
+    // - If unauthenticated (bootstrap without auth), only allow bootstrap roles
     const allowedBootstrapRoles = ['Owner', 'General Manager', 'manager'];
-    if (!allowedBootstrapRoles.includes(role)) {
+    const allowedSelfSignupRoles = ['Sales Consultant', 'Service Writer', 'manager', 'Owner', 'General Manager'];
+
+    let finalRole = requestedRole;
+
+    if (decoded) {
+      // Self-signup path: only allow roles we support.
+      if (!allowedSelfSignupRoles.includes(finalRole)) {
+        finalRole = 'Sales Consultant';
+      }
+    } else {
+      // Unauthenticated bootstrap path
+      if (!allowedBootstrapRoles.includes(finalRole)) {
+        return NextResponse.json(
+          {
+            message: `Bad Request: Only ${allowedBootstrapRoles.join(', ')} roles can be created without authentication.`,
+            code: 'INVALID_ROLE',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (decoded?.email && decoded.email.toLowerCase() !== normalizedEmail) {
       return NextResponse.json(
-        {
-          message: `Bad Request: Only ${allowedBootstrapRoles.join(', ')} roles can be created.`,
-          code: 'INVALID_ROLE',
-        },
-        { status: 400 }
+        { message: 'Forbidden: Email does not match authenticated user.', code: 'EMAIL_MISMATCH' },
+        { status: 403 }
       );
     }
 
     // Check if user already exists by email
     const existingUserQuery = await adminDb
       .collection('users')
-      .where('email', '==', email)
+      .where('email', '==', normalizedEmail)
       .get();
 
     if (!existingUserQuery.empty) {
@@ -130,30 +165,30 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create the new user in Firestore (not Firebase Auth - they'll sign up separately)
-    const newUserRef = adminDb.collection('users').doc();
-    const newUserId = newUserRef.id;
+    // Create the new user in Firestore.
+    // If authenticated, the Firestore doc id MUST be the Firebase Auth uid.
+    const newUserId = decoded?.uid ?? adminDb.collection('users').doc().id;
+    const newUserRef = adminDb.collection('users').doc(newUserId);
 
     const newUserData = {
       userId: newUserId,
       name,
-      email,
-      role,
+      email: normalizedEmail,
+      role: finalRole,
       dealershipIds: [],
       avatarUrl: 'https://images.unsplash.com/photo-1515086828834-023d61380316?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzdGVlcmluZyUyMHdoZWVsfGVufDB8fHx8MTc2ODkxMTAyM3ww&ixlib=rb-4.1.0&q=80&w=1080',
       xp: 0,
       isPrivate: false,
       isPrivateFromOwner: false,
       memberSince: new Date().toISOString(),
-      subscriptionStatus: 'active',
       phone: phone || undefined,
     };
 
     // Save the user document to Firestore
     // Note: This creates a Firestore record. The user will sign up in Firebase Auth separately.
-    await newUserRef.set(newUserData);
+    await newUserRef.set(newUserData, { merge: true });
 
-    console.log(`[API CreateUser] User created successfully: ${newUserId} (${email}, role: ${role})`);
+    console.log(`[API CreateUser] User created successfully: ${newUserId} (${normalizedEmail}, role: ${finalRole})`);
 
     return NextResponse.json(
       {

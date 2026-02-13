@@ -73,10 +73,16 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
         setLoading(false);
         return;
       }
+      const canViewBadges =
+        currentUser.userId === user.userId ||
+        viewerIsAdmin ||
+        viewerIsTrainer ||
+        viewerIsOwner ||
+        viewerIsManager;
       const [fetchedLessons, fetchedActivity, fetchedBadges] = await Promise.all([
         getLessons(user.role as LessonRole, user.userId),
         getConsultantActivity(user.userId),
-        getEarnedBadgesByUserId(user.userId),
+        canViewBadges ? getEarnedBadgesByUserId(user.userId) : Promise.resolve([]),
       ]);
       setLessons(fetchedLessons);
       setActivity(fetchedActivity);

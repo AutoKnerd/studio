@@ -25,7 +25,6 @@ service cloud.firestore {
 
     function canViewPerformance(targetUserId) {
       // Firestore rules functions must return a single expression (no statement-style if blocks).
-      // This returns true when the requester can view the target user's performance data.
       let requesterPath = /databases/$(database)/documents/users/$(request.auth.uid);
       let targetPath = /databases/$(database)/documents/users/$(targetUserId);
 
@@ -52,7 +51,10 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || hasAnyRole(['Owner', 'Admin', 'Developer', 'Trainer', 'General Manager', 'manager', 'Service Manager', 'Parts Manager']);
       allow list: if isManager();
-      allow create: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId
+        && request.resource.data.userId == userId
+        && request.resource.data.role == 'Sales Consultant'
+        && request.resource.data.subscriptionStatus in ['inactive', 'active'];
       allow update: if isOwner(userId) && isUpdatingOwnUserDocument();
       allow delete: if isOwner(userId) || hasAnyRole(['Admin', 'Developer']);
     }
@@ -98,7 +100,6 @@ service cloud.firestore {
 
     match /emailInvitations/{invitationId} {
       // Create and read operations are now handled by secure server endpoints.
-      // This prevents unauthorized users from reading or manipulating invitations.
       allow create: if isSignedIn()
         && request.resource.data.inviterId == request.auth.uid
         && request.resource.data.token == invitationId;
@@ -107,10 +108,7 @@ service cloud.firestore {
 
     match /dealerships/{dealershipId} {
       allow read: if true;
-      // Creation is now handled by a secure server endpoint.
-      // Client-side creation is disallowed for security.
       allow create: if false;
-      // Only Admins or Developers can modify dealerships after creation.
       allow update, delete: if hasAnyRole(['Admin', 'Developer']);
     }
   }

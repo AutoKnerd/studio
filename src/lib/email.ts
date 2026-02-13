@@ -1,15 +1,18 @@
-
 'use server';
 
 import { Resend } from 'resend';
 import { User, Dealership } from './definitions';
 
-if (!process.env.RESEND_API_KEY) {
+// Proper environment variable usage
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+console.log('RESEND_API_KEY present?', !!process.env.RESEND_API_KEY);
+const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@autodrive.app';
+
+if (!RESEND_API_KEY) {
   console.warn('RESEND_API_KEY is not set. Email sending will be disabled.');
 }
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const fromEmail = process.env.EMAIL_FROM || 'onboarding@autodrive.app';
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 export async function sendInvitationEmail({
   toEmail,
@@ -23,11 +26,16 @@ export async function sendInvitationEmail({
   dealership: Dealership;
 }) {
   if (!resend) {
-    console.log(`Email sending is disabled. Invite URL for ${toEmail}: ${inviteUrl}`);
-    return { success: false, error: 'Email service is not configured. Set RESEND_API_KEY to enable.' };
+    console.log(`Email service disabled. Invite URL for ${toEmail}: ${inviteUrl}`);
+    return {
+      success: false,
+      error: 'Email service is not configured. Set RESEND_API_KEY to enable.',
+      inviteUrl,
+    };
   }
 
   const subject = `You're invited to join ${dealership.name} on AutoDrive`;
+
   const body = `
     <div style="font-family: sans-serif; line-height: 1.5; color: #333;">
       <h2 style="color: #111;">You're Invited!</h2>
@@ -49,20 +57,31 @@ export async function sendInvitationEmail({
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `AutoDrive <${fromEmail}>`,
+      from: `AutoDrive <${EMAIL_FROM}>`,
       to: [toEmail],
-      subject: subject,
+      subject,
       html: body,
     });
 
     if (error) {
       console.error('Resend API Error:', error);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error: error.message,
+        inviteUrl,
+      };
     }
 
-    return { success: true, data };
+    return {
+      success: true,
+      data,
+    };
   } catch (error) {
     console.error('Failed to send email:', error);
-    return { success: false, error: (error as Error).message };
+    return {
+      success: false,
+      error: (error as Error).message,
+      inviteUrl,
+    };
   }
 }

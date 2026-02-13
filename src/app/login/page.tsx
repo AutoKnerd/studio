@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/components/auth/login-form';
 import { Logo } from '@/components/layout/logo';
@@ -35,6 +34,17 @@ export default function LoginPage() {
             <Logo variant="full" width={610} height={203} />
         </div>
         <LoginForm />
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/subscribe"
+            className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Sign up for Pro plan
+          </Link>
+          <p className="px-2 text-center text-xs text-muted-foreground">
+            New here? Create your account and start your subscription.
+          </p>
+        </div>
         <div className="text-center">
              <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
                 Have an invitation? Use the unique link from your email to register your account.

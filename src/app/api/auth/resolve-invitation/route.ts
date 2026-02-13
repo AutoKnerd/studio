@@ -1,15 +1,12 @@
 
 import { NextResponse } from 'next/server';
-import { getAdminDb, getAdminAuth } from '@/firebase/admin';
+import { adminDb, adminAuth } from '@/firebase/admin';
 import { EmailInvitation } from '@/lib/definitions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ token?: string }> }
-) {
+export async function POST(req: Request) {
   const authorization = req.headers.get('authorization');
   
   if (!authorization) {
@@ -19,8 +16,6 @@ export async function POST(
   const token = authorization.replace('Bearer ', '');
 
   try {
-    const adminDb = getAdminDb();
-    const adminAuth = getAdminAuth();
     const decodedToken = await adminAuth.verifyIdToken(token);
     const userEmail = decodedToken.email;
 

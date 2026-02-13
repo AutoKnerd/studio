@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -7,6 +6,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuth } from '@/hooks/use-auth';
+import { useAuth as useFirebaseAuth } from '@/firebase';
+import { createIndividualCheckoutSession } from '@/app/actions/stripe';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export function SignupForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const firebaseAuth = useFirebaseAuth();
   const { publicSignup } = useAuth();
   const { toast } = useToast();
 
@@ -49,11 +51,23 @@ export function SignupForm() {
     setIsSubmitting(true);
     try {
       await publicSignup(data.name, data.email, data.password);
-      
+
+      const fbUser = firebaseAuth.currentUser;
+      if (!fbUser) {
+        throw new Error('Signup succeeded, but no authenticated user was found. Please try again.');
+      }
+
+      const idToken = await fbUser.getIdToken(true);
+
       toast({
         title: 'Account Created!',
-        description: 'Redirecting you to subscribe to AutoDrive Pro.',
+        description: 'Opening Stripe Checkout…',
       });
+
+      // This is a Server Action that will redirect the browser to Stripe.
+      await createIndividualCheckoutSession(idToken);
+
+      // Fallback (should rarely happen because the Server Action redirects)
       router.push('/subscribe');
     } catch (error: any) {
       toast({
