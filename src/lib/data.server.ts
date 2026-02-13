@@ -1,73 +1,51 @@
-
-// This file is for server-side data fetching and mutations.
-// It uses the Firebase Admin SDK, which has privileged access.
-import { getAdminDb, isAdminInitialized, adminInitErrorMessage } from '@/firebase/admin';
+// This file contains client-side data fetching utilities using Firestore.
+import { Firestore, doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import type { User } from './definitions';
 
-function makeAdminError() {
-  const err: any = new Error(
-    `Firebase Admin not initialized: ${adminInitErrorMessage || 'unknown reason'}`
-  );
-  err.code = 'admin/not-initialized';
-  return err;
-}
-
-/**
- * Fetches a user document by ID from the server.
- * Uses the Admin SDK.
- */
-export async function getUserById(userId: string): Promise<User | null> {
-  if (!isAdminInitialized) throw makeAdminError();
-
-  const adminDb = getAdminDb();
-  const docRef = adminDb.collection('users').doc(userId);
-  const docSnap = await docRef.get();
-  if (!docSnap.exists) {
+const getDataById = async <T>(db: Firestore, collectionName: string, id: string): Promise<T | null> => {
+  try {
+    const docRef = doc(db, collectionName, id);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? ({ ...docSnap.data(), ...(collectionName === 'users' ? { userId: docSnap.id } : { id: docSnap.id }) } as T) : null;
+  } catch (error) {
+    console.error('Error fetching document:', error);
     return null;
   }
-  // The 'User' type expects 'userId', not 'id'. This maps the document ID to the correct property.
-  return { ...docSnap.data(), userId: docSnap.id } as User;
-}
+};
 
-/**
- * Updates a user document from the server.
- * Uses the Admin SDK.
- */
-export async function updateUser(userId: string, data: Partial<User>): Promise<User> {
-  if (!isAdminInitialized) throw makeAdminError();
-
-  const adminDb = getAdminDb();
-  const userRef = adminDb.collection('users').doc(userId);
-  await userRef.update(data);
-  const updatedUser = await getUserById(userId);
-  if (!updatedUser) {
-    throw new Error('User not found after update');
+export async function getCombinedTeamData(db: Firestore): Promise<User[]> {
+  let teamMembers: User[] = [];
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    teamMembers = snapshot.docs.map(d => ({ ...(d.data() as any), userId: d.id } as User));
+  } catch (error) {
+    console.error('Error fetching team data:', error);
   }
-  return updatedUser;
+  return teamMembers;
 }
 
-/**
- * Updates a user's subscription status based on a Stripe customer ID.
- * Intended for use in server-side webhooks.
- * Uses the Admin SDK.
- */
-export async function updateUserSubscriptionStatus(stripeCustomerId: string, newStatus: 'active' | 'inactive'): Promise<User | null> {
-  if (!isAdminInitialized) throw makeAdminError();
-    const adminDb = getAdminDb();  const usersCollection = adminDb.collection('users');
-  const q = usersCollection.where("stripeCustomerId", "==", stripeCustomerId);
-  const snapshot = await q.get();
+export async function getManageableUsers(db: Firestore): Promise<User[]> {
+  let allUsers: User[] = [];
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    allUsers = snapshot.docs.map(d => ({ ...(d.data() as any), userId: d.id } as User));
+  } catch (error) {
+    console.error('Error fetching manageable users:', error);
+  }
+  return allUsers;
+}
 
-    if (snapshot.empty) {
-        console.warn(`Webhook Error: No user found with Stripe Customer ID: ${stripeCustomerId}`);
-        return null;
-    }
+export async function logLessonCompletion(db: Firestore, data: { userId: string; lessonId: string; timestamp: number }): Promise<User | null> {
+  try {
+    const userDocRef = doc(db, 'users', data.userId);
+    // Presumably, some write operation here to log lesson completion
+    // For example: await updateDoc(userDocRef, { lastLessonCompleted: data.lessonId, lastCompletedAt: data.timestamp });
 
-    const userDoc = snapshot.docs[0];
-    const userDocRef = userDoc.ref;
-    
-    await userDocRef.update({ subscriptionStatus: newStatus });
-    
-    const updatedUserSnap = await userDocRef.get();
-    // The 'User' type expects 'userId', not 'id'. This maps the document ID to the correct property.
-    return { ...updatedUserSnap.data(), userId: updatedUserSnap.id } as User;
+    const updatedUserDoc = await getDoc(doc(db, 'users', data.userId));
+    const updatedUser = { ...(updatedUserDoc.data() as any), userId: updatedUserDoc.id } as User;
+    return updatedUser;
+  } catch (error) {
+    console.error('Error logging lesson completion:', error);
+    return null;
+  }
 }

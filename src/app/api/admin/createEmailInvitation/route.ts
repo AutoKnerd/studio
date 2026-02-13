@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { getAdminDb, getAdminAuth } from '@/firebase/admin';
 import { UserRole, Dealership, User } from '@/lib/definitions';
@@ -84,21 +83,38 @@ export async function POST(req: Request) {
     const origin = req.headers.get('origin') || 'http://localhost:9002';
     const inviteUrl = `${origin}/register?token=${invitationToken}`;
 
-    // Send the invitation email
-    const emailResult = await sendInvitationEmail({
-      toEmail: email,
-      inviteUrl,
-      inviter: user,
-      dealership: dealership,
-    });
+    // Send the invitation email (best-effort). Even if email fails, the invite link must be returned.
+    let emailSent = false;
+    let emailError: string | undefined;
 
-    if (!emailResult.success) {
-      // Log the email failure but don't fail the API request,
-      // as the invite link is still valid and can be copied manually.
-      console.error(`Failed to send invitation email to ${email}: ${emailResult.error}`);
+    try {
+      const emailResult = await sendInvitationEmail({
+        toEmail: email,
+        inviteUrl,
+        inviter: user,
+        dealership: dealership,
+      });
+
+      emailSent = !!emailResult?.success;
+      if (!emailSent) {
+        emailError = emailResult?.error || 'Unknown email provider error';
+        console.error(`[API CreateEmailInvitation] Failed to send invitation email to ${email}: ${emailError}`);
+      }
+    } catch (e: any) {
+      emailSent = false;
+      emailError = e?.message || String(e);
+      console.error(`[API CreateEmailInvitation] Invitation email threw for ${email}:`, e);
     }
 
-    return NextResponse.json({ token: invitationToken, inviteUrl, emailSent: emailResult.success }, { status: 201 });
+    return NextResponse.json(
+      {
+        token: invitationToken,
+        inviteUrl,
+        emailSent,
+        ...(emailError ? { emailError } : {}),
+      },
+      { status: 201 }
+    );
 
   } catch (error: any) {
     console.error('[API CreateEmailInvitation] Error:', error);

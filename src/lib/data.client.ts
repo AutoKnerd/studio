@@ -32,7 +32,15 @@ const getDataById = async <T>(db: Firestore, collectionName: string, id: string)
     const docRef = doc(db, collectionName, id);
     try {
         const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? ({ ...docSnap.data(), id: docSnap.id } as T) : null;
+        if (!docSnap.exists()) return null;
+
+        // Normalize Firestore doc IDs into the shape our app expects.
+        // Users use `userId` as the primary key; most other collections use `id`.
+        const base = { ...docSnap.data() } as any;
+        if (collectionName === 'users') {
+            return ({ ...base, userId: docSnap.id } as T);
+        }
+        return ({ ...base, id: docSnap.id } as T);
     } catch(e: any) {
          const contextualError = new FirestorePermissionError({
             path: docRef.path,
@@ -731,7 +739,7 @@ export async function logLessonCompletion(data: {
     }
     
     const updatedUserDoc = await getDoc(doc(db, 'users', data.userId));
-    const updatedUser = { ...updatedUserDoc.data(), id: updatedUserDoc.id } as User;
+    const updatedUser = { ...(updatedUserDoc.data() as any), userId: updatedUserDoc.id } as User;
     
     return { updatedUser, newBadges: newlyAwardedBadges };
 }
@@ -853,7 +861,7 @@ export async function getCombinedTeamData(dealershipId: string, user: User): Pro
     let teamMembers: User[];
     try {
         const snapshot = await getDocs(userQuery);
-        teamMembers = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+        teamMembers = snapshot.docs.map(d => ({ ...(d.data() as any), userId: d.id } as User));
     } catch(e: any) {
         const contextualError = new FirestorePermissionError({ path: usersCollection.path, operation: 'list' });
         errorEmitter.emit('permission-error', contextualError);
@@ -945,7 +953,7 @@ export async function getManageableUsers(managerId: string): Promise<User[]> {
     let allUsers: User[];
     try {
         const snapshot = await getDocs(usersCollection);
-        allUsers = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+        allUsers = snapshot.docs.map(d => ({ ...(d.data() as any), userId: d.id } as User));
     } catch(e: any) {
         const contextualError = new FirestorePermissionError({ path: usersCollection.path, operation: 'list' });
         errorEmitter.emit('permission-error', contextualError);
