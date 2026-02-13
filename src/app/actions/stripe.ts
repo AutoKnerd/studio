@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { getStripe } from '@/lib/stripe';
 import { getUserById, updateUser } from '@/lib/data.server';
+import { getAdminAuth } from '@/firebase/admin';
 
 export async function createCheckoutSession(userId: string) {
   const stripe = getStripe();
@@ -88,4 +89,48 @@ export async function createCustomerPortalSession(stripeCustomerId: string) {
     } else {
         throw new Error('Could not create customer portal session.');
     }
+}
+
+export async function createIndividualCheckoutSession(idToken: string) {
+  if (!idToken) {
+    throw new Error('Authentication required.');
+  }
+
+  const stripe = getStripe();
+  const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
+  if (!priceId) {
+    throw new Error('The Stripe Price ID is not configured. Please set NEXT_PUBLIC_STRIPE_PRICE_ID in your .env file.');
+  }
+
+  const adminAuth = getAdminAuth();
+  const decodedToken = await adminAuth.verifyIdToken(idToken);
+  const firebaseUid = decodedToken.uid;
+  if (!firebaseUid) {
+    throw new Error('Authentication required.');
+  }
+
+  const origin = (await headers()).get('origin') || 'http://localhost:9002';
+
+  const checkoutSession = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ],
+    mode: 'subscription',
+    success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/payment/cancel`,
+    customer_email: decodedToken.email ?? undefined,
+    metadata: {
+      firebaseUid,
+    },
+  });
+
+  if (checkoutSession.url) {
+    redirect(checkoutSession.url);
+  }
+
+  throw new Error('Could not create Stripe checkout session.');
 }

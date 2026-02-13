@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -10,37 +9,37 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
+
     function hasAnyRole(roles) {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in roles;
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in roles;
     }
-    
+
     function isManager() {
       return hasAnyRole([
-          'Admin', 'Developer', 'Owner', 'Trainer', 'General Manager', 
-          'manager', 'Service Manager', 'Parts Manager', 'Finance Manager'
+        'Admin', 'Developer', 'Owner', 'Trainer', 'General Manager',
+        'manager', 'Service Manager', 'Parts Manager', 'Finance Manager'
       ]);
     }
 
     function canViewPerformance(targetUserId) {
-        let requester = get(/databases/$(database)/documents/users/$(request.auth.uid));
-        let targetUser = get(/databases/$(database)/documents/users/$(targetUserId));
-        
-        if (!exists(/databases/$(database)/documents/users/$(request.auth.uid)) || !exists(/databases/$(database)/documents/users/$(targetUserId))) {
-          return false;
-        }
+      // Firestore rules functions must return a single expression (no statement-style if blocks).
+      // This returns true when the requester can view the target user's performance data.
+      let requesterPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      let targetPath = /databases/$(database)/documents/users/$(targetUserId);
 
-        if (requester.data.role in ['Admin', 'Developer', 'Trainer']) {
-            return true;
-        }
-        if (requester.data.role == 'Owner' && targetUser.data.isPrivateFromOwner != true) {
-            return true;
-        }
-        if (isManager() && targetUser.data.isPrivate != true) {
-            return true;
-        }
-        return false;
+      return isSignedIn()
+        && exists(requesterPath)
+        && exists(targetPath)
+        && (
+          // Admin / Developer / Trainer can view everyone
+          (get(requesterPath).data.role in ['Admin', 'Developer', 'Trainer'])
+          // Owner can view unless the user has opted out from owner visibility
+          || (get(requesterPath).data.role == 'Owner' && get(targetPath).data.isPrivateFromOwner != true)
+          // Other manager roles can view unless the user is private
+          || (isManager() && get(targetPath).data.isPrivate != true)
+        );
     }
 
     function isUpdatingOwnUserDocument() {
@@ -65,30 +64,44 @@ service cloud.firestore {
     }
 
     match /users/{userId}/lessonLogs/{lessonLogId} {
-      allow get, list: if isOwner(userId) || canViewPerformance(userId) || isManager();
+      allow get, list: if isOwner(userId) || canViewPerformance(userId);
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId) || isManager();
     }
 
     match /users/{userId}/earnedBadges/{badgeId} {
-      allow get, list: if isOwner(userId) || isManager();
+      // Badge “trophy case” visibility:
+      // - Users can read their own badges
+      // - Admin/Developer/Trainer can read anyone
+      // - Owner/Manager roles can read badges for users they are allowed to view via canViewPerformance
+      allow get, list: if isOwner(userId) || canViewPerformance(userId);
+
+      // Users can earn/create their own badges (writes from client).
       allow create: if isOwner(userId);
+
+      // Badges are append-only from the client.
       allow update: if false;
-      allow delete: if isManager();
+
+      // Only Admin/Developer can delete badges.
+      allow delete: if hasAnyRole(['Admin', 'Developer']);
     }
 
     match /lessonAssignments/{assignmentId} {
       allow read: if isOwner(resource.data.userId) || isManager();
       allow create: if isManager() && request.resource.data.assignerId == request.auth.uid;
-      allow update: if isOwner(resource.data.userId) && request.resource.data.completed == true && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed']);
+      allow update: if isOwner(resource.data.userId)
+        && request.resource.data.completed == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed']);
       allow delete: if isManager();
     }
-    
+
     match /emailInvitations/{invitationId} {
       // Create and read operations are now handled by secure server endpoints.
       // This prevents unauthorized users from reading or manipulating invitations.
-      allow create: if isSignedIn() && request.resource.data.inviterId == request.auth.uid && request.resource.data.token == invitationId;
+      allow create: if isSignedIn()
+        && request.resource.data.inviterId == request.auth.uid
+        && request.resource.data.token == invitationId;
       allow read, update, delete: if false;
     }
 
