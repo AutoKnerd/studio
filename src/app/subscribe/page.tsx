@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Spinner } from '@/components/ui/spinner';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { createCheckoutSession } from '@/app/actions/stripe';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +28,10 @@ export default function SubscribePage() {
   }, [user, loading, router]);
   
   const handleSubscribe = async () => {
-    if (!user) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
     setIsSubmitting(true);
     try {
         await createCheckoutSession(user.userId);
@@ -71,11 +74,9 @@ export default function SubscribePage() {
                 </ul>
             </CardContent>
             <CardFooter>
-                 <form action={handleSubscribe} className="w-full">
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting ? <Spinner /> : 'Upgrade to Pro'}
-                    </Button>
-                </form>
+              <Button className="w-full" disabled={isSubmitting} onClick={handleSubscribe}>
+                {isSubmitting ? <Spinner size="sm" /> : 'Upgrade to Pro'}
+              </Button>
             </CardFooter>
         </Card>
       </main>
