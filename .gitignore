@@ -45,3 +45,4 @@ firebase-debug.log
 firestore-debug.logfirebase-key.json
 firebase-key.json
 firebase-key.json
+tsconfig.tsbuildinfo
