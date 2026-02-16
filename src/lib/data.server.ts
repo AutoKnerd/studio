@@ -1,15 +1,12 @@
 
 'use server';
 
-import {
-  getAdminDb,
-  isAdminInitialized,
-  AdminNotInitializedError,
-} from '@/firebase/admin';
 import type { User } from './definitions';
 
-// Helper function to throw a consistent error when the Admin SDK is not available.
-function checkAdminSdk() {
+// Helper function to dynamically import and check the Admin SDK.
+async function checkAdminSdk() {
+  // Use dynamic import to prevent this from being in the client bundle.
+  const { isAdminInitialized, AdminNotInitializedError } = await import('@/firebase/admin');
   if (!isAdminInitialized) {
     throw new AdminNotInitializedError(
       'The Firebase Admin SDK is not available on the server. This function cannot be executed.'
@@ -17,11 +14,13 @@ function checkAdminSdk() {
   }
 }
 
+// NOTE: This internal function is not exported.
 const getDataById = async <T>(
   collectionName: string,
   id: string
 ): Promise<T | null> => {
-  checkAdminSdk();
+  await checkAdminSdk();
+  const { getAdminDb } = await import('@/firebase/admin');
   const adminDb = getAdminDb();
 
   try {
@@ -36,21 +35,19 @@ const getDataById = async <T>(
       return null;
     }
 
-    // Normalize Firestore doc IDs into the shape our app expects.
-    // Users use `userId` as the primary key; most other collections use `id`.
     if (collectionName === 'users') {
       return { ...data, userId: docSnap.id } as T;
     }
     return { ...data, id: docSnap.id } as T;
   } catch (error) {
     console.error(`[data.server] Error fetching document from ${collectionName}/${id}:`, error);
-    // Re-throwing or handling is an option here. For now, we'll return null.
     return null;
   }
 };
 
 export async function getCombinedTeamData(): Promise<User[]> {
-  checkAdminSdk();
+  await checkAdminSdk();
+  const { getAdminDb } = await import('@/firebase/admin');
   const adminDb = getAdminDb();
   let teamMembers: User[] = [];
   try {
@@ -65,7 +62,8 @@ export async function getCombinedTeamData(): Promise<User[]> {
 }
 
 export async function getManageableUsers(): Promise<User[]> {
-  checkAdminSdk();
+  await checkAdminSdk();
+  const { getAdminDb } = await import('@/firebase/admin');
   const adminDb = getAdminDb();
   let allUsers: User[] = [];
   try {
@@ -80,21 +78,17 @@ export async function getManageableUsers(): Promise<User[]> {
 }
 
 
-// This function is problematic as it implies a write operation from a file that might be used
-// in server components, which is not a recommended pattern for mutations.
-// However, to fix the build, we will make it use the admin SDK.
 export async function logLessonCompletion(data: {
   userId: string;
   lessonId: string;
   timestamp: number;
 }): Promise<User | null> {
-    checkAdminSdk();
+    await checkAdminSdk();
+    const { getAdminDb } = await import('@/firebase/admin');
     const adminDb = getAdminDb();
     try {
         const userDocRef = adminDb.collection('users').doc(data.userId);
         
-        // This is a placeholder for the actual logic that should exist.
-        // For now, we just fetch the user to prove connectivity.
         const updatedUserDoc = await userDocRef.get();
         if (!updatedUserDoc.exists) return null;
 
