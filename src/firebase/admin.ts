@@ -6,6 +6,7 @@ import { firebaseConfig } from '@/firebase/config';
 let app: App | undefined;
 let _adminDb: Firestore | null = null;
 let _adminAuth: Auth | null = null;
+let _Timestamp: any = null;
 export let isAdminInitialized = false;
 export let adminInitErrorMessage: string | null = null;
 
@@ -41,10 +42,11 @@ function initializeAdmin() {
       app = apps[0];
     }
     
-    const { getFirestore } = require('firebase-admin/firestore');
+    const { getFirestore, Timestamp } = require('firebase-admin/firestore');
     const { getAuth } = require('firebase-admin/auth');
     _adminDb = getFirestore(app);
     _adminAuth = getAuth(app);
+    _Timestamp = Timestamp;
     isAdminInitialized = true;
     
   } catch (error: any) {
@@ -83,4 +85,8 @@ export function getAdminDb(): Firestore {
 
 export function getAdminAuth(): Auth {
     return getInitializedAdminSdk<Auth>(_adminAuth, 'Auth');
+}
+
+export function getAdminTimestamp(): any {
+    return getInitializedAdminSdk<any>(_Timestamp, 'Timestamp');
 }

@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
-import { getAdminAuth, getAdminDb } from "@/firebase/admin";
+import { getAdminAuth, getAdminDb, getAdminTimestamp } from "@/firebase/admin";
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const getTimestamp = async () => {
-  const { Timestamp } = await import('firebase-admin/firestore');
-  return Timestamp;
-};
 
 export async function GET(
   req: Request,
@@ -95,7 +90,7 @@ export async function POST(
         throw new Error("Invitation expired");
       }
 
-      const Timestamp = await getTimestamp();
+      const Timestamp = getAdminTimestamp();
       
       tx.update(inviteRef, {
         claimed: true,
