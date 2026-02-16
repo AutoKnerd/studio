@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAdminDb, getAdminAuth, getAdminTimestamp } from '@/firebase/admin';
+import { getAdminDb, getAdminAuth } from '@/firebase/admin';
 import { UserRole, Dealership, User } from '@/lib/definitions';
 
 export const runtime = 'nodejs';
@@ -77,7 +77,7 @@ export async function POST(req: Request, { params }: { params: Promise<{}> }) {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     
-    const Timestamp = getAdminTimestamp();
+    const { Timestamp } = await import('firebase-admin/firestore');
     
     const newInvitationData = {
         token: invitationToken,
