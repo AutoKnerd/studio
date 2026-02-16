@@ -366,6 +366,7 @@ const generateTourDataInternal = (): Promise<TourData> => {
 
 export const generateTourData = async (): Promise<TourData> => {
   if (!tourDataPromise) {
+    console.log("Generating tour data for the first time...");
     tourDataPromise = generateTourDataInternal();
   }
   return tourDataPromise;
