@@ -1,4 +1,4 @@
-import { getApps, initializeApp, App, applicationDefault } from 'firebase-admin/app';
+import { getApps, initializeApp, App, applicationDefault, cert } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth, Auth } from 'firebase-admin/auth';
 
@@ -16,14 +16,57 @@ class AdminNotInitializedError extends Error {
   }
 }
 
+function getEnvServiceAccount():
+  | { projectId: string; clientEmail: string; privateKey: string }
+  | null {
+  const json = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (json) {
+    try {
+      const parsed = JSON.parse(json);
+      if (parsed?.project_id && parsed?.client_email && parsed?.private_key) {
+        return {
+          projectId: parsed.project_id,
+          clientEmail: parsed.client_email,
+          privateKey: String(parsed.private_key).replace(/\\n/g, '\n'),
+        };
+      }
+    } catch {
+      // fall through to split env vars
+    }
+  }
+
+  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+
+  if (projectId && clientEmail && privateKey) {
+    return {
+      projectId,
+      clientEmail,
+      privateKey: privateKey.replace(/\\n/g, '\n'),
+    };
+  }
+
+  return null;
+}
+
 try {
   if (getApps().length === 0) {
-    // In a managed Google Cloud environment like App Hosting, applicationDefault()
-    // automatically uses the runtime service account. The projectId is inferred
-    // from the environment, so we don't need to specify it manually.
-    app = initializeApp({
-      credential: applicationDefault(),
-    });
+    const envServiceAccount = getEnvServiceAccount();
+    if (envServiceAccount) {
+      app = initializeApp({
+        credential: cert({
+          projectId: envServiceAccount.projectId,
+          clientEmail: envServiceAccount.clientEmail,
+          privateKey: envServiceAccount.privateKey,
+        }),
+      });
+    } else {
+      // In managed Google Cloud environments, ADC works with runtime service account.
+      app = initializeApp({
+        credential: applicationDefault(),
+      });
+    }
     console.log(`[Firebase Admin] Initialized with project ID: ${app.options.projectId}`);
     isAdminInitialized = true;
   } else {
