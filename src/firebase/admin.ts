@@ -1,10 +1,12 @@
-import { getApps, initializeApp, App, applicationDefault, cert } from 'firebase-admin/app';
-import { getFirestore, Firestore } from 'firebase-admin/firestore';
-import { getAuth, Auth } from 'firebase-admin/auth';
+import type { App } from 'firebase-admin/app';
+import type { Auth } from 'firebase-admin/auth';
+import type { Firestore } from 'firebase-admin/firestore';
 
 let app: App | undefined;
-let _adminDb: Firestore | any = null;
-let _adminAuth: Auth | any = null;
+let _adminDb: Firestore | null = null;
+let _adminAuth: Auth | null = null;
+let initializationAttempted = false;
+
 export let isAdminInitialized = false;
 export let adminInitErrorMessage: string | null = null;
 
@@ -31,7 +33,7 @@ function getEnvServiceAccount():
         };
       }
     } catch {
-      // fall through to split env vars
+      // Fall through to split env vars.
     }
   }
 
@@ -50,71 +52,91 @@ function getEnvServiceAccount():
   return null;
 }
 
-try {
-  if (getApps().length === 0) {
-    const envServiceAccount = getEnvServiceAccount();
-    if (envServiceAccount) {
-      app = initializeApp({
-        credential: cert({
-          projectId: envServiceAccount.projectId,
-          clientEmail: envServiceAccount.clientEmail,
-          privateKey: envServiceAccount.privateKey,
-        }),
-      });
-    } else {
-      // In managed Google Cloud environments, ADC works with runtime service account.
-      app = initializeApp({
-        credential: applicationDefault(),
-      });
-    }
-    console.log(`[Firebase Admin] Initialized with project ID: ${app.options.projectId}`);
-    isAdminInitialized = true;
-  } else {
-    app = getApps()[0];
-    isAdminInitialized = true;
+function initializeAdmin() {
+  if (initializationAttempted) {
+    return;
   }
 
-  _adminDb = getFirestore(app);
-  _adminAuth = getAuth(app);
+  initializationAttempted = true;
+
+  try {
+    const appModule = require('firebase-admin/app') as typeof import('firebase-admin/app');
+    const firestoreModule = require('firebase-admin/firestore') as typeof import('firebase-admin/firestore');
+    const authModule = require('firebase-admin/auth') as typeof import('firebase-admin/auth');
+
+    if (appModule.getApps().length === 0) {
+      const envServiceAccount = getEnvServiceAccount();
+      if (envServiceAccount) {
+        app = appModule.initializeApp({
+          credential: appModule.cert({
+            projectId: envServiceAccount.projectId,
+            clientEmail: envServiceAccount.clientEmail,
+            privateKey: envServiceAccount.privateKey,
+          }),
+        });
+      } else {
+        // In managed Google Cloud environments, ADC works with runtime service account.
+        app = appModule.initializeApp({
+          credential: appModule.applicationDefault(),
+        });
+      }
+    } else {
+      app = appModule.getApps()[0];
+    }
+
+    _adminDb = firestoreModule.getFirestore(app);
+    _adminAuth = authModule.getAuth(app);
+    isAdminInitialized = true;
+    adminInitErrorMessage = null;
+
+    console.log(`[Firebase Admin] Initialized with project ID: ${app.options.projectId ?? 'unknown'}`);
   } catch (err: any) {
-  // Initialization can fail if Application Default Credentials are not available
-  // (local dev without GOOGLE_APPLICATION_CREDENTIALS). Avoid throwing during
-  // module import so API route handlers can still respond with controlled errors.
-  console.error('[Firebase Admin] Initialization failed:', err && err.message ? err.message : err, err && err.stack ? err.stack : undefined);
+    // Initialization can fail if ADC is unavailable during local dev.
+    // Keep module import safe so routes can return controlled 503 errors.
+    const errMsg = err?.message ? String(err.message) : String(err);
+    adminInitErrorMessage = errMsg;
+    isAdminInitialized = false;
 
-  const errMsg = (err && err.message) ? err.message : String(err);
-  adminInitErrorMessage = errMsg;
-  isAdminInitialized = false;
+    console.error(
+      '[Firebase Admin] Initialization failed:',
+      errMsg,
+      err?.stack ? err.stack : undefined
+    );
 
-  // Use a distinct Error type/code so API routes can reliably detect an
-  // Admin initialization failure and return a 503 (service unavailable).
-  const makeErr = (suffix: string) => new AdminNotInitializedError(
-    `Firebase Admin not initialized. applicationDefault() failed: ${errMsg}. ${suffix}`
-  );
+    const makeErr = (suffix: string) =>
+      new AdminNotInitializedError(
+        `Firebase Admin not initialized. ${errMsg}. ${suffix}`
+      );
 
-  _adminAuth = {
-    verifyIdToken: async () => {
-      throw makeErr('Ensure Application Default Credentials are available (GOOGLE_APPLICATION_CREDENTIALS) or run in App Hosting.');
-    },
-  };
+    _adminAuth = {
+      verifyIdToken: async () => {
+        throw makeErr(
+          'Ensure Application Default Credentials are available (GOOGLE_APPLICATION_CREDENTIALS) or run in App Hosting.'
+        );
+      },
+    } as unknown as Auth;
 
-  _adminDb = {
-    collection: () => {
-      throw makeErr('Ensure Application Default Credentials are available (GOOGLE_APPLICATION_CREDENTIALS) or run in App Hosting.');
-    },
-    runTransaction: async () => {
-      throw makeErr('Ensure Application Default Credentials are available (GOOGLE_APPLICATION_CREDENTIALS) or run in App Hosting.');
-    },
-  };
+    _adminDb = {
+      collection: () => {
+        throw makeErr(
+          'Ensure Application Default Credentials are available (GOOGLE_APPLICATION_CREDENTIALS) or run in App Hosting.'
+        );
+      },
+      runTransaction: async () => {
+        throw makeErr(
+          'Ensure Application Default Credentials are available (GOOGLE_APPLICATION_CREDENTIALS) or run in App Hosting.'
+        );
+      },
+    } as unknown as Firestore;
+  }
 }
 
-
 export function getAdminDb(): Firestore {
+  initializeAdmin();
   return _adminDb as Firestore;
 }
 
 export function getAdminAuth(): Auth {
+  initializeAdmin();
   return _adminAuth as Auth;
 }
-export const adminDb = _adminDb as Firestore;
-export const adminAuth = _adminAuth as Auth;

@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/firebase/admin';
+import { getAdminAuth, getAdminDb } from '@/firebase/admin';
 import { EmailInvitation } from '@/lib/definitions';
 
 export const runtime = 'nodejs';
@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 
 async function resolveByEmail(userEmail: string) {
+  const adminDb = getAdminDb();
   const invitationsRef = adminDb.collection('emailInvitations');
   const q = invitationsRef
     .where('email', '==', userEmail.toLowerCase())
@@ -27,6 +28,7 @@ async function resolveByEmail(userEmail: string) {
 }
 
 async function resolveByToken(token: string) {
+  const adminDb = getAdminDb();
   if (!token || typeof token !== 'string') {
     return NextResponse.json({ message: 'Bad Request: Missing invitation token.' }, { status: 400 });
   }
@@ -99,6 +101,7 @@ export async function POST(req: Request) {
     // If the caller is already authenticated, keep the original behavior
     if (authorization) {
       const idToken = authorization.replace('Bearer ', '');
+      const adminAuth = getAdminAuth();
       const decodedToken = await adminAuth.verifyIdToken(idToken);
       const userEmail = decodedToken.email;
 
