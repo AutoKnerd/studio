@@ -148,9 +148,9 @@ export default function DeveloperPage() {
                             <Spinner />
                         ) : (
                             <Tabs value={activeTool} onValueChange={setActiveTool} className="w-full">
-                                <div className="md:hidden mb-4">
+                                <div className="mb-4">
                                     <Select value={activeTool} onValueChange={setActiveTool}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full md:w-[300px]">
                                             <SelectValue placeholder="Select a management tool..." />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -160,11 +160,6 @@ export default function DeveloperPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <TabsList className="hidden md:grid w-full grid-cols-6">
-                                    {managementTools.map(tool => (
-                                        <TabsTrigger key={tool.value} value={tool.value}>{tool.label}</TabsTrigger>
-                                    ))}
-                                </TabsList>
                                 <TabsContent value="create_user" className="pt-4">
                                     <CreateUserForm onUserCreated={refreshData} />
                                 </TabsContent>
