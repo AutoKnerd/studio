@@ -26,6 +26,22 @@ const getTourData = async () => {
 }
 
 const isTouringUser = (userId?: string): boolean => !!userId && userId.startsWith('tour-');
+const tourUserEmails: Record<string, string> = {
+    'consultant.demo@autodrive.com': 'tour-consultant',
+    'service.writer.demo@autodrive.com': 'tour-service-writer',
+    'parts.consultant.demo@autodrive.com': 'tour-parts-consultant',
+    'finance.manager.demo@autodrive.com': 'tour-finance-manager',
+    'manager.demo@autodrive.com': 'tour-manager',
+    'service.manager.demo@autodrive.com': 'tour-service-manager',
+    'parts.manager.demo@autodrive.com': 'tour-parts-manager',
+    'general.manager.demo@autodrive.com': 'tour-general-manager',
+    'owner.demo@autodrive.com': 'tour-owner',
+};
+
+const getTourIdFromEmail = (email?: string | null): string | null => {
+    if (!email) return null;
+    return tourUserEmails[email.toLowerCase()] || null;
+};
 
 
 // --- HELPER FUNCTIONS ---
@@ -55,34 +71,30 @@ const getDataById = async <T>(db: Firestore, collectionName: string, id: string)
 
 // AUTH
 export async function getUserById(userId: string): Promise<User | null> {
-    const tourUserEmails: Record<string, string> = {
-        'consultant.demo@autodrive.com': 'tour-consultant',
-        'service.writer.demo@autodrive.com': 'tour-service-writer',
-        'parts.consultant.demo@autodrive.com': 'tour-parts-consultant',
-        'finance.manager.demo@autodrive.com': 'tour-finance-manager',
-        'manager.demo@autodrive.com': 'tour-manager',
-        'service.manager.demo@autodrive.com': 'tour-service-manager',
-        'parts.manager.demo@autodrive.com': 'tour-parts-manager',
-        'general.manager.demo@autodrive.com': 'tour-general-manager',
-        'owner.demo@autodrive.com': 'tour-owner',
-    };
+    if (isTouringUser(userId)) {
+        const { users } = await getTourData();
+        return users.find(u => u.userId === userId) || null;
+    }
+
+    // For demo users, map the Firebase auth account to the canonical tour user.
+    // This keeps all downstream data lookups keyed by `tour-*` IDs.
+    const authTourId = auth.currentUser?.uid === userId
+        ? getTourIdFromEmail(auth.currentUser.email)
+        : null;
+    if (authTourId) {
+        const tourUser = (await getTourData()).users.find(u => u.userId === authTourId);
+        if (tourUser) return tourUser;
+    }
 
     // This is a special bridge for the demo user logins.
     // It finds the real user doc to get their email, then maps it to the correct fake tour ID.
     const userDoc = await getDoc(doc(db, 'users', userId)).catch(() => null);
     if (userDoc && userDoc.exists()) {
-        const userEmail = userDoc.data()?.email;
-        const tourId = tourUserEmails[userEmail];
+        const tourId = getTourIdFromEmail(userDoc.data()?.email);
         if (tourId) {
              const tourUser = (await getTourData()).users.find(u => u.userId === tourId);
-             // Return the specific tour user, but inject the REAL Firebase UID so auth state remains valid.
-             return tourUser ? { ...tourUser, userId: userId } : null;
+             return tourUser || null;
         }
-    }
-
-    if (isTouringUser(userId)) {
-        const { users } = await getTourData();
-        return users.find(u => u.userId === userId) || null;
     }
     
     return getDataById<User>(db, 'users', userId);
