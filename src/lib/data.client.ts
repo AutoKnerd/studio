@@ -592,6 +592,7 @@ export async function createLesson(
             associatedTrait: lessonData.associatedTrait,
             role: lessonData.targetRole as LessonRole,
             customScenario: lessonData.scenario,
+            createdByUserId: creator.userId,
         };
         lessons.push(newLesson);
         return { lesson: newLesson, autoAssignedCount: 0, autoAssignFailed: false };
@@ -606,6 +607,7 @@ export async function createLesson(
         associatedTrait: lessonData.associatedTrait,
         role: lessonData.targetRole as LessonRole,
         customScenario: lessonData.scenario,
+        createdByUserId: creator.userId,
     };
     try {
         await setDoc(newLessonRef, newLesson);
@@ -747,6 +749,241 @@ export async function getAllAssignedLessonIds(userId: string): Promise<string[]>
         errorEmitter.emit('permission-error', contextualError);
         throw contextualError;
     }
+}
+
+export type CreatedLessonStatus = {
+    lesson: Lesson;
+    assignedCount: number;
+    completedCount: number;
+    pendingCount: number;
+    assignedUserCount: number;
+    takenUserCount: number;
+    taken: boolean;
+    assignees: Array<{
+        userId: string;
+        name: string;
+        role?: UserRole;
+        taken: boolean;
+    }>;
+    lastAssignedAt: Date | null;
+};
+
+export async function getCreatedLessonStatuses(assignerId: string): Promise<CreatedLessonStatus[]> {
+    if (isTouringUser(assignerId)) {
+        const { lessons, lessonAssignments, users } = await getTourData();
+        const assignmentsByCreator = lessonAssignments.filter((assignment) => assignment.assignerId === assignerId);
+        const lessonIds = new Set([
+            ...lessons.filter((lesson) => lesson.createdByUserId === assignerId).map((lesson) => lesson.lessonId),
+            ...assignmentsByCreator.map((assignment) => assignment.lessonId),
+        ]);
+
+        const userMetaById = new Map(
+            users.map((tourUser) => [
+                tourUser.userId,
+                {
+                    name: tourUser.name || tourUser.email || tourUser.userId,
+                    role: tourUser.role,
+                },
+            ])
+        );
+
+        const lessonById = new Map(lessons.map((lesson) => [lesson.lessonId, lesson]));
+        const rows: CreatedLessonStatus[] = Array.from(lessonIds)
+            .map((lessonId) => {
+                const lesson = lessonById.get(lessonId);
+                if (!lesson) return null;
+                const scopedAssignments = assignmentsByCreator.filter((assignment) => assignment.lessonId === lessonId);
+                const assignedCount = scopedAssignments.length;
+                const completedCount = scopedAssignments.filter((assignment) => assignment.completed).length;
+                const pendingCount = Math.max(assignedCount - completedCount, 0);
+                const assigneeById = new Map<string, { userId: string; name: string; role?: UserRole; taken: boolean }>();
+                scopedAssignments.forEach((assignment) => {
+                    const existing = assigneeById.get(assignment.userId);
+                    if (existing) {
+                        existing.taken = existing.taken || assignment.completed;
+                        return;
+                    }
+                    const userMeta = userMetaById.get(assignment.userId);
+                    assigneeById.set(assignment.userId, {
+                        userId: assignment.userId,
+                        name: userMeta?.name || assignment.userId,
+                        role: userMeta?.role,
+                        taken: !!assignment.completed,
+                    });
+                });
+                const assignees = Array.from(assigneeById.values()).sort((a, b) => a.name.localeCompare(b.name));
+                const assignedUserCount = assignees.length;
+                const takenUserCount = assignees.filter((assignee) => assignee.taken).length;
+                const lastAssignedAt = scopedAssignments.length > 0
+                    ? new Date(Math.max(...scopedAssignments.map((assignment) => assignment.timestamp.getTime())))
+                    : null;
+                return {
+                    lesson,
+                    assignedCount,
+                    completedCount,
+                    pendingCount,
+                    assignedUserCount,
+                    takenUserCount,
+                    taken: completedCount > 0,
+                    assignees,
+                    lastAssignedAt,
+                };
+            })
+            .filter((row): row is CreatedLessonStatus => !!row);
+
+        return rows.sort((a, b) => {
+            const timeA = a.lastAssignedAt?.getTime() ?? 0;
+            const timeB = b.lastAssignedAt?.getTime() ?? 0;
+            if (timeA !== timeB) return timeB - timeA;
+            return a.lesson.title.localeCompare(b.lesson.title);
+        });
+    }
+
+    const assignmentsCollection = collection(db, 'lessonAssignments');
+    const lessonsCollection = collection(db, 'lessons');
+    const usersCollection = collection(db, 'users');
+
+    let assignmentsByCreator: LessonAssignment[] = [];
+    try {
+        const assignmentSnapshot = await getDocs(query(assignmentsCollection, where('assignerId', '==', assignerId)));
+        assignmentsByCreator = assignmentSnapshot.docs.map((assignmentDoc) => {
+            const raw = assignmentDoc.data() as any;
+            const rawTimestamp = raw.timestamp;
+            const timestamp = rawTimestamp?.toDate
+                ? rawTimestamp.toDate()
+                : (rawTimestamp instanceof Date ? rawTimestamp : new Date(0));
+            return {
+                assignmentId: raw.assignmentId || assignmentDoc.id,
+                userId: raw.userId,
+                lessonId: raw.lessonId,
+                assignerId: raw.assignerId,
+                timestamp,
+                completed: !!raw.completed,
+            } as LessonAssignment;
+        });
+    } catch (e) {
+        const contextualError = new FirestorePermissionError({ path: assignmentsCollection.path, operation: 'list' });
+        errorEmitter.emit('permission-error', contextualError);
+        throw contextualError;
+    }
+
+    const userMetaById = new Map<string, { name: string; role?: UserRole }>();
+    const assignedUserIds = Array.from(new Set(assignmentsByCreator.map((assignment) => assignment.userId).filter(Boolean)));
+    if (assignedUserIds.length > 0) {
+        const userSnapshots = await Promise.all(
+            assignedUserIds.map(async (userId) => {
+                try {
+                    const userSnapshot = await getDoc(doc(usersCollection, userId));
+                    if (!userSnapshot.exists()) return null;
+                    return { userId, user: userSnapshot.data() as User };
+                } catch {
+                    return null;
+                }
+            })
+        );
+        userSnapshots.forEach((entry) => {
+            if (!entry) return;
+            userMetaById.set(entry.userId, {
+                name: entry.user.name || entry.user.email || entry.userId,
+                role: entry.user.role,
+            });
+        });
+    }
+
+    const lessonById = new Map<string, Lesson>();
+
+    try {
+        const createdLessonSnapshot = await getDocs(query(lessonsCollection, where('createdByUserId', '==', assignerId)));
+        createdLessonSnapshot.docs.forEach((lessonDoc) => {
+            const lesson = { ...(lessonDoc.data() as any), lessonId: (lessonDoc.data() as any).lessonId || lessonDoc.id } as Lesson;
+            lessonById.set(lesson.lessonId, lesson);
+        });
+    } catch (e) {
+        const contextualError = new FirestorePermissionError({ path: lessonsCollection.path, operation: 'list' });
+        errorEmitter.emit('permission-error', contextualError);
+        throw contextualError;
+    }
+
+    const lessonIdsFromAssignments = Array.from(new Set(assignmentsByCreator.map((assignment) => assignment.lessonId).filter(Boolean)));
+    const missingLessonIds = lessonIdsFromAssignments.filter((lessonId) => !lessonById.has(lessonId));
+    if (missingLessonIds.length > 0) {
+        const chunks: string[][] = [];
+        for (let i = 0; i < missingLessonIds.length; i += 30) {
+            chunks.push(missingLessonIds.slice(i, i + 30));
+        }
+
+        try {
+            const snapshots = await Promise.all(
+                chunks.map((chunk) => getDocs(query(lessonsCollection, where('lessonId', 'in', chunk))))
+            );
+            snapshots.forEach((snapshot) => {
+                snapshot.docs.forEach((lessonDoc) => {
+                    const lesson = { ...(lessonDoc.data() as any), lessonId: (lessonDoc.data() as any).lessonId || lessonDoc.id } as Lesson;
+                    lessonById.set(lesson.lessonId, lesson);
+                });
+            });
+        } catch (e) {
+            const contextualError = new FirestorePermissionError({ path: lessonsCollection.path, operation: 'list' });
+            errorEmitter.emit('permission-error', contextualError);
+            throw contextualError;
+        }
+    }
+
+    const lessonIds = Array.from(new Set([
+        ...Array.from(lessonById.keys()),
+        ...lessonIdsFromAssignments,
+    ]));
+
+    const rows: CreatedLessonStatus[] = lessonIds
+        .map((lessonId) => {
+            const lesson = lessonById.get(lessonId);
+            if (!lesson) return null;
+            const scopedAssignments = assignmentsByCreator.filter((assignment) => assignment.lessonId === lessonId);
+            const assignedCount = scopedAssignments.length;
+            const completedCount = scopedAssignments.filter((assignment) => assignment.completed).length;
+            const pendingCount = Math.max(assignedCount - completedCount, 0);
+            const assigneeById = new Map<string, { userId: string; name: string; role?: UserRole; taken: boolean }>();
+            scopedAssignments.forEach((assignment) => {
+                const existing = assigneeById.get(assignment.userId);
+                if (existing) {
+                    existing.taken = existing.taken || assignment.completed;
+                    return;
+                }
+                const userMeta = userMetaById.get(assignment.userId);
+                assigneeById.set(assignment.userId, {
+                    userId: assignment.userId,
+                    name: userMeta?.name || assignment.userId,
+                    role: userMeta?.role,
+                    taken: !!assignment.completed,
+                });
+            });
+            const assignees = Array.from(assigneeById.values()).sort((a, b) => a.name.localeCompare(b.name));
+            const assignedUserCount = assignees.length;
+            const takenUserCount = assignees.filter((assignee) => assignee.taken).length;
+            const lastAssignedAt = scopedAssignments.length > 0
+                ? new Date(Math.max(...scopedAssignments.map((assignment) => assignment.timestamp.getTime())))
+                : null;
+
+            return {
+                lesson,
+                assignedCount,
+                completedCount,
+                pendingCount,
+                assignedUserCount,
+                takenUserCount,
+                taken: completedCount > 0,
+                assignees,
+                lastAssignedAt,
+            };
+        })
+        .filter((row): row is CreatedLessonStatus => !!row);
+
+    return rows.sort((a, b) => {
+        const timeA = a.lastAssignedAt?.getTime() ?? 0;
+        const timeB = b.lastAssignedAt?.getTime() ?? 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return a.lesson.title.localeCompare(b.lesson.title);
+    });
 }
 
 export async function assignLesson(userId: string, lessonId: string, assignerId: string): Promise<LessonAssignment> {
