@@ -151,18 +151,25 @@ export async function updateUser(userId: string, data: Partial<Omit<User, 'userI
         return updatedUser;
     }
 
-    const userRef = doc(db, 'users', userId);
-    try {
-        await updateDoc(userRef, data);
-    } catch (e: any) {
-        const contextualError = new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'update',
-            requestResourceData: data,
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        throw contextualError;
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) {
+        throw new Error("Authentication required");
     }
+
+    const response = await fetch('/api/admin/updateUser', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ targetUserId: userId, data }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update user');
+    }
+
     const updatedUser = await getDataById<User>(db, 'users', userId);
     if (!updatedUser) throw new Error("User not found after update");
     return updatedUser;

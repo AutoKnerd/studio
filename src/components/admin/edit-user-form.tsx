@@ -46,22 +46,36 @@ export function EditUserForm({ manageableUsers, dealerships, onUserUpdated }: Ed
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
+  const defaultFormValues: EditUserFormValues = {
+    name: '',
+    email: '',
+    role: allRoles[0],
+    phone: '',
+    dealershipIds: [],
+    isPrivate: false,
+    isPrivateFromOwner: false,
+    showDealerCriticalOnly: false,
+  };
+
+  const toFormValues = (user: User): EditUserFormValues => ({
+    name: user.name || '',
+    email: user.email || '',
+    role: user.role,
+    phone: user.phone || '',
+    dealershipIds: user.dealershipIds || [],
+    isPrivate: !!user.isPrivate,
+    isPrivateFromOwner: !!user.isPrivateFromOwner,
+    showDealerCriticalOnly: !!user.showDealerCriticalOnly,
+  });
+
   const form = useForm<EditUserFormValues>({
       resolver: zodResolver(editUserSchema),
+      defaultValues: defaultFormValues,
   });
 
   useEffect(() => {
     if (selectedUser) {
-      form.reset({
-        name: selectedUser.name,
-        email: selectedUser.email,
-        role: selectedUser.role,
-        phone: selectedUser.phone || '',
-        dealershipIds: selectedUser.dealershipIds || [],
-        isPrivate: selectedUser.isPrivate || false,
-        isPrivateFromOwner: selectedUser.isPrivateFromOwner || false,
-        showDealerCriticalOnly: selectedUser.showDealerCriticalOnly || false,
-      });
+      form.reset(toFormValues(selectedUser));
     }
   }, [selectedUser, form]);
 
@@ -77,13 +91,15 @@ export function EditUserForm({ manageableUsers, dealerships, onUserUpdated }: Ed
   }, [searchTerm, manageableUsers]);
 
   const handleSelectUser = (user: User) => {
+    // Reset before rendering fields so every input starts controlled.
+    form.reset(toFormValues(user));
     setSelectedUser(user);
     setSearchTerm('');
   };
 
   const handleClearSelection = () => {
     setSelectedUser(null);
-    form.reset();
+    form.reset(defaultFormValues);
   };
 
   async function onSubmit(data: EditUserFormValues) {
