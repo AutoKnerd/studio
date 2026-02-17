@@ -79,10 +79,8 @@ service cloud.firestore {
     }
 
     function isUpdatingOwnUserDocument() {
-      // Prevent a user from changing their own role or userId.
-      let isUserIdImmutable = request.resource.data.userId == resource.data.userId;
-      let isRoleImmutable = request.resource.data.role == resource.data.role;
-      return isUserIdImmutable && isRoleImmutable;
+      // Prevent a user from changing their own role.
+      return !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
     }
 
     match /users/{userId} {
@@ -103,8 +101,14 @@ service cloud.firestore {
           'Finance Manager'
         ];
       allow update: if 
-        (isOwner(userId) && isUpdatingOwnUserDocument()) || 
-        (hasAnyRole(['Admin', 'Developer']) && request.resource.data.userId == resource.data.userId);
+        // The userId field inside the document is immutable for all updates.
+        (!('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId) &&
+        (
+          // A user can update their own doc, but not change their role.
+          (isOwner(userId) && isUpdatingOwnUserDocument()) || 
+          // An Admin or Developer can update any user.
+          hasAnyRole(['Admin', 'Developer'])
+        );
       allow delete: if isOwner(userId) || hasAnyRole(['Admin', 'Developer']);
     }
 
