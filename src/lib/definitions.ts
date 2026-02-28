@@ -74,6 +74,8 @@ export type User = {
   isPrivateFromOwner?: boolean;
   showDealerCriticalOnly?: boolean;
   memberSince?: string;
+  privacyPolicyAcceptedAt?: string | null;
+  privacyPolicyVersion?: string | null;
   selfDeclaredDealershipId?: string;
   stripeCustomerId?: string;
   subscriptionStatus?: 'active' | 'inactive';
