@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Message } from '@/lib/definitions';
 import { useAuth } from '@/hooks/use-auth';
@@ -17,10 +17,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, User as UserIcon, MessageSquare, CreditCard, Undo2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+import { AvatarSoundRing } from '@/components/profile/avatar-sound-ring';
 
 function MessageItem({ message }: { message: Message }) {
     const [relativeTime, setRelativeTime] = useState('');
@@ -121,21 +122,49 @@ export function UserNav({ user, avatarClassName, withBlur = false }: UserNavProp
     };
 
     const isViewingAsDifferentRole = originalUser && user.role !== originalUser.role;
+    const avatarThemePreference = user.themePreference || (user.useProfessionalTheme ? 'executive' : 'vibrant');
+    const navAvatarSizeClass = avatarClassName || 'h-10 w-10';
+
+    const avatarScores = useMemo(() => {
+        if (!user.stats) return undefined;
+
+        return {
+            empathy: Math.round(user.stats.empathy?.score ?? 60),
+            listening: Math.round(user.stats.listening?.score ?? 60),
+            trust: Math.round(user.stats.trust?.score ?? 60),
+            followUp: Math.round(user.stats.followUp?.score ?? 60),
+            closing: Math.round(user.stats.closing?.score ?? 60),
+            relationshipBuilding: Math.round(user.stats.relationship?.score ?? 60),
+        };
+    }, [user.stats]);
+
+    const hasAvatarActivity = Boolean(avatarScores && Object.values(avatarScores).some((value) => value > 0));
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleMessagesDialogOpen}>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-auto w-auto rounded-full focus-visible:ring-0 focus-visible:ring-offset-0 p-0">
-                <Avatar className={avatarClassName}>
-                    <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
+            <button
+                type="button"
+                className="relative h-auto w-auto rounded-full p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+                <div className={cn("relative inline-flex items-center justify-center", navAvatarSizeClass)}>
+                    <AvatarSoundRing
+                      scores={avatarScores}
+                      hasActivity={hasAvatarActivity}
+                      themePreference={avatarThemePreference}
+                      className="inset-[-33%] h-[166%] w-[166%]"
+                    />
+                    <Avatar className="relative z-10 h-full w-full border-4 border-slate-700">
+                        <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                </div>
                 {withBlur && <div className="absolute inset-0 rounded-full border-2 border-cyan-400 blur-md" />}
                 {isClient && unreadCount > 0 && (
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" />
                 )}
-            </Button>
+            </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>

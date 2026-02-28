@@ -39,6 +39,8 @@ import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { BaselineAssessmentDialog } from './baseline-assessment-dialog';
 import { CreatedLessonsView } from '../lessons/created-lessons-view';
+import { CxSoundwaveCard } from '@/components/cx/CxSoundwaveCard';
+import { getDefaultScope } from '@/lib/cx/scope';
 
 
 interface ManagerDashboardProps {
@@ -133,6 +135,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
   const [systemReport, setSystemReport] = useState<SystemReport | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const router = useRouter();
+  const cxScope = useMemo(() => getDefaultScope(user), [user]);
 
 
   const teamContext = useMemo(() => {
@@ -690,7 +693,7 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
       </Dialog>
       <header className="flex items-center justify-between">
           <Logo variant="full" width={183} height={61} />
-          <UserNav user={user} avatarClassName="h-14 w-14 border-2 border-cyan-400/50" withBlur />
+          <UserNav user={user} avatarClassName="h-14 w-14" />
       </header>
     
       <section className="space-y-3">
@@ -864,30 +867,16 @@ export function ManagerDashboard({ user }: ManagerDashboardProps) {
                         )}
                     </Card>
                     <Card>
-                        <CardHeader>
-                            <CardTitle>My Personal CX Scores</CardTitle>
-                            <CardDescription>Your performance across completed lessons.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="grid gap-x-8 gap-y-4">
-                        {loading ? (
-                            Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)
-                        ) : managerAverageScores ? (
-                            Object.entries(managerAverageScores).map(([key, value]) => {
-                                const Icon = metricIcons[key as keyof typeof metricIcons];
-                                const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                                return (
-                                    <div key={key} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Icon className="h-5 w-5 text-muted-foreground" />
-                                        <span className="text-sm font-medium text-foreground">{title}</span>
-                                    </div>
-                                    <span className="font-bold text-cyan-400">{value}%</span>
-                                    </div>
-                                );
-                            })
-                        ) : (
-                            <p className="text-muted-foreground col-span-full text-center">No scores available yet.</p>
-                        )}
+                        <CardContent className="pt-6">
+                          {loading ? (
+                            <Skeleton className="h-[400px] w-full rounded-xl" />
+                          ) : (
+                            <CxSoundwaveCard
+                              scope={cxScope}
+                              data={managerAverageScores}
+                              memberSince={user.memberSince || null}
+                            />
+                          )}
                         </CardContent>
                     </Card>
                 </div>

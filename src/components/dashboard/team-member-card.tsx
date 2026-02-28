@@ -20,6 +20,7 @@ import { CreateLessonForm } from '../lessons/create-lesson-form';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { BadgeShowcase } from '../profile/badge-showcase';
 import { managerialRoles } from '@/lib/definitions';
+import { AvatarSoundRing } from '../profile/avatar-sound-ring';
 
 interface TeamMemberCardProps {
   user: User;
@@ -51,6 +52,7 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
   const [isCreateLessonOpen, setCreateLessonOpen] = useState(false);
   const [memberSince, setMemberSince] = useState<string | null>(null);
   const [recentActivityDate, setRecentActivityDate] = useState<string | null>(null);
+  const themePreference = user.themePreference || (user.useProfessionalTheme ? 'executive' : 'vibrant');
 
 
   const { level } = calculateLevel(user.xp);
@@ -235,10 +237,13 @@ export function TeamMemberCard({ user, currentUser, dealerships, onAssignmentUpd
         <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                        <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                    <div className="relative h-16 w-16">
+                        <AvatarSoundRing scores={averageScores} hasActivity={activity.length > 0} themePreference={themePreference} />
+                        <Avatar className="relative z-10 h-16 w-16 border-2 border-slate-700">
+                            <AvatarImage src={user.avatarUrl} data-ai-hint="person portrait" />
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                    </div>
                     <div>
                         <CardTitle className="text-2xl">{user.name}</CardTitle>
                         <CardDescription>{user.role === 'manager' ? 'Sales Manager' : user.role} at {currentDealershipNames}</CardDescription>

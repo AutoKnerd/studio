@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/layout/logo';
+import { AvatarSoundRing } from './avatar-sound-ring';
 
 interface ScoreCardProps {
   user: User;
@@ -33,6 +34,7 @@ const metricIcons: Record<CxTrait, icons.LucideIcon> = {
 export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ user, activity, badges, dealerships }, ref) => {
   const { level, levelXp, nextLevelXp, progress } = calculateLevel(user.xp);
   const hasActivity = activity.length > 0;
+  const avatarSrc = typeof user.avatarUrl === 'string' ? user.avatarUrl.trim() : '';
 
   const dealershipName = useMemo(() => {
     if (!dealerships || dealerships.length === 0) return '';
@@ -106,9 +108,9 @@ export const ScoreCard = React.forwardRef<HTMLDivElement, ScoreCardProps>(({ use
         {/* Avatar */}
         <div className="flex-grow flex items-center justify-center my-2">
           <div className="relative w-28 h-28">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 blur-lg" />
+              <AvatarSoundRing scores={averageScores} hasActivity={hasActivity} />
               <Avatar className="relative w-full h-full border-4 border-slate-700">
-                  <AvatarImage src={user.avatarUrl} alt={user.name} crossOrigin="anonymous" />
+                  <AvatarImage src={avatarSrc || undefined} alt={user.name} />
                   <AvatarFallback className="text-5xl bg-slate-800 text-white">
                       {user.name.charAt(0)}
                   </AvatarFallback>

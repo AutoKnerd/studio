@@ -27,6 +27,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BaselineAssessmentDialog } from './baseline-assessment-dialog';
+import { CxSoundwaveCard } from '@/components/cx/CxSoundwaveCard';
+import { getDefaultScope } from '@/lib/cx/scope';
 
 interface ConsultantDashboardProps {
   user: User;
@@ -127,6 +129,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
   const [needsBaselineAssessment, setNeedsBaselineAssessment] = useState(false);
   const [showBaselineAssessment, setShowBaselineAssessment] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const cxScope = useMemo(() => getDefaultScope(user), [user]);
 
 
   useEffect(() => {
@@ -295,7 +298,7 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
         {/* Header */}
         <header className="flex items-center justify-between">
             <Logo variant="full" width={183} height={61} />
-            <UserNav user={user} avatarClassName="h-14 w-14 border-2 border-cyan-400/50" withBlur />
+            <UserNav user={user} avatarClassName="h-14 w-14" />
         </header>
 
         {isPaused && (
@@ -419,33 +422,15 @@ export function ConsultantDashboard({ user }: ConsultantDashboardProps) {
 
         {/* My Stats */}
         <section id="stats">
-            <Card className="bg-slate-900/50 backdrop-blur-md border border-cyan-400/30">
-                <CardHeader>
-                <CardTitle>My Average CX Scores</CardTitle>
-                <CardDescription>Your average performance across all completed lessons.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                {loading ? (
-                    Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)
-                ) : averageScores ? (
-                    Object.entries(averageScores).map(([key, value]) => {
-                    const Icon = metricIcons[key as keyof typeof metricIcons];
-                    const title = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                    return (
-                        <div key={key} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Icon className="h-5 w-5 text-muted-foreground" />
-                            <span className="text-sm font-medium text-foreground">{title}</span>
-                        </div>
-                        <span className="font-bold text-cyan-400">{value}%</span>
-                        </div>
-                    );
-                    })
-                ) : (
-                    <p className="text-muted-foreground col-span-full text-center">No scores available yet.</p>
-                )}
-                </CardContent>
-            </Card>
+            {loading ? (
+              <Skeleton className="h-[400px] w-full rounded-xl" />
+            ) : (
+              <CxSoundwaveCard
+                scope={cxScope}
+                data={averageScores}
+                memberSince={user.memberSince || null}
+              />
+            )}
         </section>
 
         {/* My Badges */}
